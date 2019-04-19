@@ -1,0 +1,42 @@
+\RequirePackage[ngerman=ngerman-x-latest]{hyphsubst}
+\documentclass[ngerman,BCOR=6mm,cdgeometry=no,DIV=13]{tudscrreprt}
+
+\usepackage[T1]{fontenc}
+\usepackage{selinput}\SelectInputMappings{adieresis={ä},germandbls={ß}}
+\usepackage{babel}
+\usepackage{isodate}
+\usepackage{blindtext}
+
+\begin{document}
+
+\faculty{Fakultät Informatik}
+\department{}
+\institute{Institut für Technische Informatik}
+\chair{Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}
+
+\date{16.9.2019}
+\title{Entwicklung eines SYCL-Backends für die Alpaka-Bibliothek und dessen
+       Evaluation mit Schwerpunkt auf FPGAs}
+
+\subject{diploma}
+\graduation[Dipl.-Inf.]{Diplom-Informatiker}
+
+\author{%
+        Jan Stephan%
+        \matriculationnumber{3755136}%
+        \dateofbirth{8.5.1991}%
+        \placeofbirth{Wilhelmshaven}}
+\matriculationyear{2012}
+
+\supervisor{Dr.-Ing. Oliver Knodel \and
+            Matthias Werner, M.Sc.}
+\referee{Prof. Dr.-Ing. habil. Rainer G. Spallek \and
+         Prof. Dr. rer. nat. Ulrich Schramm}
+
+\maketitle
+
+\tableofcontents
+
+\input{einleitung}
+
+\end{document}
