@@ -1,18 +1,31 @@
 \RequirePackage[ngerman=ngerman-x-latest]{hyphsubst}
-\documentclass[ngerman,BCOR=6mm,cdgeometry=no,DIV=13]{tudscrreprt}
+\documentclass[ngerman,cdfont=false,cdfont=nodin,11pt]{tudscrreprt}
 
 \usepackage[T1]{fontenc}
-\usepackage{selinput}\SelectInputMappings{adieresis={ä},germandbls={ß}}
+\usepackage{selinput}
+\SelectInputMappings{adieresis={ä},germandbls={ß}}
 \usepackage{babel}
 \usepackage{isodate}
-\usepackage{blindtext}
+\usepackage[math]{blindtext}
+
+\usepackage[default]{opensans}
+\DeclareRobustCommand\ebseries{\fontseries{eb}\selectfont}
+\DeclareRobustCommand\nbseries{\fontseries{b}\selectfont}
+\DeclareRobustCommand\sbseries{\fontseries{sb}\selectfont}
+\DeclareRobustCommand\rgseries{\fontseries{m}\selectfont}
+\DeclareRobustCommand\ltseries{\fontseries{l}\selectfont}
+\DeclareRobustCommand\clseries{\fontseries{cl}\selectfont}
+\DeclareTextFontCommand{\texteb}{\ebseries}
+\DeclareTextFontCommand{\textsb}{\sbseries}
+\DeclareTextFontCommand{\textlt}{\ltseries}
+\DeclareTextFontCommand{\textcl}{\clseries}
 
 \begin{document}
 
-\faculty{Fakultät Informatik}
+\faculty{{\fontsize{8.8}{1.2}\fosfamily\nbseries Fakultät Informatik}}
 \department{}
-\institute{Institut für Technische Informatik}
-\chair{Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}
+\institute{{\fontsize{8.8}{1.2}\fosfamily\rgseries Institut für Technische Informatik}}
+\chair{{\fontsize{8.8}{1.2}\fosfamily\rgseries Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}}
 
 \date{16.9.2019}
 \title{Entwicklung eines SYCL-Backends für die Alpaka-Bibliothek und dessen
