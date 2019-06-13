@@ -1,0 +1,24 @@
+Einleitung
+
+Alpaka
+
+SYCL
+
+Implementierung des SYCL-Backends
+
+    Probleme
+        * widersprüchliche Konzepte
+            * Alpaka reine Zeiger, SYCL Accessor
+            * Alpaka führt atomics auf normalen Datentypen aus, SYCL braucht atomic-Datentyp
+            * SYCL-Erweiterungen nicht ohne Weiteres in Alpaka nutzbar (alpaka::pipeline?)
+
+PSI-Code
+    * wissenschaftliche Beschreibung
+    * Beschreibung der einzelnen Kernel
+
+Messergebnisse
+    * Messmethoden / Hardware
+    * Ergebnisse
+
+Fazit & Ausblick
+    
