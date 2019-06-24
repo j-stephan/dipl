@@ -1,14 +1,15 @@
 \RequirePackage[ngerman=ngerman-x-latest]{hyphsubst}
-\documentclass[ngerman,cdfont=false,cdfont=nodin,11pt]{tudscrreprt}
+\documentclass[ngerman,cdfont=false,cdfont=nodin,cdmath=false,11pt]{tudscrbook}
 
+\usepackage[ngerman]{babel}
+\usepackage[math]{blindtext}
 \usepackage[T1]{fontenc}
+\usepackage{isodate}
+\usepackage[default]{opensans}
+\usepackage{pdfpages}
 \usepackage{selinput}
 \SelectInputMappings{adieresis={ä},germandbls={ß}}
-\usepackage{babel}
-\usepackage{isodate}
-\usepackage[math]{blindtext}
 
-\usepackage[default]{opensans}
 \DeclareRobustCommand\ebseries{\fontseries{eb}\selectfont}
 \DeclareRobustCommand\nbseries{\fontseries{b}\selectfont}
 \DeclareRobustCommand\sbseries{\fontseries{sb}\selectfont}
@@ -30,7 +31,6 @@
 \date{16.9.2019}
 \title{Entwicklung eines SYCL-Backends für die Alpaka-Bibliothek und dessen
        Evaluation mit Schwerpunkt auf FPGAs}
-
 \subject{diploma}
 \graduation[Dipl.-Inf.]{Diplom-Informatiker}
 
@@ -40,6 +40,7 @@
         \dateofbirth{8.5.1991}%
         \placeofbirth{Wilhelmshaven}}
 \matriculationyear{2012}
+\course{Informatik}
 
 \supervisor{Dr.-Ing. Oliver Knodel \and
             Matthias Werner, M.Sc.}
@@ -48,8 +49,19 @@
 
 \maketitle
 
+\newpage\null\thispagestyle{empty}\newpage
+
+\includepdf[pages=-]{aufgabenstellung.pdf}
+
+\newpage\null\thispagestyle{empty}\newpage
+
 \tableofcontents
 
 \input{einleitung}
+\input{alpaka}
+\input{sycl}
+\input{implementierung}
+\input{messung}
+\input{fazit}
 
 \end{document}

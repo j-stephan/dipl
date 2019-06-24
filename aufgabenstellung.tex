@@ -1,0 +1,81 @@
+\RequirePackage[ngerman=ngerman-x-latest]{hyphsubst}
+\documentclass[ngerman,cdfont=false,cdfont=nodin,11pt]{tudscrreprt}
+
+\usepackage[ngerman]{babel}
+\usepackage[math]{blindtext}
+\usepackage[T1]{fontenc}
+\usepackage[symbol]{footmisc}
+\usepackage{isodate}
+\usepackage{selinput}
+\SelectInputMappings{adieresis={ä},germandbls={ß}}
+\usepackage{tudscrsupervisor}
+
+\usepackage[default]{opensans}
+\DeclareRobustCommand\ebseries{\fontseries{eb}\selectfont}
+\DeclareRobustCommand\nbseries{\fontseries{b}\selectfont}
+\DeclareRobustCommand\sbseries{\fontseries{sb}\selectfont}
+\DeclareRobustCommand\rgseries{\fontseries{m}\selectfont}
+\DeclareRobustCommand\ltseries{\fontseries{l}\selectfont}
+\DeclareRobustCommand\clseries{\fontseries{cl}\selectfont}
+\DeclareTextFontCommand{\texteb}{\ebseries}
+\DeclareTextFontCommand{\textsb}{\sbseries}
+\DeclareTextFontCommand{\textlt}{\ltseries}
+\DeclareTextFontCommand{\textcl}{\clseries}
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\begin{document}
+
+\faculty{{\fontsize{8.8}{1.2}\fosfamily\nbseries Fakultät Informatik}}
+\department{}
+\institute{{\fontsize{8.8}{1.2}\fosfamily\rgseries Institut für Technische Informatik}}
+\chair{{\fontsize{8.8}{1.2}\fosfamily\rgseries Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}}
+
+\date{16.9.2019}
+\title{Entwicklung eines SYCL-Backends für die Alpaka-Bibliothek und dessen
+       Evaluation mit Schwerpunkt auf FPGAs}
+\subject{diploma}
+\graduation[Dipl.-Inf.]{Diplom-Informatiker}
+
+\author{%
+        Jan Stephan%
+        \matriculationnumber{3755136}%
+        \dateofbirth{8.5.1991}%
+        \placeofbirth{Wilhelmshaven}}
+\matriculationyear{2012}
+\course{Informatik}
+
+\issuedate{15.4.2019}
+\duedate{16.9.2019}
+
+\supervisor{Dr.-Ing. Oliver Knodel (HZDR) \and
+            Matthias Werner, M.Sc. (HZDR)}
+\referee{Prof. Dr.-Ing. habil. Rainer G. Spallek \and
+         Prof. Dr. rer. nat. Ulrich Schramm (HZDR)}
+\professor{Prof. Dr.-Ing. habil. Rainer G. Spallek}
+
+\taskform{
+    Alpaka ist eine plattformabstrahierende C++11-""Bibliothek zur parallelen
+    Programmierung von Multicore- und Manycore-Architekturen. SYCL liefert ein
+    modernes C++11-""\-Pro\-gram\-mier\-mo\-dell für OpenCL und ist aufgrund der
+    zunehmenden Plattformunterstützung eine wünschenswerte Erweiterung für
+    Alpaka. SYCL-Compiler erlauben u.a. Zugriff auf NVIDIA-GPUs (experimentell)
+    und FPGAs (triSYCL).
+
+    Ziel dieser Arbeit ist es, SYCL als Backend-Variante für Alpaka zu
+    implementieren und den Einsatz gängiger SYCL-Compiler hinsichtlich CPUs,
+    GPUs und FPGAs an einer realen Alpaka-Anwendung zu evaluieren.
+}{%
+    \item Literaturrecherche zu SYCL/OpenCL und FPGAs.
+    \item Einarbeitung in die FPGA-Programmierung mittels des triSYCL-Compilers
+          und des Xilinx-SDAccel-Ökosystems.
+    \item Untersuchung der Performance-Analysemöglichkeiten hinsichtlich der
+          Nutzbarkeit und erreichten Leistung im Vergleich zu anderen Konzepten
+          und Architekturen.
+    \item Evaluierung des SYCL-Backend-Prototypen anhand eines in Alpaka
+          entwickelten Verarbeitungsalgorithmus für
+          Röntgenstrahlen-Pixeldetektordaten, u.a. hinsichtlich der erreichbaren
+          Datenraten auf sowie der Nutzbarkeit von FPGAs.
+    \item Zusammenstellung, Auswertung und Dokumentation der Ergebnisse.
+}
+\end{document}
