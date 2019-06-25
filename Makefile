@@ -1,3 +1,4 @@
+
 BIBLIOGRAPHY_SOURCE = bibliography.bib
 
 PAPER = main
@@ -24,6 +25,8 @@ COLORIZE = \
 		   sed "s/! LaTeX Error/${RED}${BOLD}&${NORMAL}${NOCOLOR}/g" | \
 		   sed "s/! Undefined control sequence/${RED}${BOLD}&${NORMAL}${NOCOLOR}/g" | \
 		   sed "s/l\.[0-9]*/${BLUE}${BOLD}&${NORMAL}${NOCOLOR}/g"
+
+.DEFAULT_GOAL := $(PAPER_TARGET)
 
 $(TASK_TARGET): $(TASK_SOURCE)
 	@echo ">>> GENERATING TASK <<<"
@@ -55,8 +58,6 @@ $(PAPER_TARGET): $(PAPER_SOURCE) $(TASK_TARGET) $(BIBLIOGRAPHY_SOURCE)
 	@echo ">>> PDFLATEX <<<"
 	@echo ""
 	pdflatex -shell-escape -interaction=nonstopmode $(PAPER_SOURCE) | $(COLORIZE)
-
-all: $(TASK_TARGET) $(PAPER_TARGET)
 
 .PHONY: clean
 clean:
