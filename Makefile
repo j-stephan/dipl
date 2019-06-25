@@ -36,13 +36,13 @@ $(PAPER_TARGET): $(PAPER_SOURCE) $(TASK_TARGET) $(BIBLIOGRAPHY_SOURCE)
 	@echo ""
 	pdflatex -shell-escape -interaction=nonstopmode $(PAPER_SOURCE) 1> /dev/null 2> /dev/null
 	@echo ""
-	@echo ">>> BIBTEX <<<"
+	@echo ">>> BIBER <<<"
 	@echo ""
-	# bibtex $(PAPER_AUX)
+	biber $(PAPER)
 	@echo ""
 	@echo ">>> GLOSSARIES <<<"
 	@echo ""
-	# makeglossaries $(PAPER)
+	makeglossaries $(PAPER)
 	@echo ""
 	@echo ">>> PRERUN PDFLATEX <<<"
 	@echo ""
@@ -60,4 +60,4 @@ all: $(TASK_TARGET) $(PAPER_TARGET)
 
 .PHONY: clean
 clean:
-	@rm -f *.out *.aux *.log *.pdf *.bbl *.blg *.dvi *.toc *.lof *.lol *.lot *.acn *.acr *.alg *.glg *.glo *.gls *.ist *.xdy *.nco *.ncg *.ncs *.bcf
+	@rm -f *.out *.aux *.log *.pdf *.bbl *.blg *.dvi *.toc *.lof *.lol *.lot *.acn *.acr *.alg *.glg *.glo *.gls *.ist *.xdy *.nco *.ncg *.ncs *.bcf *.run.xml

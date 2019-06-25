@@ -1,10 +1,18 @@
 \RequirePackage[ngerman=ngerman-x-latest]{hyphsubst}
-\documentclass[ngerman,cdfont=false,cdfont=nodin,cdmath=false,11pt]{tudscrbook}
+\documentclass[english,ngerman,
+               abstract=section,abstract=nottotoc,abstract=all,abstract=vfill,
+               cdfont=false,cdfont=nodin,
+               cdmath=false,
+               declaration=true,declaration=section,declaration=totoc,11pt]{tudscrbook}
 
 \usepackage[ngerman]{babel}
+\usepackage[backend=biber,style=alphabetic]{biblatex}
 \usepackage[math]{blindtext}
+\usepackage{csquotes}
 \usepackage[T1]{fontenc}
+\usepackage[acronyms,nonumberlist,nopostdot,toc,savewrites,xindy]{glossaries}
 \usepackage{isodate}
+\usepackage{nth}
 \usepackage[default]{opensans}
 \usepackage{pdfpages}
 \usepackage{selinput}
@@ -20,6 +28,15 @@
 \DeclareTextFontCommand{\textsb}{\sbseries}
 \DeclareTextFontCommand{\textlt}{\ltseries}
 \DeclareTextFontCommand{\textcl}{\clseries}
+
+\addbibresource{bibliography.bib}
+
+\input{glossar}
+
+% Germanisiere LaTeX
+\deftranslation[to=German]{Acronyms}{Abkürzungsverzeichnis}
+\deftranslation[to=German]{Glossary}{Glossar}
+\renewcommand*{\listlistingname}{Quelltextverzeichnis}
 
 \begin{document}
 
@@ -47,15 +64,24 @@
 \referee{Prof. Dr.-Ing. habil. Rainer G. Spallek \and
          Prof. Dr. rer. nat. Ulrich Schramm}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Vorspann
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \maketitle
 
-\newpage\null\thispagestyle{empty}\newpage
-
 \includepdf[pages=-]{aufgabenstellung.pdf}
-
-\newpage\null\thispagestyle{empty}\newpage
+\input{zusammenfassung}
 
 \tableofcontents
+
+\glsaddall
+\printglossary
+\printglossary[type=\acronymtype]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Hauptteil
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \input{einleitung}
 \input{alpaka}
@@ -63,5 +89,13 @@
 \input{implementierung}
 \input{messung}
 \input{fazit}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Nachspann
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\printbibliography[heading=bibintoc]
+
+\confirmation
 
 \end{document}
