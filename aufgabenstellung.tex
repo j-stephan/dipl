@@ -1,5 +1,5 @@
 \RequirePackage[ngerman=ngerman-x-latest]{hyphsubst}
-\documentclass[ngerman,cdfont=false,cdfont=nodin,11pt]{tudscrreprt}
+\documentclass[ngerman]{tudscrreprt}
 
 \usepackage[ngerman]{babel}
 \usepackage[math]{blindtext}
@@ -7,29 +7,14 @@
 \usepackage[symbol]{footmisc}
 \usepackage{isodate}
 \usepackage{selinput}
-\SelectInputMappings{adieresis={ä},germandbls={ß}}
 \usepackage{tudscrsupervisor}
-
-\usepackage[default]{opensans}
-\DeclareRobustCommand\ebseries{\fontseries{eb}\selectfont}
-\DeclareRobustCommand\nbseries{\fontseries{b}\selectfont}
-\DeclareRobustCommand\sbseries{\fontseries{sb}\selectfont}
-\DeclareRobustCommand\rgseries{\fontseries{m}\selectfont}
-\DeclareRobustCommand\ltseries{\fontseries{l}\selectfont}
-\DeclareRobustCommand\clseries{\fontseries{cl}\selectfont}
-\DeclareTextFontCommand{\texteb}{\ebseries}
-\DeclareTextFontCommand{\textsb}{\sbseries}
-\DeclareTextFontCommand{\textlt}{\ltseries}
-\DeclareTextFontCommand{\textcl}{\clseries}
-
-\renewcommand{\thefootnote}{\fnsymbol{footnote}}
 
 \begin{document}
 
-\faculty{{\fontsize{8.8}{1.2}\fosfamily\nbseries Fakultät Informatik}}
+\faculty{Fakultät Informatik}
 \department{}
-\institute{{\fontsize{8.8}{1.2}\fosfamily\rgseries Institut für Technische Informatik}}
-\chair{{\fontsize{8.8}{1.2}\fosfamily\rgseries Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}}
+\institute{Institut für Technische Informatik}
+\chair{Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}
 
 \date{16.9.2019}
 \title{Entwicklung eines SYCL-Backends für die Alpaka-Bibliothek und dessen

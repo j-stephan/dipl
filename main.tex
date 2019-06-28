@@ -1,8 +1,6 @@
 \RequirePackage[ngerman=ngerman-x-latest]{hyphsubst}
 \documentclass[english,ngerman,
                abstract=section,abstract=nottotoc,abstract=all,abstract=vfill,
-               cdfont=false,cdfont=nodin,
-               cdmath=false,
                declaration=true,declaration=section,declaration=totoc,11pt]{tudscrbook}
 
 \usepackage[ngerman]{babel}
@@ -13,21 +11,8 @@
 \usepackage[acronyms,nonumberlist,nopostdot,toc,savewrites,xindy]{glossaries}
 \usepackage{isodate}
 \usepackage{nth}
-\usepackage[default]{opensans}
 \usepackage{pdfpages}
 \usepackage{selinput}
-\SelectInputMappings{adieresis={ä},germandbls={ß}}
-
-\DeclareRobustCommand\ebseries{\fontseries{eb}\selectfont}
-\DeclareRobustCommand\nbseries{\fontseries{b}\selectfont}
-\DeclareRobustCommand\sbseries{\fontseries{sb}\selectfont}
-\DeclareRobustCommand\rgseries{\fontseries{m}\selectfont}
-\DeclareRobustCommand\ltseries{\fontseries{l}\selectfont}
-\DeclareRobustCommand\clseries{\fontseries{cl}\selectfont}
-\DeclareTextFontCommand{\texteb}{\ebseries}
-\DeclareTextFontCommand{\textsb}{\sbseries}
-\DeclareTextFontCommand{\textlt}{\ltseries}
-\DeclareTextFontCommand{\textcl}{\clseries}
 
 \addbibresource{bibliography.bib}
 
@@ -40,10 +25,10 @@
 
 \begin{document}
 
-\faculty{{\fontsize{8.8}{1.2}\fosfamily\nbseries Fakultät Informatik}}
+\faculty{Fakultät Informatik}
 \department{}
-\institute{{\fontsize{8.8}{1.2}\fosfamily\rgseries Institut für Technische Informatik}}
-\chair{{\fontsize{8.8}{1.2}\fosfamily\rgseries Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}}
+\institute{Institut für Technische Informatik}
+\chair{Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}
 
 \date{16.9.2019}
 \title{Entwicklung eines SYCL-Backends für die Alpaka-Bibliothek und dessen
