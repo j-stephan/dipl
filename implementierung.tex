@@ -5,3 +5,17 @@
 \section{Besonderheiten des SYCL-Backends}\label{implementierung:besonderheiten}
 
 \section{Probleme}\label{implementierung:probleme}
+
+Static shared memory:
+    * OpenCL?
+    * ansonsten Workaround über Pre-Allocation -> Probleme auf FPGAs mit Layout?
+    * TDim über Accelerator verfügbar (siehe Synchronization)
+
+Atomics:
+    * Zeiger erfordern Wrapper (global space, local space...) damit atomics
+      funktionieren
+
+Hierarchie:
+    * grids: global memory
+    * blocks: global memory
+    * threads: global oder shared memory :( -> nur global memory berücksichtigen
