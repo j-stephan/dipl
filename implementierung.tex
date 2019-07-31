@@ -5,3 +5,52 @@
 \section{Besonderheiten des SYCL-Backends}\label{implementierung:besonderheiten}
 
 \section{Probleme}\label{implementierung:probleme}
+
+\subsection{Event-System}
+
+\begin{itemize}
+    \item Alpaka: Übernimmt CUDA-Eventsystem. Erfordert manuelle Erzeugung des
+          Events und die Einsortierung in den SYCL-Stream.
+    \item SYCL: Events dienen eigentlich nur dem Profiling. Abhängigkeiten
+          werden von der SYCL-Laufzeitumgebung synchronisiert und basieren nicht
+          auf Events, sondern der Verfügbarkeit des Speichers.
+    \item Lösung: Leere Funktion für das SYCL-Backend. \texttt{alpaka::wait()}
+\end{itemize}
+
+\subsection{Block-Synchronisierung}
+
+\begin{itemize}
+    \item Alpaka will überall einen Dimensions-Parameter, nur nicht bei der
+          Block-Synchronisierung.
+    \item SYCL braucht den Dimensionsparameter bei der Block-Synchronisierung.
+    \item Lösung: Erfolgt, funktioniert über Templates.
+\end{itemize}
+
+\subsection{Shared Memory}
+
+\begin{itemize}
+    \item SYCL kann keinen shared memory innerhalb eines Kernels anlegen, Alpaka
+          schon.
+    \item Lösung: Keine möglich, Begründung des SYCL-Kommittees einfügen.
+\end{itemize}
+
+\subsection{Atomics}
+
+\begin{itemize}
+    \item SYCL kann anhand eines rohen Zeigers nicht ableiten, welcher
+          \texttt{multi\_ptr}-Typ verwendet werden soll.
+    \item \texttt{multi\_ptr} wird für SYCL-Atomics benötigt.
+    \item Alpaka gibt uns nur rohe Zeiger.
+    \item Lösung: Keine. Im Moment funktionieren Atomics nur für den globalen
+          Addressraum. Begründung SYCL-Kommittee einfügen.
+\end{itemize}
+
+\subsection{Zeiger}
+
+\begin{itemize}
+    \item Alpaka: Will überall reine Zeiger (Kernel-Code)
+    \item SYCL: Will überall \texttt{accessor}, alternativ \texttt{multi\_ptr}
+    \item Lösung: \texttt{multi\_ptr} lässt sich implizit zu reinem Zeiger casten
+    \item Hinweis: SYCL-Spezifikation gibt fälschlicherweise an, dass
+          \texttt{accessor} implizit castbar ist.
+\end{itemize}
