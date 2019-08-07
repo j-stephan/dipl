@@ -1,0 +1,42 @@
+\chapter{GitHub-Diskussionen}\label{anhang:github}
+
+\section{Diskussionen mit dem SYCL-Spezifikationskomitee}
+\label{anhang:github:syclspec}
+
+\subsection{Why is there no way to allocate local memory inside a ND-kernel
+            (parallel\_for)?}\label{anhang:github:syclspec:staticshared}
+
+Original: \url{https://github.com/KhronosGroup/SYCL-Docs/issues/20}, zuletzt
+abgerufen am 07. August 2019.
+
+\begin{otherlanguage}{english}
+    \paragraph{Jan Stephan} I know this is possible using the hierarchical
+                            \texttt{parallel\_for} invoke, but we can't do it
+                            with the \texttt{nd\_item} version despite being
+                            able to specify the group size. OpenCL allows this
+                            (AFAIK), SYCL's competitors do, too, so why not
+                            allow it in SYCL? I suppose there must be a reason
+                            for leaving it out.
+    \paragraph{Victor Lomuller (Codeplay)} The main reason is the host device.
+                            If your compiler is not SYCL aware, you need to be
+                            able to preallocate this memory before calling the
+                            functor, which is not trivial without compiler
+                            support.
+    \paragraph{Jan Stephan} Wouldn't this be solvable by doing the inverse of
+                            the hierarchical case? I.e. everything is
+                            \texttt{private} by default if declared inside the
+                            kernel, unless embedded with something like
+                            \texttt{cl::sycl::local\_memory}.
+    \paragraph{Victor Lomuller} It does not address the compiler support
+                                problem. You still need to preallocate memory
+                                before calling the functor, but without compiler
+                                support, you cannot know the amount of memory
+                                you need nor where to place the pointer to that
+                                memory (the stack frame does not exist yet).
+    \paragraph{Ronan Keryell (Xilinx)} which SYCL competitor can run on CPU
+                              without a specific compiler? This allows for
+                              example to use HellGrind \& ThreadSanitizer with
+                              plain GCC or Clang to debug a SYCL program just by
+                              running it on my laptop. I find this an amazing
+                              feature of SYCL...
+\end{otherlanguage}

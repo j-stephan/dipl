@@ -3,10 +3,11 @@
                abstract=section,abstract=nottotoc,abstract=all,abstract=vfill,
                declaration=true,declaration=section,declaration=totoc,11pt]{tudscrbook}
 
-\usepackage[ngerman]{babel}
+\usepackage[english,ngerman]{babel}
 \usepackage[backend=biber,style=alphabetic]{biblatex}
 \usepackage[math]{blindtext}
 \usepackage{csquotes}
+\usepackage{dialogue}
 \usepackage[T1]{fontenc}
 \usepackage[acronyms,nonumberlist,nopostdot,toc,savewrites,xindy]{glossaries}
 \usepackage{isodate}
@@ -30,7 +31,7 @@
 \institute{Institut für Technische Informatik}
 \chair{Seniorprofessor Dr.-Ing. habil. Rainer G. Spallek}
 
-\date{16.9.2019}
+\date{16.12.2019}
 \title{Entwicklung eines SYCL-Backends für die Alpaka-Bibliothek und dessen
        Evaluation mit Schwerpunkt auf FPGAs}
 \subject{diploma}
@@ -80,6 +81,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \printbibliography[heading=bibintoc]
+
+\appendix
+\input{anhang}
 
 \confirmation
 

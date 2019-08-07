@@ -1,23 +1,26 @@
-\chapter{Implementierung des SYCL-Backends der Alpaka-Bibliothek}\label{implementierung}
+\chapter{Implementierung des SYCL-Backends der Alpaka-Bibliothek}
+\label{implementierung}
 
-\section{Allgemeiner Aufbau}\label{implementierung:aufbau}
+\section{Allgemeiner Aufbau}
+\label{implementierung:aufbau}
 
-\section{Besonderheiten des SYCL-Backends}\label{implementierung:besonderheiten}
+\section{Besonderheiten des SYCL-Backends}
+\label{implementierung:besonderheiten}
 
-\section{Probleme}\label{implementierung:probleme}
+\subsection{Zeiger und \textit{accessors}}
+\label{implementierung:besonderheiten:zeiger}
 
-\subsection{Event-System}
 
 \begin{itemize}
-    \item Alpaka: Übernimmt CUDA-Eventsystem. Erfordert manuelle Erzeugung des
-          Events und die Einsortierung in den SYCL-Stream.
-    \item SYCL: Events dienen eigentlich nur dem Profiling. Abhängigkeiten
-          werden von der SYCL-Laufzeitumgebung synchronisiert und basieren nicht
-          auf Events, sondern der Verfügbarkeit des Speichers.
-    \item Lösung: Leere Funktion für das SYCL-Backend. \texttt{alpaka::wait()}
+    \item Alpaka: Will überall reine Zeiger (Kernel-Code)
+    \item SYCL: Will überall \texttt{accessor}, alternativ \texttt{multi\_ptr}
+    \item Lösung: \texttt{multi\_ptr} lässt sich implizit zu reinem Zeiger casten
+    \item Hinweis: SYCL-Spezifikation gibt fälschlicherweise an, dass
+          \texttt{accessor} implizit castbar ist.
 \end{itemize}
 
 \subsection{Block-Synchronisierung}
+\label{implementierung:besonderheiten:synchronisierung}
 
 \begin{itemize}
     \item Alpaka will überall einen Dimensions-Parameter, nur nicht bei der
@@ -26,15 +29,84 @@
     \item Lösung: Erfolgt, funktioniert über Templates.
 \end{itemize}
 
-\subsection{Shared Memory}
+\section{Probleme}\label{implementierung:probleme}
 
-\begin{itemize}
-    \item SYCL kann keinen shared memory innerhalb eines Kernels anlegen, Alpaka
-          schon.
-    \item Lösung: Keine möglich, Begründung des SYCL-Kommittees einfügen.
-\end{itemize}
+Während der Implementierung traten einige Probleme auf, die sich vornehmlich
+auf gravierende konzeptionelle Unterschiede zwischen Alpaka und SYCL
+zurückführen lassen. Diese werden in den folgenden Abschnitten näher
+beschrieben.
 
-\subsection{Atomics}
+\subsection{Event-System}\label{implementierung:probleme:events}
+
+Alpaka übernimmt viele Konzepte des CUDA-API, darunter auch das Event-System.
+Durch CUDA-\textit{events} wird dem Programmierer eine weitere
+Synchronisationsmöglichkeit eröffnet. Diese können in einem \textit{stream} vor
+oder nach asynchronen Operationen -- wie etwa Kopiervorgängen oder dem Starten
+eines Kernels -- einsortiert werden. Der Programmierer kann dann später oder
+parallel in einem anderen \textit{stream} abfragen, ob das jeweilige
+\textit{event} bereits erreicht wurde und gegebenenfalls darauf warten. Darüber
+hinaus ermöglichen \textit{events} ein simples Profiling, da z.B. die Zeitspanne
+zwischen verschiedenen \textit{events} gemessen werden kann.
+
+SYCL kennt ebenfalls ein \textit{event}-Konzept, das sich jedoch von CUDAs bzw.
+Alpakas System unterscheidet. Auch SYCL-\textit{events} lassen sich für
+einfaches Profiling nutzen, ermöglichen dem Programmierer jedoch nicht, eine
+weitere SYCL-\textit{queue} (dem Gegenstück zu CUDA-\textit{streams}) auf ein
+bestimmtes \textit{event} zu warten.
+
+Dies ist für die Implementierung der Alpaka-\textit{events} ein Problem, da hier
+CUDAs Verhalten simuliert wird. Zur Zeit ist der Befehl
+\texttt{alpaka::wait::waiterWaitFor()} für die \textit{event}-basierte
+Synchronisation in Alpaka nicht implementiert, wenn der \textit{waiter} eine
+Alpaka-\textit{queue} ist.
+
+\subsection{Geteilter Speicher}\label{implementierung:probleme:shared}
+
+Einige Plattformen der parallelen Programmierung, wie etwa CUDA und OpenCL,
+kennen das Konzept eines Speichers auf Multiprozessor-Ebene, der ungefähr
+einem programmierbaren L1-Cache entspricht. Dieser Speicher nennt sich im
+CUDA-Umfeld \textit{shared memory}, während er bei OpenCL (und SYCL)
+\textit{local memory} heißt. Alpaka übernimmt für dieses Speicherkonzept die
+CUDA-Terminologie. \textit{Shared memory} steht allen \textit{threads} auf
+der \textit{block}-Ebene zur Verfügung und bietet deutlich schnellere
+Zugriffszeiten als der globale Speicher.
+
+Es gibt zwei mögliche Arten, Speicher dieses Typs zu reservieren:
+\textit{dynamisch}, das heißt außerhalb des Kernel-Codes und zur Laufzeit, sowie
+\textit{statisch}, das heißt innerhalb des Kernel-Codes und mit einer zur
+Compile-Zeit feststehenden Größe.
+
+Alpaka stellt für beide Varianten eine Schnittstelle bereit. Für den dynamischen
+Fall muss der Programmierer das \textit{type trait}
+\texttt{alpaka::kernel::traits::BlockSharedMemDynSizeBytes} auf der Host-Seite
+für seine Anwendung implementieren. Innerhalb des Kernels kann er dann über die
+Alpaka-Funktion \texttt{alpaka::block::shared::dyn::getMem()} auf den Zeiger
+zum so reservierten geteilten Speicher zugreifen. Dieser Fall lässt sich auch
+für SYCL implementieren, indem man die in
+Abschnitt~\ref{implementierung:besonderheiten:zeiger} vorgestellten
+Umwandlungen von \textit{accessor}-Typen in \textit{Zeiger} anwendet.
+
+Für den statischen Fall existiert die Funktion
+\texttt{alpaka::block::shared::st::allocVar()}, die innerhalb des Kernels
+aufgerufen wird und eine beliebige Variable im geteilten Speicher ablegt. Diese
+Funktion kann für SYCL nicht implementiert werden, da die SYCL-Spezifikation
+dies (im Gegensatz zu OpenCL) bis auf einen bestimmten Sonderfall
+\cite[siehe][Abschnitt 4.8.5.3]{sycl2019} nicht vorsieht.
+
+Diese Einschränkung erklärt sich dadurch, dass SYCL mit dem Anspruch entworfen
+wurde, von jedem beliebigen modernen C++-Compiler übersetzt werden zu können,
+auch wenn dieser keine Unterstützung für OpenCL- und/oder SYCL-Konzepte mit sich
+bringt. In diesem Fall generiert der Compiler wie bei jedem anderen C++-Programm
+normalen CPU-Maschinencode. Der Umfang des statischen geteilten Speichers steht
+zwar bereits zur Compile-Zeit fest und kann daher schon vor dem Aufruf des
+Kernels alloziert werden. Der Zeiger auf diesen Speicherbereich kann durch einen
+C++-Compiler ohne SYCL-Unterstützung dem betreffenden Kernel vor dessen
+Ausführung jedoch gar nicht zugeordnet werden, da für diese Funktion noch kein
+Stapelrahmen existiert. (vgl. die GitHub"=Diskussion mit Mitgliedern des
+SYCL"=Spezifikationskomitees im
+Anhang~\ref{anhang:github:syclspec:staticshared})
+
+\subsection{Atomare Funktionen}\label{implementierung:probleme:atomics}
 
 \begin{itemize}
     \item SYCL kann anhand eines rohen Zeigers nicht ableiten, welcher
@@ -46,11 +118,3 @@
 \end{itemize}
 
 \subsection{Zeiger}
-
-\begin{itemize}
-    \item Alpaka: Will überall reine Zeiger (Kernel-Code)
-    \item SYCL: Will überall \texttt{accessor}, alternativ \texttt{multi\_ptr}
-    \item Lösung: \texttt{multi\_ptr} lässt sich implizit zu reinem Zeiger casten
-    \item Hinweis: SYCL-Spezifikation gibt fälschlicherweise an, dass
-          \texttt{accessor} implizit castbar ist.
-\end{itemize}
