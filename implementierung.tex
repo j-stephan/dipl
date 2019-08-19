@@ -1,15 +1,28 @@
 \chapter{Implementierung des SYCL-Backends der Alpaka-Bibliothek}
 \label{implementierung}
 
-\section{Allgemeiner Aufbau}
-\label{implementierung:aufbau}
+Mit Ausnahme der in den folgenden Abschnitten aufgeführten Besonderheiten
+(Abschnitt~\ref{implementierung:besonderheiten}) bzw.\ Probleme
+(Abschnitt~\ref{implementierung:probleme}) konnte die Implementierung des
+SYCL-Backends für Alpaka recht einfach durchgeführt werden. Als Vorlage für
+dessen Aufbau dienten die bereits vorhandenen Backends, wobei hier besonders
+das CUDA-Backend hervorzuheben ist.
 
 \section{Besonderheiten des SYCL-Backends}
 \label{implementierung:besonderheiten}
 
+\subsection{Beschleuniger-Auswahl}
+
+TODO
+
 \subsection{Zeiger und \textit{accessors}}
 \label{implementierung:besonderheiten:zeiger}
 
+Die Übergabe von Datenfeldern an \gls{device}- und \gls{kernel}-Funktionen
+erfolgt in Alpaka über die von C, älterem C++ und CUDA bekannten Zeiger. Pro
+Datenfeld erhält die Funktion üblicherweise einen Zeiger, z.B. vom Typ
+\texttt{float*}, und einen ganzzahligen Parameter (meist vom Typ
+\texttt{size\_t}), der die Länge des Speicherbereichs angibt.
 
 \begin{itemize}
     \item Alpaka: Will überall reine Zeiger (Kernel-Code)
@@ -104,7 +117,7 @@ C++-Compiler ohne SYCL-Unterstützung dem betreffenden Kernel vor dessen
 Ausführung jedoch gar nicht zugeordnet werden, da für diese Funktion noch kein
 Stapelrahmen existiert. (vgl. die GitHub"=Diskussion mit Mitgliedern des
 SYCL"=Spezifikationskomitees im
-Anhang~\ref{anhang:github:syclspec:staticshared})
+Anhang~\ref{anhang:diskussionen:syclspec:staticshared})
 
 \subsection{Atomare Funktionen}\label{implementierung:probleme:atomics}
 
@@ -117,4 +130,6 @@ Anhang~\ref{anhang:github:syclspec:staticshared})
           Addressraum. Begründung SYCL-Kommittee einfügen.
 \end{itemize}
 
-\subsection{Zeiger}
+\subsection{FPGA-Erweiterungen}\label{implementierung:probleme:fpga}
+
+Wie SYCL-FPGA-Erweiterungen nutzen?

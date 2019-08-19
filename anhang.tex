@@ -1,10 +1,10 @@
-\chapter{GitHub-Diskussionen}\label{anhang:github}
+\chapter{Online-Diskussionen}\label{anhang:diskussionen}
 
 \section{Diskussionen mit dem SYCL-Spezifikationskomitee}
-\label{anhang:github:syclspec}
+\label{anhang:diskussionen:syclspec}
 
 \subsection{Why is there no way to allocate local memory inside a ND-kernel
-            (parallel\_for)?}\label{anhang:github:syclspec:staticshared}
+            (parallel\_for)?}\label{anhang:diskussionen:syclspec:staticshared}
 
 Original: \url{https://github.com/KhronosGroup/SYCL-Docs/issues/20}, zuletzt
 abgerufen am 07. August 2019.
@@ -39,4 +39,190 @@ abgerufen am 07. August 2019.
                               plain GCC or Clang to debug a SYCL program just by
                               running it on my laptop. I find this an amazing
                               feature of SYCL...
+\end{otherlanguage}
+
+\newpage
+\subsection{How to extract address space from raw pointers?}
+\label{anhang:diskussionen:syclspec:addressspace}
+
+Original: \url{https://github.com/KhronosGroup/SYCL-Docs/issues/21}, zuletzt
+abgerufen am 15. August 2019.
+
+\begin{otherlanguage}{english}
+    \paragraph{Jan Stephan} Imagine a device-side function with the following
+                            signature:
+                            \begin{code}
+                                \begin{minted}[fontsize=\small]{c++}
+void foo(int* vec);
+                                \end{minted}
+                            \end{code}
+                            I don't know if \texttt{vec} comes from global,
+                            local, constant or private memory. However, inside
+                            \texttt{foo} I'd like to do something to
+                            \texttt{vec} which requires me to know the address
+                            space of the pointer, e.g. a
+                            \texttt{cl::sycl::atomic\_fetch\_add}. How do I tell
+                            the \texttt{multi\_ptr} / \texttt{atomic} inside
+                            \texttt{foo} which address space is needed? Simply
+                            using a \texttt{global\_ptr} will break if
+                            \texttt{vec} actually resides in local memory. Using
+                            \texttt{multi\_ptr} will fail because the address
+                            space template parameter is missing. Creating an
+                            \texttt{atomic} by passing \texttt{vec} to its
+                            constructor will fail because \texttt{vec} isn't a
+                            \texttt{multi\_ptr}. Using
+                            \texttt{atomic\_fetch\_add} on \texttt{vec} will
+                            fail because \texttt{vec} isn't an \texttt{atomic}
+                            type.
+                            \\
+                            Some implementations (like ComputeCpp) internally
+                            use \texttt{\_\_global} to annotate the pointer
+                            during device compilation. But even if there was a
+                            way to write something like
+                            \texttt{void foo(\_\_global int* vec)} (there isn't
+                            as far as I know, ComputeCpp complains if I do this)
+                            this would be a bad idea because the address space
+                            attributes are implementation-defined.
+                            \\
+                            Why do we need this? Sadly, there are libraries /
+                            frameworks out there that pass around raw pointers
+                            but where a SYCL backend is planned / worked on.
+                            \\
+                            Edit: I also tried to overload \texttt{foo} with
+                            \texttt{global\_ptr}, \texttt{local\_ptr} etc.
+                            directly. This will fail because the call is
+                            ambigous.
+    \paragraph{Ronan Keryell (Xilinx)} Interestingly, Intel is trying hard to
+                                       hide what you are asking for:
+                                       \texttt{intel/llvm\#348}\footnote{Verweis
+                                       auf Änderung des Intel-SYCL-Compilers, 
+                                       J.S.}
+                                       \\
+                                       Can you imagine an API that could be
+                                       added to the standard?
+    \paragraph{Jan Stephan} An easy solution that doesn't require an API change
+                            would be to correctly deduce the overloads, i.e.
+                            \texttt{foo(global\_ptr)}, \texttt{foo(local\_ptr)}
+                            and so on. This is not very intuitive, though, and
+                            might break user APIs.
+                            \\
+                            From the programmer's point of view it would be
+                            preferable to allow \texttt{multi\_ptr}
+                            construction on raw pointers without having to
+                            specify the address space. The compiler should be
+                            able to figure this out by itself since it knows
+                            about the address spaces anyway.
+                            \\
+                            On the other hand it should raise an error if the
+                            programmer tries to assign a raw pointer in local
+                            space to a \texttt{global\_ptr}. Currently this
+                            doesn't happen, both the Intel and ComputeCpp
+                            compiler will happily compile if I pass the same
+                            pointer to \texttt{global\_ptr}'s and
+                            \texttt{local\_ptr}'s constructor.
+                            \\
+                            Admittedly I haven't given this much thought yet (I
+                            only encountered the problem on Wednesday), I'll try
+                            to think this through on the weekend.
+    \paragraph{Jan Stephan} The weekend has passed... Apart from the solutions
+                            above the best I could come up with is something
+                            like \texttt{cl::sycl::pointer\_traits} to be added
+                            to the specification. The interface would look
+                            something along the lines of
+                            \begin{code}
+                                \begin{minted}[fontsize=\small]{c++}
+template <typename Ptr>
+struct pointer_traits
+{
+    static_assert(is_raw_ptr_type(Ptr), "Ptr needs to be a raw pointer type");
+    using pointer_t = /* implementation-defined */ Ptr;
+    using address_space = /* implementation-defined */;
+    // maybe add other traits here
+};
+                                \end{minted}
+                            \end{code}
+                            Since the compiler needs to figure out the address
+                            space on its own anyway (if I understand Section 6.8
+                            correctly), it would fill out the
+                            \texttt{implementation-defined} parts. A programmer
+                            could then use SFINAE or \texttt{if constexpr} to
+                            adapt to the different address spaces.
+                            \\
+                            This is basically the problem \texttt{multi\_ptr}
+                            tries to solve, it already encapsulates the
+                            functionality above. However, \texttt{multi\_ptr}
+                            requires the user to specify the address space
+                            before using it. This makes sense because we can
+                            request a \texttt{multi\_ptr} from a buffer
+                            accessor, a local accessor, and so on and the
+                            \texttt{multi\_pt}r data structure has to know about
+                            its address space. It also renders us unable to
+                            construct it from a pointer we don't know the
+                            address space of.
+                            \\
+                            So my straight-forward resolution still is to remove
+                            the requirement to specify the address space for the
+                            \texttt{multi\_ptr} type. Instead the compiler needs
+                            to figure out the correct value for the
+                            \texttt{address\_space} member of
+                            \texttt{multi\_ptr} (or the \texttt{Space} template
+                            parameter). If this is not an option because of
+                            implications I'm not aware of (and I'm sure there
+                            are plenty) I'd shoot for the
+                            \texttt{pointer\_traits} option.
+    \paragraph{Ronan Keryell} \begin{quote}
+                                Since the compiler needs to figure out the
+                                address space on its own anyway (if I understand
+                                Section 6.8 correctly), it would fill out the
+                                implementation-defined parts. A programmer could
+                                then use SFINAE or \texttt{if constexpr} to
+                                adapt to the different address spaces.
+                              \end{quote}
+                              The problem is that this address space resolution
+                              can be done in LLVM or even in the SPIR-V backend
+                              or whatever... So you might not have this
+                              information inside Clang as a type trait... :-(
+                              \\
+                              \texttt{multi\_ptr} was designed:
+                              \begin{itemize}
+                                  \item to avoid requiring this kind of
+                                        address-space inference by avoiding
+                                        using raw pointers. Of course this means
+                                        passing around the \texttt{multi\_ptr}
+                                        type. But with \texttt{auto} nowadays it
+                                        is easier;
+                                  \item to provide a way to interoperate with
+                                        existing OpenCL C kernel code. But since
+                                        there is no type inference in OpenCL C
+                                        either, you have to do an explicit
+                                        dispatch yourself from the
+                                        \texttt{multi\_ptr} to call an OpenCL
+                                        function with different version and
+                                        different names for each possible
+                                        address-space...
+                              \end{itemize}
+    \paragraph{Jan Stephan} \begin{quote}
+                                The problem is that this address space
+                                resolution can be done in LLVM or even in the
+                                SPIR-V backend or whatever... So you might not
+                                have this information inside Clang as a type
+                                trait... :-(
+                            \end{quote}
+                            I have to admit that my knowledge about compiler
+                            construction is a bit limited. But the backends will
+                            have to look up this information, too - why can't
+                            the frontend do the same?
+                            \begin{quote}
+                                to avoid requiring this kind of address-space
+                                inference by avoiding using raw pointers. Of
+                                course this means passing around the
+                                multi\_ptr type. But with auto nowadays it is
+                                easier;
+                            \end{quote}
+                            While I can understand this intent with regard to
+                            new code I believe this is an oversight if we
+                            consider legacy code bases. If those have a raw
+                            pointer API the design of \texttt{multi\_ptr} or
+                            the lack of a feature to otherwise extract the
+                            address space becomes a major obstacle.
 \end{otherlanguage}

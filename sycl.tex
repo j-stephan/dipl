@@ -2,8 +2,432 @@
 
 \section{Einführung}\label{sycl:intro}
 
-\section{Grundlagen}\label{sycl:grundlagen}
+\section{Überblick}\label{sycl:ueberblick}
+
+\subsection{Ursprung}\label{sycl:ueberblick:ursprung}
+
+\subsection{SAXPY und SYCL}\label{sycl:ueberblick:saxpy}
+
+\subsubsection{Beschleunigerwahl und Befehlswarteschlange}
+\label{sycl:ueberblick:saxpy:queue}
+
+\subsubsection{Speicherreservierung}
+\label{sycl:ueberblick:saxpy:buffer}
+
+\subsubsection{Kernel-Ausführung}
+\label{sycl:ueberblick:saxpy:kernel}
+
+\subsubsection{Synchronisierung}
+\label{sycl:ueberblick:saxpy:sync}
+
+\subsubsection{Zusammenfassung}
+\label{sycl:ueberblick:saxpy:zusammenfassung}
+
+\section{API-Konzepte}\label{sycl:api}
+
+\subsection{Konventionen}\label{sycl:api:konventionen}
+
+Der gesamte Umfang des \gls{sycl}-\gls{api} ist in der Header-Datei
+\texttt{sycl.hpp} enthalten. Diese wird gemeinsam mit dem \gls{sycl}-Compiler
+des jeweiligen Herstellers bzw.\ Software-Anbieters ausgeliefert (siehe
+Abschnitt~\ref{sycl:implementierungen} für eine Übersicht der verfügbaren
+\gls{sycl}-Implementierungen). \cite[vgl.][Abschnitt 4.1]{sycl2019}
+
+\gls{sycl}s Klassen, Konstanten, Typen und Funktionen befinden sich im
+\texttt{cl::sycl}"=Namensraum, herstellerspezifische Erweiterungen sind in
+\texttt{cl::sycl::<hersteller>} definiert. \cite[vgl.][Abschnitt 4.1]{sycl2019}
+
+Die Erzeugung eines Objekts erfordert häufig den Einsatz von
+\texttt{enum class}-Werten oder anderen nicht-fundamentalen Typen als
+\texttt{template}-Parameter. Generell folgt die Objekterzeugung dem im
+Quelltext~\ref{sycl:api:konventionen:obj} dargestellten Muster.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto sycl_object = cl::sycl::sycl_class<
+                    int,             // gewünschter Datentyp
+                    1,               // gewünschte Dimensionalität
+                    cl::sycl::config // SYCL-Typ oder enum-class-Wert
+                    >{
+                        cl::sycl::range<1> // Dimensionalität wie oben
+                            {42}           // Anzahl enthaltener Elemente
+                    };
+    \end{minted}
+    \caption{Objekterzeugung mit SYCL}
+    \label{sycl:api:konventionen:obj}
+\end{code}
+
+\subsection{Referenz-Semantik}\label{sycl:api:referenz}
+
+Ein wichtiger Unterschied zur üblichen C++"=Programmierung sind SYCLs
+Referenz"=Semantiken. Die Spezifikation schreibt vor
+\cite[siehe][Abschnitt 4.3.2]{sycl2019}:
+\begin{otherlanguage}{english}
+    \begin{quote}
+        Each of the following SYCL runtime classes: \texttt{device},
+        \texttt{context}, \texttt{queue}, \texttt{program}, \texttt{kernel},
+        \texttt{event}, \texttt{buffer}, \texttt{image}, \texttt{sampler},
+        \texttt{accessor} and \texttt{stream} must obey the following
+        statements, where \texttt{T} is the runtime class: [...]
+        \\
+        Any instance of \texttt{T} that is constructed as a copy of another
+        instance, via either the copy constructor or copy assignment operator,
+        must behave as-if it were the original instance and as-if any action
+        performed on it were also performed on the original instance and if said
+        instance is not a host object must represent and continue to represent
+        the same underlying OpenCL objects as the original instance where
+        applicable.
+    \end{quote}
+\end{otherlanguage}
+Bemerkenswert ist, dass diese Semantik ebenfalls für die Typen \texttt{buffer}
+und \texttt{image} gilt, das heißt Datentypen, die größere Speicherbereiche
+kapseln. In der C++-Standardbibliothek werden die internen Felder vergleichbarer
+Typen (wie \texttt{vector}) ebenfalls kopiert. Nach dem Kopiervorgang existieren
+damit zwei voneinander verschiedene Objekte, die getrennte Speicherbereiche
+verwalten. Die SYCL-Objekte beziehen sich jedoch nach dem Kopiervorgang auf den
+selben Speicherbereich, es wird also bei der Objektkopie kein neuer Speicher
+angelegt. De facto handelt es sich bei der Kopie eines SYCL-Objekts daher
+lediglich um eine Referenz auf das ursprüngliche Objekt.
+
+\subsection{Ausnahmefehler}\label{sycl:api:exceptions}
+
+\subsection{Profiling}\label{sycl:api:profiling}
 
 \section{Weiterführende Konzepte}\label{sycl:konzepte}
 
 \section{Implementierungen}\label{sycl:implementierungen}
+
+Der ersten Veröffentlichung der SYCL-Spezifikation im Mai 2015 folgten im Laufe
+der Zeit einige Implementierungen. Diese werden in den folgenden Abschnitten
+vorgestellt.
+
+Darüber hinaus existiert eine von der Firma Codeplay betreute Internet-Seite,
+die sich dem gesamten \gls{sycl}"=Ökosystem widmet. \cite[vgl.][]{sycltech}
+
+\subsection{ComputeCpp}
+
+Die schottische Firma Codeplay ist der zur Zeit einzige Anbieter einer
+kommerziellen SYCL-Implementierung, die unter dem Namen \textit{ComputeCpp}
+vermarktet wird. Sie richtet sich in erster Linie an Hardware für die Bereiche
+Automotive und Embedded, unterstützt jedoch (bei einer bereits vorhandenen
+OpenCL"=Implementierung) auch \gls{cpu}s und \gls{gpu}s der Firma Intel sowie
+(experimentell) NVIDIA-\gls{gpu}s. Nach vorheriger Registrierung ist für
+nichtkommerzielle Zwecke auch eine kostenlose \textit{community edition}
+verfügbar. \cite[vgl.][]{computecpp}
+
+\subsection{Intel}
+
+Eine wichtige quelloffene Implementierung kommt von der Firma Intel. Strategisch
+soll diese Implementierung mit dem Compiler \textit{clang} des LLVM"=Projekts
+vereinigt werden. Zur Zeit handelt es sich jedoch noch um eine eigenständige
+Implementierung, die vor allem auf die Intel"=\gls{opencl}"=Implementierungen
+für \gls{cpu}s und \gls{gpu}s abzielt. Aktivitäten innerhalb des öffentlich
+einsehbaren Quelltext"=Repositoriums deuten jedoch darauf hin, dass auch die
+eigenen \gls{fpga}s unterstützt werden sollen. \cite[vgl.][]{intelsycl}
+
+\subsection{triSYCL}
+
+Das Projekt triSYCL ist eine quelloffene Implementierung des
+\gls{sycl}"=Standards, die früher von der Firma AMD und jetzt von Xilinx
+entwickelt wird. Nach eigener Aussage dient es vornehmlich experimentellen
+Zwecken, um dem \gls{sycl}"=Komitee und dem \gls{opencl}"=C++"=Komitee des
+Khronos"=Konsortiums sowie dem C++"=Standardisierungskomitee der ISO Feedback
+liefern zu können. Das Hauptprojekt unterstützt \gls{cpu}s (über \gls{openmp}
+oder \gls{tbb}) sowie \gls{opencl}"=Implementierungen, die die Verarbeitung des
+\gls{spir}"=Zwischencodes unterstützen. \cite[vgl.][]{trisycl}
+
+Daneben existiert ein von der Intel"=Implementierung abgeleitetes
+Compiler-Projekt, das sich vornehmlich der besseren Unterstützung von
+Xilinx"=\gls{fpga}s anzunehmen scheint. \cite[vgl.][]{trisyclclang}
+
+\subsection{hipSYCL}
+
+Der Heidelberger Doktorand Aksel Alpay ist der Autor einer weiteren
+SYCL-Implementierung. Diese setzt auf dem CUDA"=Klon der Firma AMD auf, der
+\gls{gpgpu}"=Sprache \gls{hip}. \gls{hip} ist sowohl auf AMD- als auch auf
+NVIDIA"=\gls{gpu}s ausführbar. Dadurch können auch mit hipSYCL entwickelte
+Programme auf diesen \gls{gpu}s ausgeführt werden. hipSYCL war über weite
+Strecken ein Ein-Mann-Projekt, erst seit Februar 2019 ist die regelmäßige
+Mitarbeit eines weiteren Entwicklers zu verzeichnen. Aus diesem Grund ist
+hipSYCL unvollständig implementiert, es fehlen unter anderem atomare Funktionen
+oder die Möglichkeit, Ausnahmefehler zu werfen und abzufangen.
+\cite[vgl.][]{hipsycl}
+
+\subsection{sycl-gtx}
+
+Eine weitere Open-Source-Implementierung ist das eingangs erwähnte
+\textit{sycl"=gtx}. Ursprünglich ist diese Implementierung im Rahmen einer
+Masterarbeit entstanden \cite[vgl.][]{zuzek2016} und wird bis heute vom
+ursprünglichen Autoren weiterentwickelt. Aufgrund der begrenzten
+Entwicklerkapazitäten ist diese Variante aber immer noch sehr rudimentär und
+unterstützt nur eine Teilmenge der SYCL"=Spezifikation.
+
+Im Gegensatz zu den anderen Implementierungen wird der SYCL"=\gls{kernel} erst
+zur Laufzeit des kompilierten Programms in einen \gls{opencl}"=\gls{kernel}
+umgewandelt und anschließend an die zugrundeliegende
+\gls{opencl}"=Laufzeitumgebung weitergereicht. Dadurch ist \textit{sycl"=gtx}
+sehr portabel, da es nicht auf eine bestimmte Hardware beschränkt ist;
+grundsätzlich soll es mit jeder \gls{opencl}"=Umgebung kompatibel sein, die
+mindestens den Standard in Version 1.2 unterstützt. 
+\cite[vgl.][47\psqq]{zuzek2016}
+
+\section{Erweiterungen für FPGAs}\label{sycl:erweiterungen}
+
+Wie im vorherigen Abschnitt dargestellt wurde, stehen für die \gls{fpga}s der
+großen Hersteller Intel und Xilinx bereits experimentelle
+\gls{sycl}"=Implementierungen zur Verfügung. Um die speziellen Eigenschaften
+dieses Hardware"=Typs besser nutzen zu können, gibt es in beiden
+Implementierungen Erweiterungen, die \gls{sycl}s Umfang um
+\gls{fpga}"=spezifische Funktionalität ergänzen.
+
+\subsection{Intel-FPGAs}\label{sycl:erweiterungen:intel}
+
+Die Firma Intel will mit ihrer SYCL-Implementierung wahrscheinlich mittel- bis
+langfristig auch die eigenen \glspl{fpga} ansprechen. Um die Eigenheiten dieses
+Hardware-Typs besser nutzen zu können, werden in der Header-Datei
+\texttt{CL/sycl/intel/fpga\_extensions.hpp} bereits zwei FPGA-spezifische
+Erweiterungen mitgeliefert, die in den nächsten Abschnitten kurz vorgestellt
+werden.
+
+\subsubsection{Beschleuniger-Auswahl}\label{sycl:erweiterungen:intel:selector}
+
+SYCL bietet im Rahmen der Spezifikation nur \texttt{device\_selector}-Typen
+für \gls{cpu}s und \gls{gpu}s an. Um einfach auf Intel-\gls{fpga}s zugreifen
+zu können, gibt es die Erweiterung \texttt{fpga\_selector} innerhalb des
+für Intel-Erweiterungen vorgesehenen Namensraums. Diese kann wie die in der
+Spezifikation vorhandenen Varianten an den Konstruktor einer \texttt{queue}
+übergeben werden (siehe Quelltext~\ref{sycl:erweiterungen:intel:selector:src}).
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto queue = cl::sycl::queue{cl::sycl::intel::fpga_selector{}};
+    \end{minted}
+    \caption{Auswahl eines Intel-FPGA}
+    \label{sycl:erweiterungen:intel:selector:src}
+\end{code}
+
+\subsubsection{Register-Markierung}\label{sycl:erweiterungen:intel:register}
+
+Um dem Programmierer mehr Kontrolle über die Ressource des generierten
+Bitstreams zu geben und um den Compiler bei der Synthese eines effizienten
+Bitstreams zu unterstützen, können Variablen durch die Erweiterung
+\texttt{fpga\_reg} direkt in einem Register platziert werden (siehe
+Quelltext~\ref{sycl:erweiterungen:intel:register:src}). Wie das Beispiel zeigt,
+lassen sich auf diese Art auch ganze Felder in einzelne Register zerlegen.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto c = cl::sycl::intel::fpga_reg(a[k]) + b[k];
+    \end{minted}
+    \caption{Zuordnung einer Variable zu einem FPGA-Register}
+    \label{sycl:erweiterungen:intel:register:src}
+\end{code}
+
+\subsection{Xilinx-FPGAs}\label{sycl:erweiterungen:xilinx}
+
+Der im Rahmen des triSYCL-Projekts entwickelte Compiler basiert auf der
+Intel-Implementierung und wird maßgeblich von Xilinx entwickelt. Aus diesem
+Grund finden sich in dieser Implementierung einige Erweiterungen, die auf den
+Einsatz von Xilinx-\gls{fpga}s zugeschnitten sind. Diese sind in der
+Header-Datei \texttt{CL/sycl/xilinx/fpga.hpp} definiert und werden in den
+folgenden Abschnitten vorgestellt.
+
+\subsubsection{Feste Gruppengröße}
+\label{sycl:erweiterungen:xilinx:reqd}
+
+TODO: Antwort auf \glqq Warum\grqq\ abwarten.
+
+\subsubsection{Datenflussorientierte Ausführung}
+\label{sycl:erweiterungen:xilinx:dataflow}
+
+Aus Xilinx' OpenCL-Implementierung übernimmt der triSYCL-Compiler eine
+datenflussbasierte Erweiterung. Diese Erweiterung ermöglicht die task-parallele
+Ausführung aufeinanderfolgender Funktionen und Schleifen. Mit ihr wird der
+Compiler angewiesen, die Abhängigkeiten zwischen den einzelnen Schritten zu
+analysieren und für diese Schritte das
+\textit{Producer}/\textit{Consumer}-Prinzip durch eine Zwischenschaltung von
+Puffern durchzusetzen. \cite[siehe][70\psqq]{sdaccelopt2019}
+
+In OpenCL ist diese Erweiterung als \texttt{xcl\_dataflow} verfügbar und wird
+im OpenCL"=C"=Dialekt einem Kernel, einer Funktion oder einer Schleife als
+Attribut zugewiesen (siehe
+Quelltext~\ref{sycl:erweiterungen:xilinx:dataflow:opencl}). Der
+SYCL-Implementierung steht diese Erweiterung unter dem Namen \texttt{dataflow}
+zur Verfügung. Mit ihr werden Funktionen markiert, auf deren innere Funktionen
+und Schleifen die entsprechenden Bitstream-Optimierungen angewandt werden (siehe
+Quelltext~\ref{sycl:erweiterungen:xilinx:dataflow:sycl}).
+
+\begin{code}
+    \begin{minted}[fontsize=\small,escapeinside=||]{c}
+|\textbf{\textcolor{keyword-green}{\_\_kernel}}| __attribute__((xcl_dataflow))
+void kernel(/* ... */)
+{
+    /* Funktionskörper */
+}
+    \end{minted}
+    \caption{Datenfluss-Erweiterung in OpenCL C}
+    \label{sycl:erweiterungen:xilinx:dataflow:opencl}
+\end{code}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto body(/* ... */)
+{
+    /* Funktionskörper */
+}
+
+struct kernel
+{
+    auto operator()()
+    {
+        cl::sycl::xilinx::dataflow(body(/* ... */));
+    }
+};
+    \end{minted}
+    \caption{Datenfluss-Erweiterung in SYCL}
+    \label{sycl:erweiterungen:xilinx:dataflow:sycl}
+\end{code}
+
+\subsubsection{Pipeline-basierte Ausführung}
+\label{sycl:erweiterungen:xilinx:pipeline}
+
+Die triSYCL-Implementierung übernimmt aus Xilinx' OpenCL-Umgebung eine
+pipeline-basierte Erweiterung. Mit dieser kann der Compiler angewiesen werden,
+die Iterationen einer Schleife zu überlappen. Dadurch können die Iterationen
+bestimmte Ressourcen zeitgleich nutzen, wodurch sich der Ressourcenverbrauch
+insgesamt sowie die Latenz verringern können.
+\cite[siehe][67\psqq]{sdaccelopt2019}
+
+In der von Xilinx ausgelieferte OpenCL-Implementierung handelt es sich bei
+dieser Erweiterung um das Attribut \texttt{xcl\_pipeline\_loop}, mit dem
+Schleifen markiert werden (siehe
+Quelltext~\ref{sycl:erweiterungen:xilinx:pipeline:opencl}). In SYCL ist sie
+unter dem Namen \texttt{pipeline} verfügbar und wird auf Funktionen angewendet,
+deren innere Schleifen dann dieser Optimierung unterzogen werden (siehe
+Quelltext~\ref{sycl:erweiterungen:xilinx:pipeline:sycl}).
+
+\begin{code}
+    \begin{minted}[fontsize=\small,escapeinside=||]{c}
+|\textbf{\textcolor{keyword-green}{\_\_kernel}}| void kernel(/* ... */)
+{
+    __attribute__((xcl_pipeline_loop))
+    for(int i = 0; i < 32; ++i)
+    {
+        /* Schleifenkörper */
+    }
+}
+    \end{minted}
+    \caption{Pipeline-Erweiterung in OpenCL C}
+    \label{sycl:erweiterungen:xilinx:pipeline:opencl}
+\end{code}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto body(/* ... */)
+{
+    for(int i = 0; i < 32; ++i)
+    {
+        /* Schleifenkörper */
+    }
+}
+
+struct kernel
+{
+    auto operator()()
+    {
+        cl::sycl::xilinx::pipeline(body(/* ... */));
+    }
+};
+    \end{minted}
+    \caption{Pipeline-Erweiterung in SYCL}
+    \label{sycl:erweiterungen:xilinx:pipeline:sycl}
+\end{code}
+
+\subsubsection{Feldpartitionierung}
+\label{sycl:erweiterungen:xilinx:partitioning}
+
+Durch die Verteilung eines Datenfeldes auf mehrere physische Speichersegmente
+lässt sich für manche Anwendungen eine höhere Speicherbandbreite erzielen.
+Mit Xilinx' High-Level-Synthese lässt sich ein logisches Datenfeld auf drei
+verschiedene Weisen zerlegen: \textit{cyclic}, \textit{block} und
+\textit{complete}. \cite[vgl.][16]{sdxpragma2019}
+
+Der Typ \textit{cyclic} führt eine zyklische Zerlegung des Feldes durch. Geht
+man von einem acht-elementigen Feld aus und hat vier physische Speicher zur
+Verfügung, so werden die Elemente einzeln in aufsteigender Reihenfolge auf die
+Speicher aufgeteilt: Element 0 wird dem Speicher 0 zugeordnet, Element 1 dem
+Speicher 1, und so weiter. Ist Speicher 3 erreicht, beginnt die Zuteilung wieder
+von vorne, Element 4 wird dem Speicher 0 zugeordnet, Element dem Speicher 1,
+und so weiter. \cite[vgl.][17]{sdxpragma2019}
+
+Der Typ \textit{block} zerlegt das Feld blockweise. Das heißt, dass zuerst der
+Speicher 0 mit den ersten Elementen des Feldes befüllt wird, dann der Speicher
+1, und so weiter. \cite[vgl.][17]{sdxpragma2019}
+
+Beim Typ \textit{complete} wird das Feld in einzelne Elemente zerlegt. Dies
+entspricht einer Verteilung des Feldes auf einzelne Register.
+\cite[vgl.][17]{sdxpragma2019}
+
+Das Attribut \texttt{xcl\_array\_partition(<Typ>, <Faktor>, <Dimension>)} steht
+als Erweiterung in Xilinx' OpenCL-Implementierung zur Verfügung, um die
+Partitionierung durchzuführen. Dabei bezeichnet \texttt{<Typ>} einen der drei
+oben genannten Typen. \cite[vgl.][17]{sdxpragma2019}
+
+\texttt{<Faktor>} gibt für \textit{cyclic} die Anzahl der Speicher an, auf die
+das Feld verteilt werden soll, und für \textit{block} die Anzahl der Elemente
+pro Speicher. Für den Typ \textit{complete} ist dieser Parameter nicht
+definiert. \cite[vgl.][17]{sdxpragma2019}
+
+\texttt{<Dimension>} gibt an, welche Dimension des Feldes auf die beschriebene
+Weise partitioniert werden soll. \cite[vgl.][17]{sdxpragma2019}
+
+Der Quelltext~\ref{sycl:erweiterungen:xilinx:partitioning:opencl} zeigt den
+Gebrauch dieser Erweiterung in einem OpenCL-Kernel.
+
+In SYCL steht diese Erweiterung unter dem Namen \texttt{partition\_array} zur
+Verfügung, wobei die Zuweisung der oben aufgeführten Parameter hier über
+Templates erfolgt. Der
+Quelltext~\ref{sycl:erweiterungen:xilinx:partitioning:sycl} zeigt die Anwendung
+dieser Erweiterung.
+
+\begin{code}
+    \begin{minted}[fontsize=\small,escapeinside=||]{c}
+|\textbf{\textcolor{keyword-green}{\_\_kernel}}| void kernel(/* ... */)
+{
+    // zyklische Verteilung von a auf 4 physische Speicher
+    int a[16] __attribute__((xcl_array_partition(cyclic, 4, 1)));
+
+    // blockweise Verteilung von b mit 4 Elementen pro physischem Speicher
+    int b[16] __attribute__((xcl_array_partition(block, 4, 1)));
+
+    // Zerlegung von c in 16 Register
+    int c[16] __attribute__((xcl_array_partition(complete, 1)));
+}
+    \end{minted}
+    \caption{Feldpartitionierung in OpenCL C}
+    \label{sycl:erweiterungen:xilinx:partitioning:opencl}
+\end{code}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+struct kernel
+{
+    auto operator()()
+    {
+        // zyklische Verteilung von a auf 4 physische Speicher
+        auto a = cl::sycl::xilinx::partition_array<int, 16,
+                    cl::sycl::xilinx::partition::cyclic<4, 1>>{};
+
+        // blockweise Verteilung von b mit 4 Elementen pro physischem Speicher
+        auto b = cl::sycl::xilinx::partition_array<int, 16,
+                    cl::sycl::xilinx::partition::block<4, 1>>{};
+
+        // Zerlegung von c in 16 Register
+        auto c = cl::sycl::xilinx::partition_array<int, 16,
+                    cl::sycl::xilinx::partition::complete<1>>{};
+    }
+};
+    \end{minted}
+    \caption{Feldpartitionierung in SYCL}
+    \label{sycl:erweiterungen:xilinx:partitioning:sycl}
+\end{code}

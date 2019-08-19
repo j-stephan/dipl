@@ -1,8 +1,31 @@
 \makeglossaries
 
+\newacronym{api}{API}{\textit{application programming interface}}
+\newacronym{apu}{APU}{\textit{accelerated processing unit}}
+\newacronym{cpu}{CPU}{\textit{central processing unit}}
+\newacronym{dsp}{DSP}{\textit{digital signal processor}}
 \newacronym{fpga}{FPGA}{\textit{field programmable gate array}}
+\newacronym{gpgpu}{GPGPU}{\textit{general-purpose computing on graphics processing units}}
+\newacronym{gpu}{GPU}{\textit{graphics processing unit}}
 
+\newglossaryentry{cuda}{name = CUDA,
+                        description = {GPGPU-Sprache der Firma NVIDIA}}
+\newglossaryentry{device}{name = Device,
+                          description = {englischer Name für den Beschleuniger},
+                          plural = Devices}
 \newglossaryentry{kernel}{name = Kernel,
-                          description = {Programm, das auf einem Beschleuniger,
-                                         wie etwa einem FPGA, ausgeführt wird.},
+                          description = {Programm, das auf einem Beschleuniger
+                                         ausgeführt wird.},
                           plural = Kernel}
+\newglossaryentry{hip}{name = HIP,
+                       description = {\textit{Heterogeneous-compute Interface for Portability}, von CUDA abgeleitete GPGPU-Sprache der Firma AMD}}
+\newglossaryentry{opencl}{name = OpenCL,
+                          description = {\textit{Open Computing Language}, offener Standard für die Programmierung von Beschleunigern}}
+\newglossaryentry{openmp}{name = OpenMP,
+                          description = {\textit{Open Multi-Processing}, offener Standard für die Shared-Memory-Programmierung}}
+\newglossaryentry{spir}{name = SPIR,
+                        description = {\textit{Standard Portable Intermediate Language}, offene Zwischencode-Sprache}}
+\newglossaryentry{sycl}{name = SYCL,
+                        description = {moderne C++-Abstraktionsschicht über OpenCL}}
+\newglossaryentry{tbb}{name = TBB,
+                       description = {\textit{Threading Building Blocks}, von der Firma Intel entwickelte Bibliothek für die parallele Programmierung von Mehrkern-CPUs}}

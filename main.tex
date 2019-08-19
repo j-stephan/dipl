@@ -6,14 +6,17 @@
 \usepackage[english,ngerman]{babel}
 \usepackage[backend=biber,style=alphabetic]{biblatex}
 \usepackage[math]{blindtext}
+\usepackage{caption}
 \usepackage{csquotes}
 \usepackage{dialogue}
 \usepackage[T1]{fontenc}
 \usepackage[acronyms,nonumberlist,nopostdot,toc,savewrites,xindy]{glossaries}
 \usepackage{isodate}
+\usepackage[newfloat]{minted}
 \usepackage{nth}
 \usepackage{pdfpages}
 \usepackage{selinput}
+\usepackage{tcolorbox}
 
 \addbibresource{bibliography.bib}
 
@@ -23,6 +26,14 @@
 \deftranslation[to=German]{Acronyms}{Abkürzungsverzeichnis}
 \deftranslation[to=German]{Glossary}{Glossar}
 \renewcommand*{\listlistingname}{Quelltextverzeichnis}
+
+% Einstellungen für minted
+\newenvironment{code}{\captionsetup{type=listing}}{}
+\SetupFloatingEnvironment{listing}{name=Quelltext}
+\definecolor{keyword-green}{RGB}{0, 128, 0}
+\BeforeBeginEnvironment{minted}{\begin{tcolorbox}}
+\AfterEndEnvironment{minted}{\end{tcolorbox}}
+\newcommand{\lstfont}[1]{\color{#1}\small\ttfamily}
 
 \begin{document}
 
