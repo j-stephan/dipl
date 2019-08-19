@@ -1,1 +1,5 @@
 LLVM Europe (SYCL)
+FPGA in Struktur (Grundlagen)
+    * Unterschied zwischen FPGA und GPU hervorheben (SIMD-GPUs...)
+    * SYCL-Sicht auf FPGAs
+    * generell stärkerer FPGA-Fokus
