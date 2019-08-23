@@ -2,6 +2,8 @@
 
 \section{Motivation}\label{einleitung:motivation}
 
+\gls{cpu}
+\gls{gpu}
 \gls{fpga}
 
 \gls{gpgpu}
@@ -25,3 +27,10 @@ Hervorzuheben ist außerdem Peter Žužeks Masterarbeit aus dem Jahre 2016, in
 deren Rahmen eine eigene \gls{sycl}"=Implementierung entwickelt wurde. \cite{zuzek2016}
 
 \section{Ziel der Arbeit}\label{einleitung:ziel}
+
+In dieser Arbeit soll für die Alpaka-Bibliothek ein SYCL-Backend implementiert
+und ausgewertet werden. Aufgrund der bereits vorhandenen \gls{gpu}-Backends
+erfolgt die Analyse vorrangig im Hinblick auf die Nutzbarkeit von \gls{fpga}s,
+womit aufgrund der während des Bearbeitungszeitruams verfügbaren und von SYCL
+unterstützten Hardware insbesondere \gls{fpga}s des Herstellers Xilinx gemeint
+sind.
