@@ -7,11 +7,12 @@
 \newacronym{fpga}{FPGA}{\textit{field programmable gate array}}
 \newacronym{gpgpu}{GPGPU}{\textit{general-purpose computing on graphics processing units}}
 \newacronym{gpu}{GPU}{\textit{graphics processing unit}}
+\newacronym{ii}{II}{\textit{initiation interval}}
 
 \newglossaryentry{cuda}{name = CUDA,
                         description = {GPGPU-Sprache der Firma NVIDIA}}
 \newglossaryentry{device}{name = Device,
-                          description = {englischer Name für den Beschleuniger},
+                          description = {Alpaka- und SYCL-Bezeichnung für einen Beschleuniger},
                           plural = Devices}
 \newglossaryentry{kernel}{name = Kernel,
                           description = {Programm, das auf einem Beschleuniger
@@ -19,6 +20,10 @@
                           plural = Kernel}
 \newglossaryentry{hip}{name = HIP,
                        description = {\textit{Heterogeneous-compute Interface for Portability}, von CUDA abgeleitete GPGPU-Sprache der Firma AMD}}
+\newglossaryentry{host}{name = Host,
+                        description = {Alpaka- und SYCL-Bezeichnung für den Teil des Rechners, der den Kontrollfluss steuert}}
+\newglossaryentry{iigls}{name = Initiation Interval,
+                         description = {Anzahl der Zyklen zwischen dem Ausführungsbeginn aufeinanderfolgender Schleifeniterationen}}
 \newglossaryentry{opencl}{name = OpenCL,
                           description = {\textit{Open Computing Language}, offener Standard für die Programmierung von Beschleunigern}}
 \newglossaryentry{openmp}{name = OpenMP,
