@@ -3,3 +3,22 @@ FPGA in Struktur (Grundlagen)
     * Unterschied zwischen FPGA und GPU hervorheben (SIMD-GPUs...)
     * SYCL-Sicht auf FPGAs
     * generell stärkerer FPGA-Fokus
+
+* Anforderungen an den SYCL-Standard / SYCL-Compiler (Backend-Unterscheidung...)
+    * #ifdef ComputeCpp, Intel, ...
+    * Alpaka-Definitionen für Backends
+    * zu SYCL-Implementierung?
+
+* Anforderungen an Alpaka
+    * Device / Platform selector
+    * wie bei HIP
+
+* Mapping SYCL-Implementierung -> Alpaka-Konzepte erklären
+    * Compiler-bezogene Probleme sammeln (konzeptzentrisch bleiben)
+
+* Alpakas Konzepte sind accelerator-unabhängig! Modular, konzept-zentrisch statt
+  acc-zentrisch
+
+* Skript für Matthias / fwk394
+    * getting started gitlab
+    * Präsentation aus gitlab für Alpaka allg.
