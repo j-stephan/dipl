@@ -28,6 +28,8 @@ Komplexität in einer regelmäßigen Feldstruktur (engl. \textit{array}) anordne
 und über programmierbare Verdrahtungen miteinander verband.
 \cite[vgl.][208]{kesel2013} 
 
+\cite{hawkins2010}
+
 \subsection{Aufbau}
 
 Am Beispiel eines Beschleunigers vom Typ \textit{Alveo U200} der Firma Xilinx
@@ -72,11 +74,13 @@ Abschnitten erläutert werden.
 \end{figure}
 
 \begin{table}[htb]
+    \centering
     \begin{tabulary}{\textwidth}{@{}LCCCC@{}}
         \toprule
         \textbf{Ressource} & \textbf{Gesamt} & \textbf{SLR0} & \textbf{SLR1}
             & \textbf{SLR2} \tabularnewline\midrule
-        \textit{Configurable logic blocks (CLBs)}\tablefootnote{Xilinx macht
+        \textit{Configurable logic blocks (CLBs)}
+            \tablefootnote{Xilinx macht
             in seinen Datenblättern keine Angaben zur Anzahl der CLBs auf
             dem XCU200-FPGA. Die Zahl der CLBs wurde daher rechnerisch aus
             der Zahl der \textit{look-up tables} (LUT) bestimmt, die in den
@@ -100,7 +104,6 @@ Abschnitten erläutert werden.
 
 
 \cite{ultrascale2019}
-\cite{kesel2013}
 
 Alveo U200
 \begin{itemize}
@@ -152,6 +155,27 @@ DSP
 \end{itemize}
 
 \subsection{Anwendungsfälle}
+
+Gegenüber ASICs bieten \gls{fpga}s einige Vorteile. Da sich Schaltungen ohne
+einen Produktionsprozess schneller in Hardware abbilden lassen, eignen sich
+\gls{fpga}s für die Entwicklung neuer Schaltungen durch die Methode des
+\textit{rapid prototyping} und damit für eine schnellere Markteinführung. Durch
+die einfache Neuprogrammierung lassen sich Fehler außerdem während des
+Entwicklungsprozesses sowie während des Lebenszyklus des Produkts deutlich
+einfacher beheben, als dies bei ASICs der Fall wäre.
+\cite[vgl.][10-1]{hawkins2010}
+
+Dadurch eignen sich \gls{fpga}s sehr gut für den Einsatz als Schaltkreise, die
+in kleiner bis mittlerer Menge produziert werden sollen, weil die finanzielle
+Einstiegshürde deutlich geringer als bei ASICs ist. Umgekehrt sind ASICs bei
+hohen Produktionsvolumen überlegen, da die Kosten pro Chip geringer sind.
+\cite[vgl.][10-2]{hawkins2010}
+
+In jüngerer Zeit wurden \gls{fpga}s auch außerhalb des klassischen
+Schaltkreisentwurfs eingesetzt. So setzt die Firma Microsoft beispielsweise
+\gls{fpga}s des Herstellers Intel für die Inferenz tiefer neuraler Netzwerke
+\cite[vgl.][]{fowers2018, chung2018} sowie als besonders schnelle
+Netzwerkkarten ein \cite[vgl.][]{firestone2018}.
 
 \section{Entwicklungsprozess}
 
