@@ -55,7 +55,7 @@ vier zentrale Strukturen unterscheiden:
 In Abbildung~\ref{fpga:definition:aufbau} ist eine abstrakte \gls{fpga}-Struktur
 dargestellt, die aus Logikblöcken, Verbindungen, E/A-Puffern und speziellen
 Speicher- und Multiplizierer-Blöcken aufgebaut ist.
-\cite[vgl.][10-13f.]{hawkins2010}
+\cite[vgl.][10-13--10-14]{hawkins2010}
 
 \begin{figure}[htb]
     \centering
@@ -290,7 +290,7 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
         \draw [color = HKS92!90, line width = 5mm]
                 (-0.5625, 9.9375) -- (9.9375, 9.9375);
     \end{tikzpicture}
-    \caption{abstrakter FPGA-Aufbau \cite[nach][S. 10-14]{hawkins2010}}
+    \caption{abstrakter FPGA-Aufbau \cite[nach][10-14]{hawkins2010}}
     \label{fpga:definition:aufbau}
 \end{figure}
 
@@ -298,32 +298,64 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
 
 Am Beispiel der Virtex-UltraScale+-Architektur der Firma Xilinxrs soll der
 Aufbau eines modernen \gls{fpga} verdeutlicht werden. \gls{fpga}s dieser
-Architektur bestehen aus sieben fundamentalen programmierbaren Elementen:
+Architektur bestehen aus sechs fundamentalen programmierbaren Elementen:
 \begin{itemize}
-    \item Konfigurierbare Logikblöcke (engl. \textit{configurable logic blocks},
-          CLB) bestehen aus Lookup-Tabellen (LUT), die zur Generierung von
-          Logikfunktionen verwendet werden können, sowie Flipflops, die als
-          Speicher dienen.
-    \item I/O
-    \item Block RAM
-    \item UltraRAM
-    \item DRAM
-    \item DSPs
-    \item Transceiver
+    \item Konfigurierbare Logikblöcke (engl. \gls{clb}) bestehen aus acht
+          Logikeinheiten, die man als \gls{lut} bezeichnet und zur
+          Generierung von Logikfunktionen verwendet werden können. Daneben sind
+          in einem \gls{clb} Speicherelemente enthalten, die als Flipflop oder
+          Latch verwendet werden können, sowie weitere Elemente wie Multiplexer
+          oder Einheiten für den arithmetischen Übertrag.
+          \cite[vgl.][6]{ultrascaleclb2017}
+    \item Eingabe/Ausgabe-Blöcke (engl. \gls{iob}) werden zur Steuerung des
+          Datenflusses zwischen den E/A-Pins und der internen Schaltkreise
+          benutzt. Die UltraScale+-Architektur bietet verschiedene
+          \gls{iob}-Typen, die z.B. verschiedene E/A-Standards oder uni- oder
+          bidirektionale Kommunikation unterstützen. \cite[vgl. die
+          ausführliche E/A"=Beschreibung in][Kapitel 1 und 2]{ultrascaleio2019}
+    \item \glqq Block RAM\grqq\ kann bis zu \SI{36}{\kilo\bit} speichern. Dabei
+          lässt sich ein Block bei Bedarf auch in zwei unabhängige RAMs mit
+          jeweils \SI{18}{\kilo\bit} zerlegen. Zusätzlich sind in einem
+          Taktschritt voneinander unabhängige Lese- und Schreibzugriffe möglich.
+          Benachbarte Blöcke lassen sich darüber hinaus miteinander verbinden,
+          um größere RAM-Bereiche zu generieren.
+          \cite[vgl.][6]{ultrascalemem2019}
+    \item UltraRAM-Blöcke können bis zu \SI{288}{\kilo\bit} speichern, sind im
+          Vergleich mit Block RAM aber unflexibler, da Lese- und Schreibzugriffe
+          nicht parallel in einem Taktschritt möglich sind. Wie beim Block RAM
+          lassen sich auch beim UltraRAM mehrere Blöcke zusammenschalten, um
+          einen größeren Speicher zu erzeugen.
+          \cite[vgl.][92--94]{ultrascalemem2019}
+    \item Digitale Signalprozessoren (engl. \gls{dsp}) sind Blöcke, die für die
+          Ausführung fundamentaler mathematischer oder bitweiser Operationen der
+          Signal-, Bild- und Videoverarbeitung besonders gut geeignet sind. Aus
+          mehreren \gls{dsp}s lassen sich durch Verbindungen komplexere
+          Funktionen generieren. \cite[vgl.][7--8]{ultrascaledsp2019}
+    \item Blöcke für die Taktverwaltung (engl. \gls{cmt}) generieren den Takt
+          für die restlichen Komponenten des \gls{fpga}. Sie sind ebenso dazu
+          geeignet, Operationen auf einem von außen kommenden Takt
+          durchzuführen, z.B. eine Phasenverschiebung oder eine Filterung.
+          \cite[vgl.][35--40]{ultrascaleclock2018}
 \end{itemize}
+Daneben können auf Beschleunigern, die mit einem \gls{fpga} ausgerüstet sind,
+noch weitere Komponenten hinzukommen. Ein Beispiel dafür ist der als DRAM
+bezeichnete Speicher, der mehrere \si{\gibi\byte} umfassen kann. Im Vergleich
+zu Block RAM und UltraRAM weist dieser Speichertyp aber deutlich geringere
+Speicherbandbreiten auf. Auf dem Beschleuniger \textit{Alveo U200}, der mit
+einem UltraScale+-\gls{fpga} mit der Modellbezeichnung \textit{XCU200}
+ausgestattet ist, finden sich beispielsweise vier DDR4-RAM-Module mit einer
+Bandbreite von \SI{77}{\gibi\byte\per\second}.
+\cites[vgl.][3]{alveo2019}[2]{alveobrief2018}
 
-Das \gls{fpga} mit der Modellbezeichnung \textit{XCU200} ist neben diversen
-Anschlüssen (zum Beispiel USB, PCI Express und Ethernet) und dem
-Beschleuniger-Hauptspeicher auf der Platine verbaut \cite[vgl.][2]{alveo2019}.
-Es ist in drei Abschnitte unterteilt, die von Xilinx als \gls{slr} bezeichnet
-werden. Gemeinsam bilden die \gls{slr}s drei dynamische Regionen sowie eine
-statische Region, welche mit dem Hauptspeicher (DDR) des Beschleunigers
-verbunden sind (siehe Abbildung~\ref{fpga:aufbau:alveoslr}). Die dynamischen
-Regionen lassen sich vom Benutzer programmieren, während die statische Region
-der Laufzeitumgebung des \gls{fpga} vorbehalten ist \cite[vgl.][4]{alveo2019}.
-Die \gls{slr}s verfügen über verschiedene Ressourcen in unterschiedlicher
-Anzahl (siehe Tabelle~\ref{fpga:aufbau:ressourcen}), die in den folgenden
-Abschnitten erläutert werden.
+Ein XCU200-\gls{fpga} verteilt die oben genannten Elemente auf drei Abschnitte,
+die als \gls{slr} bezeichnet werden. Gemeinsam bilden die \gls{slr}s drei
+dynamische Regionen sowie eine statische Region, die alle mit dem DRAM des
+Beschleunigers verbunden sind (siehe Abbildung~\ref{fpga:aufbau:alveoslr}). Die
+dynamischen Regionen lassen sich vom Benutzer konfigurieren, während die
+statische Region der Laufzeitumgebung des \gls{fpga}-Host-Systems vorbehalten
+ist \cite[vgl.][4]{alveo2019}. Die Ressourcen verteilen sich in
+unterschiedlicher Anzahl auf die \gls{slr}s, wie 
+Tabelle~\ref{fpga:aufbau:ressourcen} zeigt.
 
 \begin{figure}[htb]
     \centering
@@ -338,8 +370,8 @@ Abschnitten erläutert werden.
             node [pos = 0.1] {SLR1};
         \draw (0.0, 2.5) rectangle (3.75, 5)
             node [pos = 0.5] {dynamische Region};
-        \draw [fill = lightgray] (3.75, 2.5) rectangle (7.5, 5)
-            node [pos = 0.5] {statische Region};
+        \draw [fill = HKS92!90] (3.75, 2.5) rectangle (7.5, 5)
+            node [pos = 0.5, color = white] {statische Region};
 
         % oben
         \draw (0.0, 5) rectangle (7.5, 7.5)
@@ -356,22 +388,13 @@ Abschnitten erläutert werden.
         \toprule
         \textbf{Ressource} & \textbf{Gesamt} & \textbf{SLR0} & \textbf{SLR1}
             & \textbf{SLR2} \tabularnewline\midrule
-        \textit{Configurable logic blocks (CLBs)}
-            \tablefootnote{Xilinx macht
-            in seinen Datenblättern keine Angaben zur Anzahl der CLBs auf
-            dem XCU200-FPGA. Die Zahl der CLBs wurde daher rechnerisch aus
-            der Zahl der \textit{look-up tables} (LUT) bestimmt, die in den
-            Datenblättern angegeben wird. Die UltraScale-Architektur bildet
-            aus jeweils acht LUTs einen CLB
-            \cite[siehe][38]{ultrascale2019}.} & \num{111500} &
-            \num{45625} & \num{20250} & \num{45625}\tabularnewline
-        Register & \num{1831000} & \num{746000} & \num{339000} & 
-            \num{746000}\tabularnewline
-        Block-RAM (\SI{36}{\kibi\byte}) & \num{1766} & \num{695} & 
+        CLB & \num{111500} & \num{45625} & \num{20250} &
+            \num{45625}\tabularnewline
+        Block RAM (\SI{36}{\kibi\byte}) & \num{1766} & \num{695} & 
             \num{376} & \num{695}\tabularnewline
         UltraRAM (\SI{288}{\kibi\byte}) & \num{800} & \num{320} &
             \num{160} & \num{320}\tabularnewline
-        DSP-Schichten & \num{5867} & \num{2275} & \num{1317} &
+        DSP & \num{5867} & \num{2275} & \num{1317} &
             \num{2275}\tabularnewline\bottomrule
     \end{tabulary}
     \caption{Ressourcen der dynamischen Regionen eines XCU200-FPGAs
@@ -379,57 +402,64 @@ Abschnitten erläutert werden.
     \label{fpga:aufbau:ressourcen}
 \end{table}
 
+Innerhalb der \gls{slr}s sind die Ressourcen spaltenweise verteilt (wie in
+Abbildung~\ref{fpga:aufbau:spalten} dargestellt). Zusätzlich werden die Spalten
+in vertikale Abschnitte von 60 \gls{clb}s bzw. der äquivalenten Anzahl der
+anderen Blocktypen unterteilt. Ein solcher Abschnitt bildet eine von Xilinx als
+\textit{clock region} bezeichnete Struktur. Zusammengefasst ergibt sich
+dadurch eine spaltenorientierte Gitterstruktur, wie sie in
+Abbildung~\ref{fpga:aufbau:clockregions} zu sehen ist.
+\cite[vgl.][22]{ultrascale2019}
 
-\cite{ultrascale2019}
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \draw [fill = HKS92!90] (0.0, 0.0) rectangle (1.0, 8.0)
+            node [pos = 0.5, rotate = 90, color = white] {externe E/A};
+        \draw (1.0, 0.0) rectangle (2.5, 8.0)
+            node [pos = 0.5, rotate = 90] {CLB, DSP, Block RAM, UltraRAM};
+        \draw [fill = HKS92!70] (2.5, 0.0) rectangle (3.5, 8.0)
+            node [pos = 0.5, rotate = 90, color = white] {E/A, Takt, Speicherschnittstelle};
+        \draw (3.5, 0.0) rectangle (5.0, 8.0)
+            node [pos = 0.5, rotate = 90] {CLB, DSP, Block RAM, UltraRAM};
+        \draw [fill = HKS92!70] (5.0, 0.0) rectangle (6.0, 8.0)
+            node [pos = 0.5, rotate = 90, color = white] {E/A, Takt, Speicherschnittstelle};
+        \draw (6.0, 0.0) rectangle (7.5, 8.0)
+            node [pos = 0.5, rotate = 90] {CLB, DSP, Block RAM, UltraRAM};
+        \draw [fill = HKS92!90] (7.5, 0.0) rectangle (8.5, 8.0)
+            node [pos = 0.5, rotate = 90, color = white] {externe E/A};
+    \end{tikzpicture}
+    \caption{spaltenweise Verteilung der FPGA-Ressourcen
+             \cite[nach][22]{ultrascale2019}}
+    \label{fpga:aufbau:spalten}
+\end{figure}
 
-Alveo U200
-\begin{itemize}
-    \item drei \textit{super logic regions} (SLRs)
-    \item entspricht drei dynamischen Regionen (vom Benutzer programmierbar) und
-          einer statischen Region (deployment shell für Konfiguration)
-    \item SLR0, SLR2: 365K LUTs, 746K Register, 695 36KB block RAM, 320 288Kb UltraRAM, 2275 DSPs
-    \item SLR1: 162K LUTs, 339K Register, 376KB block RAM, 160 288Kb UltraRAM, 1317 DSPs
-\end{itemize}
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        % Spalten
+        \draw [fill = HKS92!90] (0.0, 0.0) rectangle (1.0, 8.0);
+        \draw (1.0, 0.0) rectangle (2.5, 8.0);
+        \draw [fill = HKS92!70] (2.5, 0.0) rectangle (3.5, 8.0);
+        \draw (3.5, 0.0) rectangle (5.0, 8.0);
+        \draw [fill = HKS92!70] (5.0, 0.0) rectangle (6.0, 8.0);
+        \draw (6.0, 0.0) rectangle (7.5, 8.0);
+        \draw [fill = HKS92!90] (7.5, 0.0) rectangle (8.5, 8.0);
 
-LUT
-\begin{itemize}
-    \item 45625 Configurable Logic Blocks (CLBs) à 8 LUTs und 16 flip-flops (SLR0, SLR2) bzw. 20250 CLBs (SLR1)
-    \item demnach 730000 flip-flops (SLR0, SLR2) bzw. 324000 flip-flops (SLR1)
-    \item CLB enthält Logik für arithmetischen Übertrag und Multiplexer, dadurch komplexere Logikfunktionen möglich, sowie Kontrollsignale
-    \item CLB sind über verschiedene Verbindungspfade verbunden, die 1, 2, 4, 5, 12 oder 16 CLBs miteinander verbinden
-\end{itemize}
+        % Querlinien
+        \draw (0.0, 2.0) -- (8.5, 2.0);
+        \draw (0.0, 4.0) -- (8.5, 4.0);
+        \draw (0.0, 6.0) -- (8.5, 6.0);
 
-Register -- TODO
-
-block RAM
-\begin{itemize}
-    \item jeder 36Kb Block hat zwei unabhängige Ports, die sich die Daten im Block teilen
-    \item kann als 1 36Kb Block oder als 2 18Kb Blöcke konfiguriert werden
-    \item Ports haben programmierbare Datenbreite: 32K x 1, 16K x 2, 8K x 4, 4K x 9 (oder 8), 2K x 18 (oder 16), 1K x 36 (oder 32), 512 x 72 (oder 64)
-    \item unterschiedliche Datenbreiten für die Ports möglich
-    \item ECC unterstützt
-    \item als FIFO konfigurierbar
-    \item vertikal nebeneinander liegende Blocks lassen sich verbinden, wodurch größere Speicherbereiche entstehen
-\end{itemize}
-
-UltraRAM
-\begin{itemize}
-    \item jeder 288Kb UltraRAM hat zwei unabhängige Ports
-    \item feste Datenbreite: 4K x 72
-    \item UltraRAM-Spalten lassen sich verbinden, so sind bis zu 100MB möglich
-\end{itemize}
-
-DSP
-\begin{itemize}
-    \item spezielle Funktionseinheiten, die für Signalverarbeitung optimiert sind
-    \item enthalten 27 x 18 bit Multiplizierern (Zweierkomplement) und einen 48-bit Akkumulator
-    \item Multiplizierer kann überbrückt werden
-    \item zwei 48-bit Eingaben können eine SIMD-Einheit füttern (2x 24-bit Addition / Subtraktion / Akkumulation oder 4x 12-bit Addition / ...) oder aber eine Logik-Einheit, die bis zu zehn verschiedene Logikfunktionen für beide Operanden generieren kann
-    \item enthält Voraddierer (symmetrische Filter)
-    \item 96-bit XOR-Funktion, programmierbar auf 12, 24, 48 oder 96 bit
-    \item 48-bit Muster-Detektor, kann mit der Logikeinheit verbunden werden, um Logikfunktionen mit 96-bit Breite zu generieren
-    \item eignet sich für Pipelining und Anwendungen außerhalb der DSP
-\end{itemize}
+        % Klammer
+        \draw [decorate, decoration = {brace, amplitude = 2.5mm}, xshift = -2mm]
+            (0.0, 6.0) -- (0.0, 8.0)
+            node [pos = 0.5, xshift = -11mm, align = center] {60 CLBs};
+    \end{tikzpicture}
+    \caption{Aufteilung der FPGA-Ressourcen auf \textit{clock regions}
+             \cite[nach][22]{ultrascale2019}}
+    \label{fpga:aufbau:clockregions}
+\end{figure}
 
 \subsection{Anwendungsfälle}
 
