@@ -1,6 +1,16 @@
 \chapter{FPGAs als Beschleuniger}
 
+Konzeption und Aufbau der \gls{fpga}s sowie der zugehörige Entwicklungsprozess
+werden in diesem Kapitel geschildert. Abschließend werden die auf \gls{fpga}s
+und \gls{gpu}s zu findenden Parallelitätskonzepte miteinander verglichen.
+
 \section{Überblick}
+
+Für das Verständnis der Funktionsweise eines \gls{fpga}s ist es notwendig, die
+zugrunde liegenden Konzepte in Abgrenzung zu herkömmlicher Hardware
+darzustellen. Dieser Abschnitt definiert zunächst den \gls{fpga}-Begriff und
+erläutert im Anschluss daran den Aufbau moderner \gls{fpga}-Architekturen sowie
+traditionelle und neuartige Nutzungsmöglichkeiten dieses Hardware-Typus.
 
 \subsection{Definition}
 
@@ -13,27 +23,294 @@ der anwendungsspezifischen ICs (engl. \textit{application specific IC}, ASIC).
 Unter ASICs versteht man jene Chips, die bereits bei der Herstellung mit einer
 kundenspezifischen Schaltung versehen werden. Innerhalb dieser Kategorie gehören
 \textit{gate arrays} zu den teil-vorgefertigten ASICs (engl.
-\textit{semi-custom ASIC}). Diese werden erst gemeinsam mit anderen
-teil-vorgefertigten ASICs produziert und in einem späteren Herstellungsschritt
-mit kundenspezifischen Schaltungen versehen. Im Gegensatz zu ASICs, die von
-Anfang an nach Kundenwunsch hergestellt wurden (engl.
-\textit{full-custom ASIC}), lässt sich so eine Reduktion der Produktionskosten
-erreichen. \cite[vgl.][123]{kesel2013}
+\textit{semi-custom ASIC}). Diese werden zunächst in großer Menge mit demselben
+technischen Grundgerüst produziert und erst in einem späteren
+Herstellungsschritt in kleineren Mengen mit kundenspezifischen Schaltungen
+versehen. Im Gegensatz zu ASICs, die von Anfang an nach Kundenwunsch hergestellt
+wurden (engl. \textit{full-custom ASIC}), lässt sich so eine Reduktion der
+Produktionskosten erreichen. \cite[vgl.][123]{kesel2013}
 
 Allerdings haben \textit{gate arrays} den Nachteil, dass sie nur vom Hersteller
 programmiert werden können. Eine Anpassung der Schaltung im Feld (engl.
 \textit{field-programmable}) ist damit nicht möglich. Mit \gls{fpga}s wurde
-dieses Problem in den 1980er Jahren gelöst, indem man Logikzellen von geringer
-Komplexität in einer regelmäßigen Feldstruktur (engl. \textit{array}) anordnete
-und über programmierbare Verdrahtungen miteinander verband.
+dieses Problem in den 1980er Jahren gelöst, indem man aus Gattern
+(engl. \textit{gates}) bestehende Logikzellen von geringer Komplexität in einer
+regelmäßigen Feldstruktur (engl. \textit{array}) anordnete und über
+programmierbare Verdrahtungen miteinander verband.
 \cite[vgl.][208]{kesel2013} 
 
-\cite{hawkins2010}
+Mittlerweile gibt es viele verschiedene \gls{fpga}-Varianten, die jedoch einige
+Gemeinsamkeiten aufweisen. \gls{fpga}s bestehen stets aus einem Feld aus
+Blockzellen, die so konfiguriert werden, dass sie eine bestimmte Funktion
+ausführen. Diese Blockzellen integrieren durch ein dichtes Verbindungsnetz
+Logikgatter und Speicher über ein dichtes Verbindungsnetz. Dabei lassen sich
+vier zentrale Strukturen unterscheiden:
+\begin{itemize}
+    \item konfigurierbare Logikblöcke,
+    \item programmierbare Verbindungen,
+    \item Puffer für die Ein- und Ausgabe (E/A) und
+    \item weitere Elemente (Speicher, arithmetische Einheiten, Taktnetzwerke,
+          usw.).
+\end{itemize}
+In Abbildung~\ref{fpga:definition:aufbau} ist eine abstrakte \gls{fpga}-Struktur
+dargestellt, die aus Logikblöcken, Verbindungen, E/A-Puffern und speziellen
+Speicher- und Multiplizierer-Blöcken aufgebaut ist.
+\cite[vgl.][10-13f.]{hawkins2010}
 
-\subsection{Aufbau}
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        % (0,0) ist unten links
 
-Am Beispiel eines Beschleunigers vom Typ \textit{Alveo U200} der Firma Xilinx
-soll der Aufbau eines modernen \gls{fpga} verdeutlicht werden.
+        % untere E/A-Reihe
+        \draw [fill = HKS41!60]
+                (0.0, -1.875) rectangle (1.5, -1.125)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!60]
+                (2.625, -1.875) rectangle (4.125, -1.125)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!60]
+                (5.25, -1.875) rectangle (6.75, -1.125)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!60]
+                (7.875, -1.875) rectangle (9.375, -1.125)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+
+        % Reihe 1
+        \draw [fill = HKS41!60]
+                (-1.875, 0.0) rectangle (-1.125, 1.5)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!80]
+                (0.0, 0.0) rectangle (1.5, 1.5)
+                node[pos = 0.5, text = white, align = center] {\small Logik};
+        \draw [fill = HKS41!40]
+                (2.625, 0.0) rectangle (4.125, 1.5)
+                node[pos = 0.5, text = white, align = center] {\small Speicher};
+        \draw [fill = HKS41!80]
+                (5.25, 0.0) rectangle (6.75, 1.5)
+                node[pos = 0.5, text = white, align = center] {\small Logik};
+        \draw [fill = HKS41]
+                (7.875, 0.0) rectangle (9.375, 1.5)
+                node[pos = 0.5, text = white, align = center] {\small Multipli- \\ zierer};
+        \draw [fill = HKS41!60]
+                (10.5, 0.0) rectangle (11.25, 1.5)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+
+        % Reihe 2
+        \draw [fill = HKS41!60]
+                (-1.875, 2.625) rectangle (-1.125, 4.125)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!80]
+                (0.0, 2.625) rectangle (1.5, 4.125)
+                node[pos = 0.5, text = white, align = center] {\small Logik};
+        \draw [fill = HKS41!40]
+                (2.625, 2.625) rectangle (4.125, 4.125)
+                node[pos = 0.5, text = white, align = center] {\small Speicher};
+        \draw [fill = HKS41!80]
+                (5.25, 2.625) rectangle (6.75, 4.125)
+                node[pos = 0.5, text = white, align = center] {\small Logik};
+        \draw [fill = HKS41]
+                (7.875, 2.625) rectangle (9.375, 4.125)
+                node[pos = 0.5, text = white, align = center] {\small Multipli- \\ zierer};
+        \draw [fill = HKS41!60]
+                (10.5, 2.625) rectangle (11.25, 4.125)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+
+        % Reihe 3
+        \draw [fill = HKS41!60]
+                (-1.875, 5.25) rectangle (-1.125, 6.75)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!80]
+                (0.0, 5.25) rectangle (1.5, 6.75)
+                node[pos = 0.5, text = white, align = center] {\small Logik};
+        \draw [fill = HKS41!40]
+                (2.625, 5.25) rectangle (4.125, 6.75)
+                node[pos = 0.5, text = white, align = center] {\small Speicher};
+        \draw [fill = HKS41!80]
+                (5.25, 5.25) rectangle (6.75, 6.75)
+                node[pos = 0.5, text = white, align = center] {\small Logik};
+        \draw [fill = HKS41]
+                (7.875, 5.25) rectangle (9.375, 6.75)
+                node[pos = 0.5, text = white, align = center] {\small Multipli- \\ zierer};
+        \draw [fill = HKS41!60]
+                (10.5, 5.25) rectangle (11.25, 6.75)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+
+        % Reihe 3
+        \draw [fill = HKS41!60]
+                (-1.875, 7.875) rectangle (-1.125, 9.375)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!80]
+                (0.0, 7.875) rectangle (1.5, 9.375)
+                node[pos = 0.5, text = white, align = center] {\small Logik};
+        \draw [fill = HKS41!40]
+                (2.625, 7.875) rectangle (4.125, 9.375)
+                node[pos = 0.5, text = white, align = center] {\small Speicher};
+        \draw [fill = HKS41!80]
+                (5.25, 7.875) rectangle (6.75, 9.375)
+                node[pos = 0.5, text = white, align = center] {\small Logik};
+        \draw [fill = HKS41]
+                (7.875, 7.875) rectangle (9.375, 9.375)
+                node[pos = 0.5, text = white, align = center] {\small Multipli- \\ zierer};
+        \draw [fill = HKS41!60]
+                (10.5, 7.875) rectangle (11.25, 9.375)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+
+        % obere E/A-Reihe
+        \draw [fill = HKS41!60]
+                (0.0, 10.5) rectangle (1.5, 11.25)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!60]
+                (2.625, 10.5) rectangle (4.125, 11.25)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!60]
+                (5.25, 10.5) rectangle (6.75, 11.25)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+        \draw [fill = HKS41!60]
+                (7.875, 10.5) rectangle (9.375, 11.25)
+                node[pos = 0.5, text = white, align = center] {\small E/A};
+
+        % Verbindungen - Spalte 1
+        \draw [color = HKS92!90, line width = 5mm]
+                (0.75, -1.125) -- (0.75, 0.0);
+        \draw [color = HKS92!90, line width = 5mm]
+                (0.75, 1.5) -- (0.75, 2.625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (0.75, 4.125) -- (0.75, 5.25);
+        \draw [color = HKS92!90, line width = 5mm]
+                (0.75, 6.75) -- (0.75, 7.875);
+        \draw [color = HKS92!90, line width = 5mm]
+                (0.75, 9.375) -- (0.75, 10.5);
+
+        % Verbindungen - Spalte 2
+        \draw [color = HKS92!90, line width = 5mm]
+                (3.375, -1.125) -- (3.375, 0.0);
+        \draw [color = HKS92!90, line width = 5mm]
+                (3.375, 1.5) -- (3.375, 2.625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (3.375, 4.125) -- (3.375, 5.25);
+        \draw [color = HKS92!90, line width = 5mm]
+                (3.375, 6.75) -- (3.375, 7.875);
+        \draw [color = HKS92!90, line width = 5mm]
+                (3.375, 9.375) -- (3.375, 10.5);
+
+        % Verbindungen - Spalte 3
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.0, -1.125) -- (6.0, 0.0);
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.0, 1.5) -- (6.0, 2.625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.0, 4.125) -- (6.0, 5.25);
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.0, 6.75) -- (6.0, 7.875);
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.0, 9.375) -- (6.0, 10.5);
+
+        % Verbindungen - Spalte 4
+        \draw [color = HKS92!90, line width = 5mm]
+                (8.625, -1.125) -- (8.625, 0.0);
+        \draw [color = HKS92!90, line width = 5mm]
+                (8.625, 1.5) -- (8.625, 2.625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (8.625, 4.125) -- (8.625, 5.25);
+        \draw [color = HKS92!90, line width = 5mm]
+                (8.625, 6.75) -- (8.625, 7.875);
+        \draw [color = HKS92!90, line width = 5mm]
+                (8.625, 9.375) -- (8.625, 10.5);
+
+        % Verbindungen - Reihe 1
+        \draw [color = HKS92!90, line width = 5mm]
+                (-1.125, 0.75) -- (0.0, 0.75);
+        \draw [color = HKS92!90, line width = 5mm]
+                (1.5, 0.75) -- (2.625, 0.75);
+        \draw [color = HKS92!90, line width = 5mm]
+                (4.125, 0.75) -- (5.25, 0.75);
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.75, 0.75) -- (7.875, 0.75);
+        \draw [color = HKS92!90, line width = 5mm]
+                (9.375, 0.75) -- (10.5, 0.75);
+
+        % Verbindungen - Reihe 2
+        \draw [color = HKS92!90, line width = 5mm]
+                (-1.125, 3.375) -- (0.0, 3.375);
+        \draw [color = HKS92!90, line width = 5mm]
+                (1.5, 3.375) -- (2.625, 3.375);
+        \draw [color = HKS92!90, line width = 5mm]
+                (4.125, 3.375) -- (5.25, 3.375);
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.75, 3.375) -- (7.875, 3.375);
+        \draw [color = HKS92!90, line width = 5mm]
+                (9.375, 3.375) -- (10.5, 3.375);
+
+        % Verbindungen - Reihe 3
+        \draw [color = HKS92!90, line width = 5mm]
+                (-1.125, 6.0) -- (0.0, 6.0);
+        \draw [color = HKS92!90, line width = 5mm]
+                (1.5, 6.0) -- (2.625, 6.0);
+        \draw [color = HKS92!90, line width = 5mm]
+                (4.125, 6.0) -- (5.25, 6.0);
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.75, 6.0) -- (7.875, 6.0);
+        \draw [color = HKS92!90, line width = 5mm]
+                (9.375, 6.0) -- (10.5, 6.0);
+
+        % Verbindungen - Reihe 4
+        \draw [color = HKS92!90, line width = 5mm]
+                (-1.125, 8.625) -- (0.0, 8.625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (1.5, 8.625) -- (2.625, 8.625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (4.125, 8.625) -- (5.25, 8.625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (6.75, 8.625) -- (7.875, 8.625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (9.375, 8.625) -- (10.5, 8.625);
+
+        % Verbindungen - Zwischenspalten
+        \draw [color = HKS92!90, line width = 5mm]
+                (-0.5625, -0.8125) -- (-0.5625, 10.1875);
+        \draw [color = HKS92!90, line width = 5mm]
+                (2.0625, -0.5625) -- (2.0625, 9.9375);
+        \draw [color = HKS92!90, line width = 5mm]
+                (4.6875, -0.5625) -- (4.6875, 9.9375);
+        \draw [color = HKS92!90, line width = 5mm]
+                (7.3125, -0.5625) -- (7.3125, 9.9375);
+        \draw [color = HKS92!90, line width = 5mm]
+                (9.9375, -0.8125) -- (9.9375, 10.1875);
+
+        % Verbindungen - Zwischenzeilen
+        \draw [color = HKS92!90, line width = 5mm]
+                (-0.5625, -0.5625) -- (9.9375, -0.5625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (-0.5625, 2.0625) -- (9.9375, 2.0625);
+        \draw [color = HKS92!90, line width = 5mm]
+                (-0.5625, 4.6875) -- (9.9375, 4.6875);
+        \draw [color = HKS92!90, line width = 5mm]
+                (-0.5625, 7.3125) -- (9.9375, 7.3125);
+        \draw [color = HKS92!90, line width = 5mm]
+                (-0.5625, 9.9375) -- (9.9375, 9.9375);
+    \end{tikzpicture}
+    \caption{abstrakter FPGA-Aufbau \cite[nach][S. 10-14]{hawkins2010}}
+    \label{fpga:definition:aufbau}
+\end{figure}
+
+\subsection{Aufbau moderner FPGAs}
+
+Am Beispiel der Virtex-UltraScale+-Architektur der Firma Xilinxrs soll der
+Aufbau eines modernen \gls{fpga} verdeutlicht werden. \gls{fpga}s dieser
+Architektur bestehen aus sieben fundamentalen programmierbaren Elementen:
+\begin{itemize}
+    \item Konfigurierbare Logikblöcke (engl. \textit{configurable logic blocks},
+          CLB) bestehen aus Lookup-Tabellen (LUT), die zur Generierung von
+          Logikfunktionen verwendet werden können, sowie Flipflops, die als
+          Speicher dienen.
+    \item I/O
+    \item Block RAM
+    \item UltraRAM
+    \item DRAM
+    \item DSPs
+    \item Transceiver
+\end{itemize}
 
 Das \gls{fpga} mit der Modellbezeichnung \textit{XCU200} ist neben diversen
 Anschlüssen (zum Beispiel USB, PCI Express und Ethernet) und dem
