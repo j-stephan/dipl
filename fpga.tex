@@ -296,7 +296,7 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
 
 \subsection{Aufbau moderner FPGAs}
 
-Am Beispiel der Virtex-UltraScale+-Architektur der Firma Xilinxrs soll der
+Am Beispiel der Virtex"=UltraScale+"=Architektur der Firma Xilinx soll der
 Aufbau eines modernen \gls{fpga} verdeutlicht werden. \gls{fpga}s dieser
 Architektur bestehen aus sechs fundamentalen programmierbaren Elementen:
 \begin{itemize}
@@ -486,8 +486,442 @@ Netzwerkkarten ein \cite[vgl.][]{firestone2018}.
 
 \section{Entwicklungsprozess}
 
+Es sind bei der Software"=Entwicklung für \gls{fpga}s zwei Vorgehensweisen
+voneinander abzugrenzen: einerseits die Entwicklung durch
+Hardware"=Beschreibungssprachen (die in dieser Arbeit nur kurz skizziert
+werden) und andererseits die High"=Level"=Synthese, die auf in Hochsprachen
+implementierten Algorithmen basiert. Die Ansätze unterscheiden sich durch ihre
+Abstraktion der zugrunde liegenden Hardware (die verschiedenen
+Abstraktionsebenen wurden von Gajski in seinem Y"=Diagramm zusammengefasst, siehe
+Abbildung~\ref{fpga:entwicklung:ydiagramm}). Die Hardware"=Beschreibungssprachen
+befinden sich auf einem mittleren Niveau und Detaillierungsgrad, der
+Register"=Transfer"=Ebene, während die Hochsprachene auf der algorithmischen
+oder der Systemebene anzusiedeln sind. \cite[vgl.][10--11]{kesel2013}
+
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        % Kreise
+        \draw [postaction = {decorate,
+                             decoration = {text along path,
+                                           raise = 1mm,
+                                           text align = {align = center,
+                                                         left indent = 3.15cm},
+                                           text = {|\fontsize{6.5}{7.8}\selectfont|Transistorebene},
+                                           reverse path}}]
+              (0, 0) circle [radius = 1.0];
+
+        \draw [postaction = {decorate,
+                             decoration = {text along path,
+                                           raise = 1mm,
+                                           text align = {align = center,
+                                                         left indent = 6.3cm},
+                                           text = {|\small|Gatterebene},
+                                           reverse path}}]
+              (0, 0) circle [radius = 2.0];
+
+        \draw [postaction = {decorate,
+                             decoration = {text along path,
+                                           raise = 1mm,
+                                           text align = {align = center,
+                                                         left indent = 9.45cm},
+                                           text = {|\small|Register-Transfer-Ebene},
+                                           reverse path}}]
+              (0, 0) circle [radius = 3.0];
+
+        \draw [postaction = {decorate,
+                             decoration = {text along path,
+                                           raise = 1mm,
+                                           text align = {align = center,
+                                                         left indent = 12.6cm},
+                                           text = {|\small|Algorithmische Ebene},
+                                           reverse path}}]
+              (0, 0) circle [radius = 4.0];
+
+        \draw [postaction = {decorate,
+                             decoration = {text along path,
+                                           raise = 1mm,
+                                           text align = {align = center,
+                                                         left indent = 15.75cm},
+                                           text = {|\small|Systemebene},
+                                           reverse path}}]
+              (0, 0) circle [radius = 5.0];
+
+        % Linien
+        \draw [thick] (0, 0) -- (30:6cm) node [pos = 1.125, sloped] {\small Struktur};
+        \draw [thick] (0, 0) -- (150:6cm) node [pos = 1.15, sloped] {\small Verhalten};
+        \draw [thick] (0, 0) -- (270:6cm) 
+              node [pos = 1.05] {\small Geometrie / Physikalische Implementierung};
+
+        % Schnittpunkte
+        \draw [fill = HKS92!90] (30:1cm) circle [radius = 0.15]
+              node [below right, xshift = 2mm, fill = white, inner sep = 1pt, rotate = -30]
+                   {\fontsize{6.5}{7.8}\selectfont Transistor};
+        \draw [fill = HKS92!90] (30:2cm) circle [radius = 0.15]
+              node [below right, xshift = 2mm, fill = white, inner sep = 1pt, rotate = -30]
+                   {\fontsize{6.5}{7.8}\selectfont Gatter, Flipflop};
+        \draw [fill = HKS92!90] (30:3cm) circle [radius = 0.15]
+              node [below right, xshift = 2mm, fill = white, inner sep = 1pt, rotate = -30]
+                   {\fontsize{6.5}{7.8}\selectfont ALU, Register};
+        \draw [fill = HKS92!90] (30:4cm) circle [radius = 0.15]
+              node [below right, xshift = 2mm, fill = white, inner sep = 1mm, rotate = -30]
+                   {\fontsize{6.5}{7.8}\selectfont Prozessor};
+        \draw [fill = HKS92!90] (30:5cm) circle [radius = 0.15]
+              node [below right, xshift = 2mm, fill = white, inner sep = 1mm, rotate = -30]
+                   {\fontsize{6.5}{7.8}\selectfont CPU, Speicher};
+
+        \draw [fill = HKS92!90] (150:1cm) circle [radius = 0.15]
+              node [below left, xshift = -2mm, fill = white, inner sep = 1pt, rotate = 30]
+                   {\fontsize{6.5}{7.8}\selectfont Differentialgleichungen};
+        \draw [fill = HKS92!90] (150:2cm) circle [radius = 0.15]
+              node [below left, xshift = -2mm, fill = white, inner sep = 1pt, rotate = 30]
+                   {\fontsize{6.5}{7.8}\selectfont Boolesche Gleichungen};
+        \draw [fill = HKS92!90] (150:3cm) circle [radius = 0.15]
+              node [below left, xshift = -2mm, fill = white, inner sep = 1pt, rotate = 30]
+                   {\fontsize{6.5}{7.8}\selectfont Register-Transfer};
+        \draw [fill = HKS92!90] (150:4cm) circle [radius = 0.15]
+              node [below left, xshift = -2mm, fill = white, inner sep = 1pt, rotate = 30]
+                   {\fontsize{6.5}{7.8}\selectfont Algorithmus};
+        \draw [fill = HKS92!90] (150:5cm) circle [radius = 0.15]
+              node [below left, xshift = -2mm, fill = white, inner sep = 1pt, rotate = 30]
+                   {\fontsize{6.5}{7.8}\selectfont System-Spezifikation};
+
+        \draw [fill = HKS92!90] (270:1cm) circle [radius = 0.15]
+              node [right, xshift = 2mm, fill = white, inner sep = 1pt]
+                   {\fontsize{6.5}{7.8}\selectfont Polygone};
+        \draw [fill = HKS92!90] (270:2cm) circle [radius = 0.15]
+              node [right, xshift = 2mm, fill = white, inner sep = 1pt]
+                   {\fontsize{6.5}{7.8}\selectfont Zelle};
+        \draw [fill = HKS92!90] (270:3cm) circle [radius = 0.15]
+              node [right, xshift = 2mm, fill = white, inner sep = 1pt]
+                   {\fontsize{6.5}{7.8}\selectfont Makro};
+        \draw [fill = HKS92!90] (270:4cm) circle [radius = 0.15]
+              node [right, xshift = 2mm, fill = white, inner sep = 1pt]
+                   {\fontsize{6.5}{7.8}\selectfont Block};
+        \draw [fill = HKS92!90] (270:5cm) circle [radius = 0.15]
+              node [right, xshift = 2mm, fill = white, inner sep = 1pt]
+                   {\fontsize{6.5}{7.8}\selectfont Chip};
+    \end{tikzpicture}
+    \caption{Y"=Diagramm nach Gajski \cite[nach][10]{kesel2013}}
+    \label{fpga:entwicklung:ydiagramm}
+\end{figure}
+
 \subsection{Hardware-Beschreibungssprachen}
+
+Eine häufig verwendete Hardware"=Beschreibungssprache ist VHDL, was für
+\textit{VHSIC Hardware Description Language} steht, wobei VHSIC eine Abkürzung
+für \textit{Very High Speed Integrated Circuit} ist. Die Sprache geht auf ein
+Programm des US"=amerikanischen Verteidigungsministerium zurück, das in den
+1980er Jahren eine einheitliche Beschreibungs- bzw.\ Dokumentationssprache für
+komplexe Schaltungen wünschte, und ist an die Programmiersprache Ada angelehnt.
+\cite[vgl.][22]{kesel2013}
+
+Eine weitere bekannte Beschreibungssprache ist Verilog
+(\textit{Verifying Logic}), die ebenfalls in den 1980er Jahren entwickelt wurde
+und an der Programmiersprache C orientiert ist. Sie wurde als ursprünglich
+proprietäre Sprache von der Firma \textit{Gateway Design Automation} geschaffen
+und lässt sich in ihrem Umfang mit VHDL vergleichen. Verilog ist vor allem in
+den Vereinigten Staaten verbreitet, während europäische Entwickler eher auf VHDL
+setzen. In den folgenden Abschnitten werden die Konzepte der
+Beschreibungssprachen daher am Beispiel von VHDL erläutert.
+\cite[vgl.][24--25]{kesel2013}
+
+\subsubsection{Konzepte}
+
+VHDL ist eine Sprache für die Hardware"=Modellierung und unterscheidet sich in
+einigen wichtigen Punkten von Hochsprachen wie C++. Stehen bei Hochsprachen
+die algorithmischen Aspekte im Vordergrund, ist bei VHDL entscheidend, wie der
+Algorithmus in eine Hardware"=Beschreibung umgesetzt werden kann. Dabei wird die
+konzeptionelle Schaltung zunächst in mehrere \textit{Komponenten} zerlegt. Die
+Beschreibung jeder \textit{Komponente} erfolgt dann auf der
+Register"=Transfer"=Ebene, das heißt, dass zwischen speichernden (Register) und
+kombinatorischen (Transferfunktionen) Aspekten unterschieden wird. Aus der
+Digitaltechnik stammt eine Darstellungsweise als \glqq endlicher Automat\grqq\
+(siehe Abbildung~\ref{fpga:hdl:moore}): die Eingabe-Transferfunktion berechnet
+aus der Eingangsvariablen $X$ und der Zustandsvariablen $Z$ des Registers den
+neuen, im nächsten Takt zu übernehmenden Registerwert $Z+$. Sie ist damit eine
+boolesche Funktion:
+%
+\[
+    Z+ = f(X, Z)
+\]
+%
+Die Ausgabe-Transferfunktion berechnet die Ausgabevariable $Y$ aus $Z$ und lässt
+sich ebenfalls als boolesche Funktion darstellen:
+%
+\[
+    Y = g(Z)
+\]
+%
+Diese Darstellung wird auch als Moore"=Schaltwerk bezeichnet.
+\cite[vgl.][34--35]{kesel2013}
+%
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \draw [fill = HKS92!90] (0, 0)   rectangle (0.5, 0.5);
+        \draw [fill = HKS92!90] (0, 1.75) rectangle (0.5, 2.25);
+
+        \draw (1.5, 1.0) rectangle (5.0, 5.5)
+                         node [pos = 0.5, align = center]
+                              {\small Eingabe-\\\small Transferfunktion};
+        \draw (6.5, 1.0) rectangle (8.25, 5.5)
+                         node [pos = 0.5, align = center] {\small Register};
+        \draw (9.75, 1.0) rectangle (13.25, 5.5)
+                         node [pos = 0.5, align = center]
+                              {\small Ausgabe-\\\small Transferfunktion};
+
+
+        \draw [-{Latex[length = 3mm]}] (0.5, 0.25) 
+                    -- (7.375, 0.25)
+                       node [pos = 0.15, fill = white, inner sep = 1pt] {Takt}
+                    -- (7.375, 1.0);
+        \draw [-{Latex[length = 3mm]}] (0.5, 2.0) -- (1.5, 2.0) 
+                    node [pos = 0.35, fill = white, inner sep = 1pt] {$X$};
+        \draw [-{Latex[length = 3mm]}] (5.0, 3.25) -- (6.5, 3.25)
+                    node [pos = 0.45, fill = white, inner sep = 1pt] {$Z+$};
+        \draw [-{Latex[length = 3mm]}] (8.25, 3.25) -- (9.75, 3.25);
+        \draw [-{Latex[length = 3mm]}] (9, 3.25)
+                    -- (9, 6.0)
+                    -- (0.5, 6.0)
+                       node [pos = 0.4, fill = white, inner sep = 1pt] {$Z$}
+                    -- (0.5, 4.5)
+                    -- (1.5, 4.5);
+        \draw [-{Latex[length = 3mm]}] (13.25, 3.25) -- (14.75, 3.25)
+                    node [right, xshift = 1mm] {$Y$};
+    \end{tikzpicture}
+    \caption{Modell eines endlichen Automaten (Moore"=Schaltwerk)
+             \cite[nach][35]{kesel2013}}
+    \label{fpga:hdl:moore}
+\end{figure}
+
+Die Anschlüsse einer einzelnen \textit{Komponente} werden in VHDL als
+\textit{Entity} bezeichnet. Sie sind notwendig, um mehrere \textit{Komponenten}
+miteinander verschalten zu können. Der Quelltext~\ref{fpga:hdl:regentity} zeigt
+eine \textit{Entity} für ein 2"=Bit"=Register. \cite[vgl.][25]{kesel2013}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{vhdl}
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+
+ENTITY reg2 IS
+    PORT(
+        clk  : IN   std_logic;
+        d0   : IN   std_logic;
+        d1   : IN   std_logic;
+        load : IN   std_logic;
+        res  : IN   std_logic;
+        q0   : OUT  std_logic;
+        q1   : OUT  std_logic
+    );
+END reg2 ;
+    \end{minted}
+    \caption{\textit{Entity} eines 2-Bit-Registers \cite[siehe][26]{kesel2013}}
+    \label{fpga:hdl:regentity}
+\end{code}
+
+Jeder \textit{Entity} wird mindestens eine \textit{Architecture} zugeordnet.
+Diese beschreibt entweder die innere Funktion, also das Verhalten, oder die
+Struktur, das heißt die Verschaltung von Teil-Komponenten. Eine
+\textit{Architecture} ist also entweder eine Verhaltensbeschreibung oder eine
+Strukturbeschreibung. Strukturbeschreibungen können sowohl in Text- als auch
+in grafischer Form (mittels spezieller Schema-Editoren) angelegt werden, während
+Verhaltensbeschreibungen üblicherweise nur in Textform verfasst werden.
+\cite[vgl.][27]{kesel2013}
+
+Einer \textit{Entity} lassen sich auch mehrere unterschiedliche
+\textit{Architectures} zuordnen. So lässt sich dieselbe \textit{Entity} mit
+unterschiedlichem Verhalten oder internen Aufbau wiederverwenden.
+\cite[vgl.][27]{kesel2013}
+
+\subsubsection{Verhaltensbeschreibungen}
+
+Eine Verhaltensbeschreibung ist aus mehreren \textit{Prozessen} aufgebaut; sie
+besteht dabei nicht aus weiteren (Teil-)Komponenten.
+Quelltext~\ref{fpga:hdl:regbeh} zeigt eine solche Verhaltensbeschreibung für
+das in Quelltext~\ref{fpga:hdl:regentity} eingeführte 2"=Bit"=Register. Diese
+besteht aus zwei \textit{Prozessen}, \texttt{reg} und \texttt{mux}. Diese sind
+untereinander mit den internen Signalen \texttt{q0\_s}, \texttt{q0\_ns},
+\texttt{q1\_s} und \texttt{q1\_ns} sowie nach außen über die (in
+Quelltext~\ref{fpga:hdl:regentity} deklarierten) Ports verbunden.
+\cite[vgl.][29]{kesel2013}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{vhdl}
+ARCHITECTURE beh OF reg2 IS
+    SIGNAL q0_s, q0_ns, q1_s, q1_ns : std_logic;
+BEGIN
+
+    reg: PROCESS (clk, res)
+    BEGIN
+        IF res = '1' THEN
+            q0_s <= '0';
+            q1_s <= '0';
+        ELSIF clk'event AND clk = '1' THEN
+            q0_s <= q0_ns;
+            q1_s <= q1_ns;
+        END IF;
+    END PROCESS reg;
+
+    q0 <= q0_s AFTER 2 ns;
+    q1 <= q1_s AFTER 2 ns;
+
+    mux: PROCESS (load, q0_s, q1_s, d0, d1)
+    BEGIN
+        IF load = '1' THEN
+            q0_ns <= d0 AFTER 3 ns;
+            q1_ns <= d1 AFTER 3 ns;
+        ELSE
+            q0_ns <= q0_s AFTER 4 ns;
+            q1_ns <= q1_s AFTER 4 ns;
+        END IF;
+    END PROCESS mux;
+
+END beh;
+    \end{minted}
+    \caption{Verhaltensbeschreibung eines 2-Bit-Registers \cite[siehe][28]{kesel2013}}
+    \label{fpga:hdl:regbeh}
+\end{code}
+
+Der Prozess \texttt{res} reagiert auf die Ports \texttt{clk} und \texttt{res}:
+ist \texttt{res} logisch \glqq 1\grqq\, so werden die internen Signale
+\texttt{q0\_s} und \texttt{q1\_s} auf \glqq 0\grqq\ zurückgesetzt. Ist
+\texttt{res} logisch \glqq 0\grqq\ und existiert eine steigende Taktflanke
+(\texttt{clk'event AND clk = '1'}), werden die Werte von \texttt{q0\_ns} und
+\texttt{q1\_ns} übernommen. \texttt{res} entspricht damit dem \textit{Register}
+des in Abbildung~\ref{fpga:hdl:moore} dargestellten Moore"=Schaltwerks.
+\cite[vgl.][30--31]{kesel2013}
+
+Der Prozess \texttt{mux} beschreibt eine kombinatorische Funktion. Er
+nimmt die Signale \texttt{load}, \texttt{q0\_s}, \texttt{q1\_s},
+\texttt{d0} sowie \texttt{d1} entgegen und gibt die Signale \texttt{q0\_ns} und
+\texttt{q1\_ns} aus. Ist \texttt{load} logisch \glqq 1\grqq\, werden \texttt{d0}
+und \texttt{d1} ausgegeben, ansonsten die gespeicherten Signale \texttt{q0\_s}
+und \texttt{q1\_s}. In Moore"=Schaltwerk aus Abbildung~\ref{fpga:hdl:moore}
+entspricht \texttt{mux} somit der Eingabe"=Transferfunktion.
+\cite[vgl.][31]{kesel2013}
+
+Die Ausgabe"=Transferfunktion ist in diesem Beispiel als impliziter Prozess
+dargestellt: \texttt{q0} und \texttt{q1} sind die Ausgabe $Y$ des
+Moore"=Schaltwerks und wurden einfach mit den internen Signalen \texttt{q0\_s}
+und \texttt{q1\_s} verbunden.
+\cite[vgl.][31]{kesel2013}
+
+Prozesse sind in VHDL als Modellierungen realer Hardware zu verstehen. So lässt
+sich für das oben entworfene 2"=Bit"=Register eine äquivalente
+Hardware"=Schaltung aus zwei Multiplexern und zwei taktflankengesteuerten
+D"=Flipflops mit asynchronen Set- und Reset-Eingängen aufbauen, wie Kesel und
+Bartholomä zeigen \cite[siehe][32]{kesel2013}. Die im Prozess \texttt{reg}
+verwendeten Signale \texttt{q0\_s} und \texttt{q1\_s} entsprechen dabei den
+Flipflops, während die Multiplexer den \texttt{mux}"=Prozess implementieren.
+\cite[vgl.][31]{kesel2013}
+
+\subsubsection{Strukturbeschreibungen}
+
+Eine Strukturbeschreibung (auch Netzliste genannt) besteht aus mehreren
+Teil-Komponenten, die zu einer größeren, komplexeren Komponente 
+zusammengeschaltet werden. So lässt sich für die aus den vorherigen Abschnitten
+bekannte \texttt{reg2}"=\textit{Entity} aus einem Modell eines Multiplexers
+sowie einem Modell eines Flipflops zusammensetzen; dies ist beispielhaft in
+Quelltext~\ref{fpga:hdl:regstruct} dargestellt\footnote{Die
+Verhaltensbeschreibungen der Komponenten \texttt{mux2} und \texttt{ff2} sind in
+Anhang~\ref{anhang:source:vhdl} zu finden.}. Wie bei der
+Verhaltensbeschreibung gibt es auch bei der Strukturbeschreibung Ports, das
+heißt von außen ein- und bzw nach außen ausgehende Signale, sowie interne
+Signale für die Kommunikation der Teil-Komponenten untereinander. Die einzelnen
+Komponenten werden zunächst mit ihren lokalen Ports deklariert
+(\texttt{COMPONENT}"=Abschnitte) und danach instanziiert; \texttt{I1} und
+\texttt{I0} sind dabei Bezeichnungen für eine \textit{Instanz} der jeweiligen
+\texttt{Entity}. In der \texttt{PORT MAP} werden dann die Ports und Signale
+der Komponente auf die lokalen Ports der Teil-Komponenten geschaltet.
+\cite[vgl.][37]{kesel2013}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{vhdl}
+ARCHITECTURE struct of reg2
+    SIGNAL o1          : std_logic;
+    SIGNAL o2          : std_logic;
+    SIGNAL q0_internal : std_logic;
+    SIGNAL q1_internal : std_logic;
+
+    COMPONENT ff2
+    PORT (
+        clk : IN    std_logic;
+        d0  : IN    std_logic;
+        d1  : IN    std_logic;
+        res : IN    std_logic;
+        q0  : OUT   std_logic;
+        q1  : OUT   std_logic
+    );
+    END COMPONENT;
+    COMPONENT mux2
+    PORT (
+        a1  : IN    std_logic;
+        a2  : IN    std_logic;
+        b1  : IN    std_logic;
+        b2  : IN    std_logic;
+        sel : IN    std_logic;
+        o1  : OUT   std_logic;
+        o2  : OUT   std_logic
+    );
+    END COMPONENT;
+
+BEGIN
+
+    I1  : ff2
+        PORT MAP(
+            clk => clk, d0 => o1, d1 => o2,
+            res => res, q0 => q0_internal, q1 => q1_internal
+        );
+    I0  : mux2
+        PORT MAP(
+            a1 => d0, a2 => d1, b1 => q0_internal,
+            b2 => q1_internal, sel => load, o1 => o1, o2 => o2
+        );
+
+    q0 <= q0_internal;
+    q1 <= q1_internal;
+
+END struct;
+    \end{minted}
+    \caption{Strukturbeschreibung eines 2-Bit-Registers \cite[siehe][36]{kesel2013}}
+    \label{fpga:hdl:regstruct}
+\end{code}
+
+\subsubsection{Weitere Konzepte}
+
+Die hier vorgestellten Konzepte einer Hardware"=Beschreibungssprache bilden nur
+einen sehr geringen Teil der zur Verfügung stehenden Möglichkeiten ab. Neben den
+gezeigten Grundbausteinen verfügen VHDL und Verilog noch über weitergehende
+Fähigkeiten, wie etwa Verzweigungen, Schleifen, Operatoren udn deren Überladung
+oder rudimentäre Objektorientierung. Aufgrund der Zielsetzung dieser Arbeit kann
+hier nicht weiter darauf eingegangen werden. Eine sehr gute Einführung in die
+Programmierung mit VHDL ist aber bei Kesel und Bartholomä zu finden
+\cite[siehe][]{kesel2013}. 
+
+\subsubsection{Nebenläufigkeit}
+
+Einer der wesentlichen Unterschiede zwischen VHDL und Hochsprachen, die auf
+der algorithmischen Ebene arbeiten, ist die von vornherein vorhandene
+Nebenläufigkeit. Während Befehle in C++ nacheinander abgearbeitet werden, gilt
+dies bei VHDL nur innerhalb eines \textit{Prozesses}. \texttt{Prozesse} arbeiten
+unabhängig voneinander und werden nur über ihre Eingangssignale gesteuert, was
+sich so auch auf die reale Hardware abbilden lässt. Diese Eigenschaft ist für
+die in Abschnitt~\ref{fpga:parallelitaet} geschilderten
+Parallelitätseigenschaften eines \gls{fpga} von hoher Bedeutung.
+\cite[vgl.][25]{kesel2013}
 
 \subsection{High-Level-Synthese}
 
-\section{Parallelität}
+Aus den in den vorherigen Abschnitten vorgestellten Beispielen wird schnell
+ersichtlich, dass der Entwurf komplexerer Schaltungen mit einem hohen
+Konzeptions- und Arbeitsaufwand verbunden ist und nicht nur gute Kenntnisse des 
+abzubildenden Algorithmus erfordert, sondern darüber hinaus auch Wissen über die
+Digitaltechnik erfordert. Mit der High-Level-Synthese gibt es einen Ansatz,
+die konkrete Schaltung durch Abstraktion zu verbergen. Stattdessen findet der
+Entwurf vollständig auf der algorithmischen oder Systemebene statt und wird
+durch entsprechende Werkzeuge in eine reale Schaltung synthetisiert.
+
+\section{Parallelität}\label{fpga:parallelitaet}
+

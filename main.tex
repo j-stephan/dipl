@@ -3,11 +3,13 @@
                abstract=section,abstract=nottotoc,abstract=all,abstract=vfill,
                declaration=true,declaration=section,declaration=totoc]{tudscrbook}
 
+\usepackage{anyfontsize}
 \usepackage[english,ngerman]{babel}
 \usepackage[backend=biber,style=alphabetic]{biblatex}
 \usepackage[math]{blindtext}
 \usepackage{booktabs}
 \usepackage{caption}
+\usepackage[outline]{contour}
 \usepackage{csquotes}
 \usepackage{dialogue}
 \usepackage[T1]{fontenc}
@@ -24,7 +26,10 @@
 \usepackage{tcolorbox}
 \usepackage{tikz}
 
-\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{arrows.meta,
+                decorations,
+                decorations.pathreplacing,
+                decorations.text}
 
 \addbibresource{bibliography.bib}
 
