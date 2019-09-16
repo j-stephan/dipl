@@ -823,19 +823,10 @@ Eine Strukturbeschreibung (auch Netzliste genannt) besteht aus mehreren
 Teil-Komponenten, die zu einer größeren, komplexeren Komponente 
 zusammengeschaltet werden. So lässt sich für die aus den vorherigen Abschnitten
 bekannte \texttt{reg2}"=\textit{Entity} aus einem Modell eines Multiplexers
-sowie einem Modell eines Flipflops zusammensetzen; dies ist beispielhaft in
-Quelltext~\ref{fpga:hdl:regstruct} dargestellt\footnote{Die
-Verhaltensbeschreibungen der Komponenten \texttt{mux2} und \texttt{ff2} sind in
-Anhang~\ref{anhang:source:vhdl} zu finden.}. Wie bei der
-Verhaltensbeschreibung gibt es auch bei der Strukturbeschreibung Ports, das
-heißt von außen ein- und bzw nach außen ausgehende Signale, sowie interne
-Signale für die Kommunikation der Teil-Komponenten untereinander. Die einzelnen
-Komponenten werden zunächst mit ihren lokalen Ports deklariert
-(\texttt{COMPONENT}"=Abschnitte) und danach instanziiert; \texttt{I1} und
-\texttt{I0} sind dabei Bezeichnungen für eine \textit{Instanz} der jeweiligen
-\texttt{Entity}. In der \texttt{PORT MAP} werden dann die Ports und Signale
-der Komponente auf die lokalen Ports der Teil-Komponenten geschaltet.
-\cite[vgl.][37]{kesel2013}
+sowie einem Modell eines Flipflops zusammensetzen (siehe
+Quelltext~\ref{fpga:hdl:regstruct}\footnote{Die Verhaltensbeschreibungen der
+Komponenten \texttt{mux2} und \texttt{ff2} sind in
+Anhang~\ref{anhang:source:vhdl} zu finden.}).
 
 \begin{code}
     \begin{minted}[fontsize=\small]{vhdl}
@@ -888,6 +879,16 @@ END struct;
     \caption{Strukturbeschreibung eines 2-Bit-Registers \cite[siehe][36]{kesel2013}}
     \label{fpga:hdl:regstruct}
 \end{code}
+\noindent
+Wie bei der Verhaltensbeschreibung gibt es auch bei der Strukturbeschreibung
+Ports, das heißt von außen ein- bzw.\ nach außen ausgehende Signale, sowie
+interne Signale für die Kommunikation der Teil-Komponenten untereinander. Die
+einzelnen Komponenten werden zunächst mit ihren lokalen Ports deklariert
+(\texttt{COMPONENT}"=Abschnitte) und danach instanziiert; \texttt{I1} und
+\texttt{I0} sind dabei Bezeichnungen für eine \textit{Instanz} der jeweiligen
+\texttt{Entity}. In der \texttt{PORT MAP} werden die Ports und Signale der
+Komponente den lokalen Ports der Teil-Komponenten zugeordnet.
+\cite[vgl.][37]{kesel2013}
 
 \subsubsection{Weitere Konzepte}
 
@@ -918,10 +919,26 @@ Aus den in den vorherigen Abschnitten vorgestellten Beispielen wird schnell
 ersichtlich, dass der Entwurf komplexerer Schaltungen mit einem hohen
 Konzeptions- und Arbeitsaufwand verbunden ist und nicht nur gute Kenntnisse des 
 abzubildenden Algorithmus erfordert, sondern darüber hinaus auch Wissen über die
-Digitaltechnik erfordert. Mit der High-Level-Synthese gibt es einen Ansatz,
-die konkrete Schaltung durch Abstraktion zu verbergen. Stattdessen findet der
-Entwurf vollständig auf der algorithmischen oder Systemebene statt und wird
-durch entsprechende Werkzeuge in eine reale Schaltung synthetisiert.
+Digitaltechnik erfordert. Mit der High"=Level"=Synthese (HLS) gibt es einen
+Ansatz, die konkrete Schaltung durch Abstraktion zu verbergen. Bei der HLS
+findet der Entwurf vollständig auf der algorithmischen oder Systemebene statt.
+Anschließend wird aus dem erzeugten Modell durch HLS-Werkzeuge ein Modell auf
+der Register"=Transfer"=Ebene erzeugt, aus dem im nächsten Schritt die konkrete
+Schaltung synthetisiert werden kann. Während des algorithmischen Entwurfs kann
+der Nutzer zudem Randbedingungen einstellen, die die HLS steuern, wie z.B. den
+angestrebten Ressourcenbedarf oder den gewünschten Datendurchsatz. Bei der
+Erzeugung des Register"=Transfer"=Modells werden diese Randbedingungen dann von
+den HLS"=Werkzeugen berücksichtigt. \cite[vgl.][482]{kesel2013}
+
+Die HLS wird zur Zeit von einigen Herstellern für mehrere Programmiersprachen
+bzw. Erweiterungen bestehender Programmiersprachen unterstützt. Der Hersteller
+Xilinx bietet beispielsweise HLS-Werkzeuge für die Sprachen C, C++ und SystemC
+an und unterstützt darüber hinaus den \gls{opencl}"=Standard. Einen ähnlichen
+Weg geht die Firma Intel, die HLS-Unterstützung für C und C++ sowie
+\gls{opencl} anbietet.
+
+Aufgrund der Nähe zum in dieser Arbeit untersuchten SYCL"=Standard wird in den
+folgenden Abschnitten auf \gls{opencl} Bezug genommen.
 
 \section{Parallelität}\label{fpga:parallelitaet}
 
