@@ -1,10 +1,10 @@
-\chapter{FPGAs als Beschleuniger}
+\chapter{FPGAs als Beschleuniger}\label{fpga}
 
 Konzeption und Aufbau der \gls{fpga}s sowie der zugehörige Entwicklungsprozess
 werden in diesem Kapitel geschildert. Abschließend werden die auf \gls{fpga}s
 und \gls{gpu}s zu findenden Parallelitätskonzepte miteinander verglichen.
 
-\section{Überblick}
+\section{Überblick}\label{fpga:ueberblick}
 
 Für das Verständnis der Funktionsweise eines \gls{fpga}s ist es notwendig, die
 zugrunde liegenden Konzepte in Abgrenzung zu herkömmlicher Hardware
@@ -12,7 +12,7 @@ darzustellen. Dieser Abschnitt definiert zunächst den \gls{fpga}-Begriff und
 erläutert im Anschluss daran den Aufbau moderner \gls{fpga}-Architekturen sowie
 traditionelle und neuartige Nutzungsmöglichkeiten dieses Hardware-Typus.
 
-\subsection{Definition}
+\subsection{Definition}\label{fpga:ueberblick:definition}
 
 \textit{Field-programmable gate arrays} sind, wie der Name andeutet,
 konzeptionell mit den \textit{gate arrays} verwandt.
@@ -294,7 +294,7 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
     \label{fpga:definition:aufbau}
 \end{figure}
 
-\subsection{Aufbau moderner FPGAs}
+\subsection{Aufbau moderner FPGAs}\label{fpga:ueberblick:aufbau}
 
 Am Beispiel der Virtex"=UltraScale+"=Architektur der Firma Xilinx soll der
 Aufbau eines modernen \gls{fpga} verdeutlicht werden. \gls{fpga}s dieser
@@ -461,7 +461,7 @@ Abbildung~\ref{fpga:aufbau:clockregions} zu sehen ist.
     \label{fpga:aufbau:clockregions}
 \end{figure}
 
-\subsection{Anwendungsfälle}
+\subsection{Anwendungsfälle}\label{fpga:ueberblick:anwendungen}
 
 Gegenüber ASICs bieten \gls{fpga}s einige Vorteile. Da sich Schaltungen ohne
 einen Produktionsprozess schneller in Hardware abbilden lassen, eignen sich
@@ -484,7 +484,7 @@ Schaltkreisentwurfs eingesetzt. So setzt die Firma Microsoft beispielsweise
 \cite[vgl.][]{fowers2018, chung2018} sowie als besonders schnelle
 Netzwerkkarten ein \cite[vgl.][]{firestone2018}.
 
-\section{Entwicklungsprozess}
+\section{Entwicklungsprozess}\label{fpga:entwicklung}
 
 Es sind bei der Software"=Entwicklung für \gls{fpga}s zwei Vorgehensweisen
 voneinander abzugrenzen: einerseits die Entwicklung durch
@@ -606,7 +606,7 @@ oder der Systemebene anzusiedeln sind. \cite[vgl.][10--11]{kesel2013}
     \label{fpga:entwicklung:ydiagramm}
 \end{figure}
 
-\subsection{Hardware-Beschreibungssprachen}
+\subsection{Hardware-Beschreibungssprachen}\label{fpga:entwicklung:hdl}
 
 Eine häufig verwendete Hardware"=Beschreibungssprache ist VHDL, was für
 \textit{VHSIC Hardware Description Language} steht, wobei VHSIC eine Abkürzung
@@ -906,39 +906,315 @@ Programmierung mit VHDL ist aber bei Kesel und Bartholomä zu finden
 Einer der wesentlichen Unterschiede zwischen VHDL und Hochsprachen, die auf
 der algorithmischen Ebene arbeiten, ist die von vornherein vorhandene
 Nebenläufigkeit. Während Befehle in C++ nacheinander abgearbeitet werden, gilt
-dies bei VHDL nur innerhalb eines \textit{Prozesses}. \texttt{Prozesse} arbeiten
+dies bei VHDL nur innerhalb eines \textit{Prozesses}. \textit{Prozesse} arbeiten
 unabhängig voneinander und werden nur über ihre Eingangssignale gesteuert, was
-sich so auch auf die reale Hardware abbilden lässt. Diese Eigenschaft ist für
-die in Abschnitt~\ref{fpga:parallelitaet} geschilderten
-Parallelitätseigenschaften eines \gls{fpga} von hoher Bedeutung.
-\cite[vgl.][25]{kesel2013}
+sich so auch auf die reale Hardware abbilden lässt. \cite[vgl.][25]{kesel2013}
 
-\subsection{High-Level-Synthese}
+\subsection{High-Level-Synthese und Parallelität}\label{fpga:entwicklung:hls}
 
-Aus den in den vorherigen Abschnitten vorgestellten Beispielen wird schnell
-ersichtlich, dass der Entwurf komplexerer Schaltungen mit einem hohen
-Konzeptions- und Arbeitsaufwand verbunden ist und nicht nur gute Kenntnisse des 
-abzubildenden Algorithmus erfordert, sondern darüber hinaus auch Wissen über die
-Digitaltechnik erfordert. Mit der High"=Level"=Synthese (HLS) gibt es einen
-Ansatz, die konkrete Schaltung durch Abstraktion zu verbergen. Bei der HLS
-findet der Entwurf vollständig auf der algorithmischen oder Systemebene statt.
+Aus den im vorherigen Abschnitt gezeigten Beispielen wird schnell ersichtlich,
+dass der Entwurf komplexerer Schaltungen mit einem hohen Konzeptions- und
+Arbeitsaufwand verbunden ist und nicht nur gute Kenntnisse des  abzubildenden
+Algorithmus erfordert, sondern darüber hinaus auch Wissen über di Digitaltechnik
+erfordert. Mit der High"=Level"=Synthese (HLS) gibt es einen Ansatz, die
+konkrete Schaltung durch Abstraktion zu verbergen und sich dem Programmiermodell
+anderer Hardware"=Typen (\gls{cpu}s, \gls{gpu}s) anzunähern. Bei der HLS findet
+der Entwurf vollständig auf der algorithmischen oder Systemebene statt.
 Anschließend wird aus dem erzeugten Modell durch HLS-Werkzeuge ein Modell auf
 der Register"=Transfer"=Ebene erzeugt, aus dem im nächsten Schritt die konkrete
-Schaltung synthetisiert werden kann. Während des algorithmischen Entwurfs kann
-der Nutzer zudem Randbedingungen einstellen, die die HLS steuern, wie z.B. den
-angestrebten Ressourcenbedarf oder den gewünschten Datendurchsatz. Bei der
-Erzeugung des Register"=Transfer"=Modells werden diese Randbedingungen dann von
-den HLS"=Werkzeugen berücksichtigt. \cite[vgl.][482]{kesel2013}
+Schaltung synthetisiert werden kann. Auf herkömmliche Programmiersprachen
+übertragen entspricht der Entwurf mit einer Hardware"=Beschreibungssprache also
+der Programmierung einer \gls{cpu} mit einer Assemblersprache.
+\cite[vgl.][7]{hlsintro2019}
+
+Während des algorithmischen Entwurfs kann der Nutzer zudem Randbedingungen
+einstellen, die die HLS steuern, wie z.B. den angestrebten Ressourcenbedarf oder
+den gewünschten Datendurchsatz. Bei der Erzeugung des
+Register"=Transfer"=Modells werden diese Randbedingungen dann von den
+HLS"=Werkzeugen berücksichtigt. \cite[vgl.][482]{kesel2013}
 
 Die HLS wird zur Zeit von einigen Herstellern für mehrere Programmiersprachen
 bzw. Erweiterungen bestehender Programmiersprachen unterstützt. Der Hersteller
-Xilinx bietet beispielsweise HLS-Werkzeuge für die Sprachen C, C++ und SystemC
+Xilinx bietet beispielsweise HLS"=Werkzeuge für die Sprachen C, C++ und SystemC
 an und unterstützt darüber hinaus den \gls{opencl}"=Standard. Einen ähnlichen
-Weg geht die Firma Intel, die HLS-Unterstützung für C und C++ sowie
-\gls{opencl} anbietet.
+Weg geht die Firma Intel, die HLS"=Werkzeuge für C und C++ sowie \gls{opencl}
+anbietet.
 
-Aufgrund der Nähe zum in dieser Arbeit untersuchten SYCL"=Standard wird in den
-folgenden Abschnitten auf \gls{opencl} Bezug genommen.
+Die folgenden Erläuterungen richten sich nach den Handbüchern des Herstellers
+Xilinx, die zugrunde liegenden Konzepte gelten jedoch für alle \gls{fpga}s.
 
-\section{Parallelität}\label{fpga:parallelitaet}
+\subsubsection{Scheduling}
 
+\gls{fpga}s sind inhärent parallel. Anweisungen, die von einem bestimmten
+Hardware"=Abschnitt ausgeführt werden (in VHDL durch \textit{Prozesse}
+modelliert), sind sequentiell, während unterschiedliche Hardware"=Abschnitte in
+Bezug aufeinander nebenläufig sind. Diese Eigenschaft unterscheidet \gls{fpga}s
+deutlich von Prozessorarchitekturen, wie das folgende Beispiel zeigt.
+
+Jeder Prozessor führt ein Programm als eine Folge von Instruktionen aus. Diese
+Instruktionen werden von Compilern aus einer Hochsprache wie C++ in eine
+prozessorspezifische Assemblersprache übersetzt:
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+z = a + b;
+    \end{minted}
+    \caption{Addition in C++}
+\end{code}
+wird wie folgt transformiert:
+\begin{code}
+    \begin{minted}[fontsize=\small]{gas}
+movl    -8(%rbp), %edx
+movl    -4(%rbp), %edx
+addl    %edx, %eax
+movl    %eax, -12(%rbp)
+    \end{minted}
+    \caption{Addition in AMD64"=Assembler}
+\end{code}
+Selbst eine relativ simple Operation wie die Addition zweier Zahlen resultiert
+in vier sequentiell auszuführenden Maschineninstruktionen. Je nachdem, wo die
+Operanden liegen oder wo das Ergebnis gespeichert werden soll, können die
+Instruktionen für Laden und Speichern (im Verhältnis zur Addition) viele
+Taktzyklen benötigen. \cite[vgl.][18]{hlsintro2019}
+
+Soll die Addition für viele Elemente ausgeführt werden, wie zum Beispiel in
+einer Schleife, müssen diese vier Instruktionen stets wiederholt werden, da sich
+alle Operationen dieselbe \gls{alu} teilen.
+
+Bei der HLS kann diese Operation auf Hardware abgebildet werden, die
+ausschließlich für diese Operation verwendet wird. Wenn \texttt{a}, \texttt{b}
+und \texttt{z} \SI{32}{\bit} groß sind, wird dieser Datentyp durch 32 \gls{lut}
+implementiert\footnote{Ein LUT entspricht der Berechnung eines Bits.}. Im
+Gegensatz zu Prozessoren werden bei einer \gls{fpga}"=Implementierung für jede
+Operation innerhalb des Algorithmus voneinander unabhängige \gls{lut}"=Mengen
+instanziiert.
+\cite[vgl.][19]{hlsintro2019}
+
+Eine Schleife ließe sich auf \gls{fpga}s also ganz oder teilweise ausrollen und,
+sofern zwischen den einzelnen Iterationen keine Abhängigkeiten bestehen,
+parallel ausführen. Die während der HLS vorgenommene Analyse der Daten- und
+Kontrollflussabhängigkeiten wird im \gls{fpga}"=Kontext als Scheduling
+bezeichnet. \cite[vgl.][19]{hlsintro2019}
+
+\subsubsection{Pipelining}
+
+Das von Prozessoren bekannte Prinzip des \textit{Pipelinings} findet bei
+\gls{fpga}s ebenfalls Anwendung. Dabei werden Datenabhängigkeiten so aufgeteilt,
+dass die ursprüngliche Verarbeitungsreihenfolge beibehalten wird, während die
+benötigten Hardware"=Einheiten in eine Verkettung unabhängiger Stufen unterteilt
+werden. Jede Stufe erhält ihre Eingangsdaten von der vorherigen Stufe und reicht
+ihr Teilergebnis an die nächste Stufe weiter. Beispielsweise lässt sich die
+folgende Funktion auf einen Multiplizierer und zwei Addierer abbilden:
+\[
+    y = (a \cdot x) + b + c
+\]
+Die resultierende Hardware"=Schaltung ist in
+Abbildung~\ref{fpga:pipelining:schaltung} dargestellt. Die obere Schaltung
+berechnet $y$ ohne Pipelining, die untere Schaltung zeigt die transformierte
+Schaltung mit Pipelining.
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        % untere Schaltung
+        % a
+        \draw (0.2, 5.15) -- (0.4, 5.35) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$a$};
+        \draw (0, 5.25) -- (0.75, 5.25);
+        \draw [thick, fill = HKS92!50] (0.75, 5) rectangle (1.25, 5.5);
+        \draw [-{Latex}] (1.25, 5.25) -- (2.25, 5.25) -- (2.25, 4.75);
+
+        % x
+        \draw (0.2, 2.65) -- (0.4, 2.85) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$x$};
+        \draw (0, 2.75) -- (0.75, 2.75);
+        \draw [thick, fill = HKS92!50] (0.75, 2.5) rectangle (1.25, 3);
+        \draw [-{Latex}] (1.25, 2.75) -- (2.25, 2.75) -- (2.25, 3.25);
+
+        % b
+        \draw (0.2, 1.4) -- (0.4, 1.6) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$b$};
+        \draw (0, 1.5) -- (0.75, 1.5);
+        \draw [thick, fill = HKS92!50] (0.75, 1.25) rectangle (1.25, 1.75);
+        \draw (1.25, 1.5) -- (3.5, 1.5);
+        \draw [thick, fill = HKS92!50] (3.5, 1.25)  rectangle (4, 1.75);
+        \draw [-{Latex}] (4, 1.5) -- (6, 1.5) -- (6, 2);
+
+        % c
+        \draw (0.2, 0.15) -- (0.4, 0.35) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$c$};
+        \draw (0, 0.25) -- (0.75, 0.25);
+        \draw [thick, fill = HKS92!50] (0.75, 0) rectangle (1.25, 0.5);
+        \draw (1.25, 0.25) -- (3.5, 0.25);
+        \draw [thick, fill = HKS92!50] (3.5, 0) rectangle (4, 0.5);
+        \draw [-{Latex}] (4, 0.25) -- (8.75, 0.25) -- (8.75, 0.75);
+
+        % Multiplizierer
+        \draw [thick] (2.25, 4) circle [radius = 0.75] node {\textbf{*}};
+        \draw (3.0, 4) -- (3.5, 4);
+        \draw [thick, fill = HKS92!50] (3.5, 3.75) rectangle (4, 4.25);
+        \draw [-{Latex}] (4, 4) -- (6, 4) -- (6, 3.5);
+
+        % erster Addierer
+        \draw [thick] (6, 2.75) circle [radius = 0.75] node {\textbf{+}};
+        \draw [-{Latex}] (6.75, 2.75) -- (8.75, 2.75) -- (8.75, 2.25);
+
+        % zweiter Addierer
+        \draw [thick] (8.75, 1.5) circle [radius = 0.75] node {\textbf{+}}; 
+
+        % y
+        \draw (9.5, 1.5) -- (10.25, 1.5);
+        \draw [thick, fill = HKS92!50] (10.25, 1.25) rectangle (10.75, 1.75);
+        \draw [-{Latex}] (10.75, 1.5) -- (11.5, 1.5);
+        \draw (11.0, 1.4) -- (11.2, 1.6) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$y$};
+
+        % Pfeil
+        \draw (6, 5.75) -- ++(135:0.71) 
+                        -- ++(0.25,0) 
+                        -- ++(0, 0.75) 
+                        -- ++(0.5, 0) 
+                        -- ++(0, -0.75) node [right, xshift = 3mm] {\small Pipeline-Transformation}
+                        -- ++(0.25, 0) 
+                        -- ++(-135:0.71);
+
+        % obere Schaltung
+        % a
+        \draw (0.2, 12.65) -- (0.4, 12.85) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$a$};
+        \draw [-{Latex}] (0, 12.75) -- (2.25, 12.75) -- (2.25, 12.25);
+
+        % x
+        \draw (0.2, 10.15) -- (0.4, 10.35) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$x$};
+        \draw [-{Latex}] (0, 10.25) -- (2.25, 10.25) -- (2.25, 10.75);
+
+        % b
+        \draw (0.2, 8.9) -- (0.4, 9.1) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$b$};
+        \draw [-{Latex}] (0, 9) -- (6, 9) -- (6, 9.5);
+
+        % c
+        \draw (0.2, 7.65) -- (0.4, 7.85) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$c$};
+        \draw [-{Latex}] (0, 7.75) -- (8.75, 7.75) -- (8.75, 8.25);
+
+        % Multiplizierer
+        \draw [thick] (2.25, 11.5) circle [radius = 0.75] node {\textbf{*}};
+        \draw [-{Latex}] (3, 11.5) -- (6, 11.5) -- (6, 11);
+
+        % erster Addierer
+        \draw [thick] (6, 10.25) circle [radius = 0.75] node {\textbf{+}};
+        \draw [-{Latex}] (6.75, 10.25) -- (8.75, 10.25) -- (8.75, 9.75);
+
+        % zweiter Addierer
+        \draw [thick] (8.75, 9) circle [radius = 0.75] node {\textbf{+}}; 
+
+        % y
+        \draw [-{Latex}] (9.5, 9) -- (11.5, 9);
+        \draw (11.0, 8.9) -- (11.2, 9.1) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$y$};
+    \end{tikzpicture}
+    \caption{FPGA"=Implementierung einer mehrstufigen Berechnung \cite[nach][21]{hlsintro2019}}
+    \label{fpga:pipelining:schaltung}
+\end{figure}
+\noindent
+Die grauen Kästen der unteren Schaltung entsprechen Registern, die in realer
+Hardware durch Flipflops realisiert werden. Jeder Kasten kann dabei als ein
+zusätzlicher Taktzyklus aufgefasst werden. Die Berechnung eines einzelnen
+Ergebnisses benötigt dadurch drei zusätzliche Taktzyklen. Durch die zusätzlichen
+Register lassen sich die einzelnen Schritte der Berechnung jedoch in unabhängige
+Abschnitte aufteilen, der Multiplizierer und die Addierer können also
+nebenläufig arbeiten. Die Ergebnisse $y$ und $y'$ lassen sich auf diese Weise
+(teilweise) parallel berechnen und lasten dabei die verfügbare Hardware besser
+aus: nach einem Overhead von 3 Taktzyklen zu Beginn der Berechnung (engl.
+\textit{pipeline fill time}) berechnet die Schaltung in jedem weiteren
+Taktzyklus einen neuen Wert für $y$. Dieser Vorgang wird in
+Abbildung~\ref{fpga:pipelining:pipeline} illustriert.
+\cite[vgl.][20--21]{hlsintro2019}
+
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        % a
+        \draw (0.2, 5.15) -- (0.4, 5.35) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$a$};
+        \draw (0, 5.25) -- (0.75, 5.25);
+        \draw [thick, fill = HKS92!75] (0.75, 5) rectangle (1.25, 5.5);
+        \draw [-{Latex}] (1.25, 5.25) -- (2.25, 5.25) -- (2.25, 4.75);
+
+        % x
+        \draw (0.2, 2.65) -- (0.4, 2.85) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$x$};
+        \draw (0, 2.75) -- (0.75, 2.75);
+        \draw [thick, fill = HKS92!75] (0.75, 2.5) rectangle (1.25, 3);
+        \draw [-{Latex}] (1.25, 2.75) -- (2.25, 2.75) -- (2.25, 3.25);
+
+        % b
+        \draw (0.2, 1.4) -- (0.4, 1.6) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$b$};
+        \draw (0, 1.5) -- (0.75, 1.5);
+        \draw [thick, fill = HKS92!75] (0.75, 1.25) rectangle (1.25, 1.75);
+        \draw (1.25, 1.5) -- (3.5, 1.5);
+        \draw [thick] (3.5, 1.25) rectangle (4, 1.75);
+        \draw [-{Latex}] (4, 1.5) -- (6, 1.5) -- (6, 2);
+
+        % c
+        \draw (0.2, 0.15) -- (0.4, 0.35) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$c$};
+        \draw (0, 0.25) -- (0.75, 0.25);
+        \draw [thick, fill = HKS92!75] (0.75, 0) rectangle (1.25, 0.5);
+        \draw (1.25, 0.25) -- (3.5, 0.25);
+        \draw [thick] (3.5, 0) rectangle (4, 0.5);
+        \draw [-{Latex}] (4, 0.25) -- (8.75, 0.25) -- (8.75, 0.75);
+
+        % Multiplizierer
+        \draw [thick] (2.25, 4) circle [radius = 0.75] node {\textbf{*}};
+        \draw (3.0, 4) -- (3.5, 4);
+        \draw [thick] (3.5, 3.75) rectangle (4, 4.25);
+        \draw [-{Latex}] (4, 4) -- (6, 4) -- (6, 3.5);
+
+        % erster Addierer
+        \draw [thick, fill = HKS92!50] (6, 2.75) circle [radius = 0.75] node {\textbf{+}};
+        \draw [-{Latex}] (6.75, 2.75) -- (8.75, 2.75) -- (8.75, 2.25);
+
+        % zweiter Addierer
+        \draw [thick, fill = HKS92!50] (8.75, 1.5) circle [radius = 0.75] node {\textbf{+}}; 
+
+        % y
+        \draw (9.5, 1.5) -- (10.25, 1.5);
+        \draw [thick, fill = HKS92!50] (10.25, 1.25) rectangle (10.75, 1.75);
+        \draw [-{Latex}] (10.75, 1.5) -- (11.5, 1.5);
+        \draw (11.0, 1.4) -- (11.2, 1.6) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$y$};
+
+        % Formeln
+        \draw [thick, fill = HKS92!75] (-1, -3.5) rectangle (1.35, -0.5)
+              node [pos = 0.5, align = center, text = white] { $a(i)$ \\ 
+                                                               $x(i)$ \\ 
+                                                               $b(i)$ \\ 
+                                                               $c(i)$ };
+        \draw [thick] (1.35, -3.5) rectangle (4.5, -0.5)
+              node [pos = 0.5, align = center] { $a(i - 1) \cdot x(i - 1)$ \\
+                                                 $b(i - 1)$ \\
+                                                 $c(i - 1)$};
+        \draw [thick, fill = HKS92!50] (4.5, -3.5) rectangle (11.5, -0.5)
+              node [pos = 0.5, align = center] { $(a(i - 2) \cdot x(i - 2)) + b(i - 2) + c(i - 2)$};
+    \end{tikzpicture}
+    \caption{FPGA"=Pipeline"=Architektur \cite[nach][22]{hlsintro2019}}
+    \label{fpga:pipelining:pipeline}
+\end{figure}
+
+Die Anwendung des Pipelining während der HLS unterscheidet sich zwischen den
+Herstellern: so versucht Intels OpenCL"=Umgebung grundsätzlich, Pipelining auf
+jede vorhandene Schleife anzuwenden und erfordert ein explizites Deaktivieren
+des Verfahrens, wenn kein Pipelining gewünscht wird. Bei Xilinx' OpenCL"=Umgebung
+verhält es sich dagegen genau umgekehrt, da hier Pipelining explizit
+angeschaltet werden muss.
+
+\subsubsection{Producer-Consumer}
+
+Neben dem Pipelining gibt es auf \gls{fpga}s eine weitere Möglichkeit,
+Parallelität auszudrücken. Diese ähnelt dem Pipelining-Prinzip, arbeitet jedoch
+auf einer groberen Ebene. Dahinter steht das Ziel, diese Funktionen
+weitestgehend parallel auszuführen. Dazu analysieren die HLS"=Werkzeuge die Ein- 
+und Ausgangsparameter der im Algorithmus vorhandenen Funktionen. Im einfachsten
+Fall gibt es keine gemeinsam bearbeiteten Daten, wodurch alle Funktionen
+parallel ausgeführt werden können. Naturgemäß ist dieser Fall recht selten,
+üblicherweise werden die Ergebnisse einer Funktion von einer oder mehreren
+nachfolgenden Funktionen verarbeitet. Dieses als
+\textit{Producer"=Consumer}"=Prinzip bekannte Verfahren kann durch die
+Nebenläufigkeit der FPGA"=Hardware parallelisiert werden. Durch den Einsatz von
+Block RAM als FIFO"=Puffer zwischen den Hardware"=Abschnitten, die aus der
+jeweiligen Funktion synthetisiert wurden, kann die produzierende Funktion
+während ihrer Ausführung Teilergebnisse speichern. Die konsumierende Funktion
+kann diese Teilergebnisse nach der initialen Wartezeit (engl. \gls{ii}) direkt
+weiter verarbeiten, ohne auf das Ende der produzierenden Funktion bzw.\ das
+resultierende Gesamtergebnis warten zu müssen. \cite[vgl.][22--23]{hlsintro2019}
+
+Das Producer"=Consumer"=Prinzip wird je nach Hersteller unterschiedlich benannt.
+So nennt sich dieses Verfahren bei Xilinx \textit{Dataflow}, während es bei
+Intel \textit{Channel} heißt.
