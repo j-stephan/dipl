@@ -1,63 +1,463 @@
 \chapter{Der SYCL-Standard}\label{sycl}
 
-\section{Einführung}\label{sycl:intro}
+Die vor einigen Jahren veröffentlichte SYCL"=Spezifikation bietet eine neue
+Möglichkeit, um ein Problem auf algorithmischer Ebene zu formulieren und dann
+über die HLS in eine \gls{fpga}"=Schaltung zu synthetisieren. Eine einfache
+SYCL"=Einführung sowie die für \gls{fpga}s wichtigen Besonderheiten sind daher
+das Thema dieses Kapitels.
 
 \section{Überblick}\label{sycl:ueberblick}
 
-\subsection{Ursprung}\label{sycl:ueberblick:ursprung}
+Mit dem SYCL"=Standard\footnote{Entgegen des optischen Anscheins ist
+\glqq SYCL\grqq\ kein Akronym, sondern ein Eigenname.} verfolgt die
+herausgebende Khronos"=Gruppe das Ziel eines abstrakten C++"=Programmiermodells
+für \gls{opencl}, das die Modernität, Flexibilität und Einfachheit moderner
+C++"=Standards bieten soll, während gleichzeitig die Konzeption und Portabilität
+des \gls{opencl}"=1.2"=Standards beibehalten wird.
+\cite[vgl.][15]{sycl2019}
 
-\subsection{SAXPY und SYCL}\label{sycl:ueberblick:saxpy}
+Von \gls{opencl} erbt SYCL damit den Anspruch, ein einheitliche
+Programmierschnittstelle für verschiedene Beschleunigertypen unterschiedlicher
+Hersteller zu bieten. Das heißt, dass ein einmal geschriebener Quelltext, der
+auf einem Beschleuniger ausgeführt werden soll, möglichst ohne große Änderungen
+sowohl auf einer \gls{cpu}, einer \gls{gpu}, einem \gls{dsp} oder einem
+\gls{fpga} ausführbar sein soll.
+
+SYCL unterscheidet sich von \gls{opencl} im Hinblick auf die Struktur des
+Quelltextes: bei \gls{opencl} sind die Quelltexte für das steuernde Programm
+(\textit{Host}) und den Programmteil, der vom Beschleuniger (\textit{Device})
+ausgeführt wird, voneinander getrennt. Diese Design"=Entscheidung des
+\gls{opencl}"=Standards ist durch das Ziel der Plattformunabhängigkeit
+begründet: ein Entwickler kennt während der Kompilierung des Hauptprogramms
+nicht notwendigerweise die vorhandenen Beschleuniger der Zielplattform. Dadurch
+wird der \textit{Device}"=spezifische Quelltext häufig erst zur Laufzeit des
+Programms kompiliert, da in diesem Moment der konkrete Beschleuniger bekannt
+ist. Dieser Ansatz hat jedoch den Nachteil, dass der Compiler des
+\textit{Device}"=Quelltexts (im Folgenden als \textit{Kernel} bezeichnet) keine
+Annahmen mehr über das \textit{Host}"=Programm bzw. den den \textit{Kernel}
+umgebenden Quelltext mehr treffen kann, was zu einem geringeren
+Optimierungspotential führt. \gls{opencl}"=Kernel lassen sich zwar auch vor
+der Laufzeit des Programms für eine konkrete Zielplattform kompilieren (dies
+geschieht aufgrund der langen Kompilierungszeiten bei \gls{fpga}s), büßen
+dadurch aber ihre Plattformunabhängigkeit ein.
+
+Ein SYCL-Quelltext kennt dagegen keine strikte Trennung zwischen \textit{Host}-
+und \textit{Device}"=Anweisungen. Neben der besseren Analyse des den
+\textit{Kernel} umgebenden Kontexts hat dies den weiteren Vorteil, dass
+\textit{Host} und \textit{Device} Quelltext teilen können, wie etwa den
+beidseitig verwendeter Hilfsfunktionen. Der \textit{Kernel} wird dabei vom
+\textit{Device}"=Compiler extrahiert und in eine Form umgewandelt, die von der
+Ziel"=Hardware zur Laufzeit kompiliert oder ausgeführt werden kann.
+\cite[vgl][35]{sycl2019}
+
+Ein weiterer wichtiger Unterschied zu \gls{opencl} besteht darin, dass
+jedes SYCL"=Programm mit einem Standard"=C++"=Compiler übersetzt werden kann,
+sofern keine direkten Interaktionen mit \gls{opencl} selbst erfolgen. Damit
+lässt sich ein SYCL"=Programm auf jeder \gls{cpu} ausführen, für die ein
+(moderner) C++"=Compiler existiert, wenngleich dies Einschränkungen bei der
+erreichbaren Leistung bedeuten kann. So schreibt die SYCL"=Spezifikation für
+diesen Fall nur die Ausführbarkeit selbst vor, aber nicht die Nutzung aller
+\gls{cpu}"=Kerne oder SIMD"=Register. \cite[vgl.][15]{sycl2019}
+
+Seit der ersten Veröffentlichung im März 2014 \cite[vgl.][]{khronos2014} mit der
+Versionsnummer 1.2 wurde die SYCL"=Spezifikation stetig weiterentwickelt; die
+zur Zeit aktuelle Spezifikation vom April 2019 trägt die Revisionsnummer 1.2.1
+Revision 5. \cite[vgl.][1]{sycl2019}
+
+Teil der Khronos"=Gruppe sind (unter anderen) die \gls{fpga}"=Hersteller Xilinx
+und Intel. Xilinx unterstützt den SYCL"=Standard in Form einer Erweiterung der
+bestehenden HLS"=Werkzeuge bereits, während Intel dies für die eigenen FPGAs
+mittelfristig plant; für Intel"=\gls{cpu}s und "=\gls{gpu}s ist bereits eine
+SYCL"=Implementierung verfügbar (der Abschnitt~\ref{sycl:implementierungen}
+befasst sich mit allen verfügbaren Implementierungen).
+
+\subsection{AXPY und SYCL}\label{sycl:ueberblick:saxpy}
+
+Ein im Bereich der Programmierung häufig verwendetes einführendes Beispiel
+ist der sogenannte AXPY"=Algorithmus, der ursprünglich aus der BLAS"=Bibliothek
+stammt. Dieser führt die Berechnung
+\[\vec{y} = a \cdot \vec{x} + \vec{y}\]
+aus und ist aufgrund seiner Einfachheit und hohen erreichbaren Parallelität
+(sofern $\vec{x}$ und $\vec{y}$ viele Elemente enthalten) sehr beliebt.
+\cite[vgl.][]{lawson1979}
+
+AXPY lässt sich auch für eine Einführung in SYCL gut verwenden und wird daher in
+den folgenden Abschnitten als illustrierendes Beispiel genutzt.
+
+Ein SYCL"=Programm lässt sich in mehrere aufeinander aufbauende Stufen
+unterteilen, wie in Quelltext~\ref{sycl:ueberblick:saxpy:struktur} zu sehen ist.
+Die einzelnen Platzhalter im Quelltext werden in den nächsten Abschnitten mit
+Inhalt gefüllt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+#include <cstdlib>
+
+#include <CL/sycl.hpp>
+
+auto main() -> int
+{
+    // Beschleunigerwahl und Befehlswarteschlange
+
+    // Speicherreservierung und -initialisierung
+
+    // Kerneldefinition und -ausführung
+
+    // Synchronisierung
+
+    return EXIT_SUCCESS;
+}
+    \end{minted}
+    \caption{Struktur eines SYCL-Programms}
+    \label{sycl:ueberblick:saxpy:struktur}
+\end{code}
 
 \subsubsection{Beschleunigerwahl und Befehlswarteschlange}
 \label{sycl:ueberblick:saxpy:queue}
 
-\subsubsection{Speicherreservierung}
+Von \gls{opencl} erbt SYCL die Plattformunabhängigkeit. Es wird das
+Vorhandensein mindestens einer \gls{opencl}"=Plattform auf dem System
+angenommen\footnote{Aber nicht vorausgesetzt! Jede SYCL"=Implementierung muss
+auch ohne eine OpenCL"=Plattform auf dem Host lauffähig sein.}, was im
+Umkehrschluss bedeutet, dass unter Umständen zwischen mehreren verschiedenen
+Plattformen konkurrierender Hersteller gewählt werden muss. 
+
+Die SYCL"=Spezifikation bietet dem Programmierer mehrere Möglichkeiten, die
+gewünschte Plattform für sein Programm auszuwählen. Der einfachste Ansatz
+besteht darin, eine Befehlswarteschlange (die \texttt{queue} genannt wird) für
+einen Beschleuniger zu konstruieren. Über die Befehlswarteschlange erfolgt die
+Kommunikation zwischen dem \textit{Host} und einem \textit{Device}, also
+Kopieroperationen, das Starten eines \textit{Kernels} sowie die
+Synchronisierung. Letztere ist notwendig, da es sich bei dem \textit{Device}
+um eine vom \textit{Host} weitestgehend unabhängige Hardware handelt, die
+Operationen also (aus Sicht des \textit{Hosts}) asynchron ablaufen.
+
+Jedes genutzte \textit{Device} erhält in SYCL mindestens eine eigene
+\texttt{queue}, so dass auch die Nutzung mehrerer Beschleuniger möglich ist.
+
+Eine \texttt{queue} kann durch das Übergeben eines Auswahlkriteriums für das
+gewünschte \textit{Device} konstruiert werden. Die Auswahlkriterien werden in
+der SYCL"=Spezifikation \texttt{device\_selector} genannt. Neben den in der
+Spezifikation vorhandenen Kriterien (beispielsweise \texttt{cpu\_selector},
+\texttt{gpu\_selector} oder \texttt{host\_selector}) ist es Herstellern oder dem
+Programmierer selbst möglich, durch das Erben von der Elternklasse
+\texttt{device\_selector} eigene Kriterien zu definieren. Beispielsweise findet
+sich in den Testfällen der von Xilinx entwickelten SYCL"=Implementierung ein
+\texttt{device\_selector} für die eigenen Geräte, der die \gls{fpga}s über den
+Firmennamen findet. Mit dessen Hilfe lässt sich die Befehlswarteschlange für
+einen Xilinx"=FPGA wie in Quelltext~\ref{sycl:ueberblick:saxpy:queue:src}
+dargestellt erzeugen.
+%
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+class XOCLDeviceSelector : public cl::sycl::device_selector {
+    public:
+        int operator()(const cl::sycl::device &Device) const override {
+            const std::string DeviceVendor =
+                            Device.get_info<cl::sycl::info::device::vendor>();
+            return (DeviceVendor.find("Xilinx") != std::string::npos) ? 1 : -1;
+        }
+};
+
+/* ... */
+
+auto queue = cl::sycl::queue{XOCLDeviceSelector{}};
+    \end{minted}
+    \caption{Auswahl eines Xilinx"=FPGAs und Erzeugung einer zugehörigen
+             Befehlswarteschlange}
+    \label{sycl:ueberblick:saxpy:queue:src}
+\end{code}
+%
+\noindent
+Programmierern, die mehr Kontrolle über die Initialisierung des Beschleunigers
+oder der gesamten SYCL"=Laufzeitumgebung wünschen, stellt die
+SYCL"=Spezifikation das aus \gls{opencl} bekannte Schema zur Verfügung. Der
+Programmierer kann zunächst eine Liste aller zur Verfügung stehenden
+\gls{opencl}"=Plattformen anfordern, aus denen er frei wählen kann. Auf dem
+Fundament der gewählten Plattform erzeugt der Programmierer im nächsten Schritt
+einen SYCL"=Kontext (der einen \gls{opencl}"=Kontext kapselt). Der Kontext
+stellt wiederum eine Liste aller \textit{Devices} der Plattform bereit, aus der
+ein oder mehrere Beschleuniger ausgesucht werden können. Die Auswahl dient dann
+als Parameter für die Erzeugung einer SYCL"=Befehlswarteschlange. In jedem
+der genannten Schritte stehen dem Programmierer zahlreiche Informationen über
+die jeweilige Klasse zur Verfügung (Hersteller der Plattform oder des
+Beschleunigers, Hardware"=Eigenschaften, verfügbare Erweiterungen, usw.), die
+eine Verfeinerung der Auswahl erlauben.
+
+Der Quelltext~\ref{sycl:ueberblick:saxpy:queue:ausfuehrlich} zeigt das
+ausführliche Schema, in den folgenden Abschnitten wird jedoch die oben gezeigte,
+einfachere und kürzere Variante verwendet.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto platforms = cl::sycl::platform::get_platforms();
+auto my_platform = /* ... */;
+
+auto context = cl::sycl::context{my_platform};
+
+auto devices = context.get_devices();
+auto my_device = /* ... */;
+
+auto queue = cl::sycl::queue{my_device};
+    \end{minted}
+    \caption{Ausführliche Beschleunigerwahl und Befehlswarteschlangen"=Konstruktion}
+    \label{sycl:ueberblick:saxpy:queue:ausfuehrlich}
+\end{code}
+
+\subsubsection{Speicherreservierung und -initialisierung}
 \label{sycl:ueberblick:saxpy:buffer}
 
-\subsubsection{Kernel-Ausführung}
+Für die Vektoren $\vec{x}$ und $\vec{y}$ ist eine Speicherreservierung auf dem
+\textit{Device} sowie die Initialisierung des reservierten Speichers notwendig
+(die Konstante $a$ kann als einfacher Parameter übergeben werden). SYCL stellt
+dafür zwei Klassen bereit:
+%
+\begin{itemize}
+    \item Ein \texttt{buffer} kapselt die auf dem \textit{Device} reservierten
+          Speicherbereiche. Dabei ist zu beachten, dass ein \texttt{buffer}
+          keinem \textit{Device} direkt zugeordnet ist, sondern dem gesamten
+          Kontext zur Verfügung steht. Ein \texttt{buffer} kann so auch auf
+          mehreren \textit{Devices} verwendet werden, die notwendige
+          Synchronisierung wird von der SYCL"=Laufzeitumgebung vorgenommen.
+    \item Ein \texttt{accessor} sorgt für den Zugriff auf den von einem
+          \texttt{buffer} verwalteten Speicher. Es existieren verschiedene
+          \texttt{accessor}"=Typen, darunter auch einer für den Speicherzugriff
+          auf der \textit{Host}"=Seite. Mit diesem lässt sich ein
+          \texttt{buffer} direkt initialisieren, ohne eine explizite Kopie
+          anstoßen zu müssen. Aus Sicht des Programmierers lässt sich ein
+          \texttt{accessor} wie ein Zeiger oder Feld verwenden, d.h. über den
+          \texttt{[]}"=Operator.
+\end{itemize}
+%
+\noindent
+Ein \texttt{buffer} besteht aus einer endlichen Anzahl von Elementen desselben
+Typs und kann ein-, zwei- oder dreidimensional sein. Der Elemente-Typ sowie die
+Dimension des Puffers sind als Template"=Parameter zur Compile"=Zeit anzugeben,
+während die Anzahl als Laufzeit"=Parameter übergeben wird. Ein \texttt{accessor}
+lässt sich über die Methode \texttt{get\_access} der \texttt{buffer}"=Klasse
+erzeugen. Dabei wird als Template"=Parameter der gewünschte Zugriffstyp
+angegeben. Diese Information wird von der SYCL"=Laufzeitumgebung zur Sortierung
+der Abhängigkeiten zwischen Operationen auf dem \textit{Device} genutzt (siehe
+auch Abschnitt~\ref{sycl:konzepte:abhaengigkeiten}).
+
+SYCL unterscheidet sechs verschiedene Zugriffstypen:
+\begin{itemize}
+    \item \texttt{read} gestattet ausschließlich lesenden Zugriff auf den
+          Puffer.
+    \item \texttt{write} ermöglicht ausschließlich schreibenden Zugriff.
+    \item Durch \texttt{read\_write} kann sowohl lesend als auch schreibend
+          auf den \texttt{buffer} zugegriffen werden.
+    \item \texttt{discard\_write} ermöglicht ausschließlich schreibenden Zugriff
+          und verwirft alle vorher im Puffer enthaltenen Elemente (also auch bei
+          partiellem Zugriff).
+    \item \texttt{discard\_read\_write} ist die Kombination aus
+          \texttt{read\_write} und \texttt{discard\_write}.
+    \item \texttt{atomic} ermöglicht atomaren Zugriff bei paralleler Nutzung des
+          Puffers.
+\end{itemize}
+
+Für das AXPY"=Beispiel lassen sich die benötigten Felder wie in
+Quelltext~\ref{sycl:ueberblick:saxpy:buffer:src} dargestellt anlegen und
+initialisieren.
+%
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+// Puffer enthalten 1024 Elemente
+const auto buf_range = cl::sycl::range<1>{1024};
+
+// erzeuge eindimensionale Puffer für int-Elemente
+auto buf_x = cl::sycl::buffer<int, 1>{buf_range};
+auto buf_y = cl::sycl::buffer<int, 1>{buf_range};
+
+// greife auf x und y zu, verwirf vorherige Elemente
+auto h_acc_x = buf_x.get_access<cl::sycl::access::mode::discard_write>();
+auto h_acc_y = buf_x.get_access<cl::sycl::access::mode::discard_write>();
+
+// initialisiere x und y
+for(auto i = 0; i < 1024; ++i)
+{
+    h_acc_x[i] = /* ... */;
+    h_acc_y[i] = /* ... */;
+}
+    \end{minted}
+    \caption{Speicherreservierung und -initialisierung in SYCL}
+    \label{sycl:ueberblick:saxpy:buffer:src}
+\end{code}
+
+\subsubsection{Kerneldefinition und -ausführung}
 \label{sycl:ueberblick:saxpy:kernel}
+
+Im nächsten Schritt wird der eigentliche Kernel definiert und ausgeführt. Ein
+SYCL"=Kernel besteht aus zwei Teilen: der eigentlichen Kernel"=Funktion, also
+der Abbildung des Algorithmus auf SYCL"=C++"=Quelltext, sowie den Abhängigkeiten
+(in Form von \texttt{accessor}"=Variablen). Kernel"=Funktion und Abhängigkeiten
+bilden gemeinsam eine \textit{command group} und werden in dieser Form an die
+\texttt{queue} zur Ausführung übergeben. Dabei kann jede \textit{command group}
+nur genau eine Kernel"=Funktion (oder explizite Kopieroperation) enthalten. Es
+bildet sich damit für das AXPY"=Beispiel das in
+Quelltext~\ref{sycl:ueberblick:saxpy:kernel:cg} gezeigte Grundgerüst einer
+\textit{command group}, welche in diesem Fall als C++"=Lambdafunktion notiert
+wird.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+[&](cl::sycl::handler& cgh)
+{
+    auto d_acc_x = buf_x.get_access<cl::sycl::access::mode::read>(cgh);
+    auto d_acc_y = buf_y.get_access<cl::sycl::access::mode::read_write>(cgh);
+
+    // Kernel-Funktionsaufruf
+}
+    \end{minted}
+    \caption{Struktur einer \textit{command group}}
+    \label{sycl:ueberblick:saxpy:kernel:cg}
+\end{code}
+
+SYCL bietet für verschiedene Anwendungsfälle unterschiedliche Methoden für den
+Aufruf der Kernel"=Funktion. Für datenparallele Algorithmen bietet sich vor
+allem der Aufruf über \texttt{parallel\_for} an. Dieser entspricht dem aus
+\gls{opencl} bekannten \textit{NDRange}"=Kernel und nutzt die
+SIMD"=Eigenschaften der zur Verfügung stehenden Beschleuniger. Auf CPUs können
+so durch einen Aufruf mehrere Kerne und deren SIMD"=Register genutzt werden oder
+auf einer GPU die Multiprozessoren und SIMD"=Einheiten. Auf einem FPGA kann
+durch \texttt{parallel\_for} ebenfalls eine SIMD"=Schaltung synthetisiert
+werden. 
+
+Für aufgabenparallele Algorithmen steht in SYCL der Aufruf \texttt{single\_task}
+zur Verfügung, was einem \textit{Task}"=Kernel in \gls{opencl} entspricht.
+Dieser wird z.B. auf einer CPU nur auf einem einzelnen Kern ausgeführt. Mehrere
+Kernel dieses Typs lassen sich dann parallel auf den vorhandenen Kernen
+ausführen.
+
+Für das AXPY"=Beispiel bietet sich der datenparallele Fall an, weshalb die
+Kernel"=Funktion wie in Quelltext~\ref{sycl:ueberblick:saxpy:kernel:call}
+gezeigt aufgerufen wird. Die \num{1024} Elemente der Vektoren werden dabei als
+Arbeitsgröße mit übergeben. Die SYCL"=Laufzeitumgebung generiert daraus einen
+Ausführungsraum mit \num{1024} \textit{work-items}, einer Abstraktion der
+zugrundeliegenden Hardware"=Features (SIMD"=Register, Threads, usw.). Der Index
+des jeweiligen \textit{work-items} wird als Parameter an die Kernel"=Funktion
+übergeben und kapselt einen Index, der für den Zugriff auf ein Element im
+Speicher verwendet werden kann. 
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+[&](cl::sycl::handler& cgh)
+{
+    auto d_acc_x = buf_x.get_access<cl::sycl::access::mode::read>(cgh);
+    auto d_acc_y = buf_y.get_access<cl::sycl::access::mode::read_write>(cgh);
+
+    cgh.parallel_for<class axpy>(cl::sycl::range<1>{1024},
+    [=](cl::sycl::item<1> work_item)
+    {
+        auto idx = work_item.get_id();
+        d_acc_y[idx] = a * d_acc_x[idx] + d_acc_y[idx];
+    });
+}
+    \end{minted}
+    \caption{Struktur einer \textit{command group} mit Kernel"=Aufruf}
+    \label{sycl:ueberblick:saxpy:kernel:call}
+\end{code}
 
 \subsubsection{Synchronisierung}
 \label{sycl:ueberblick:saxpy:sync}
 
-\subsubsection{Zusammenfassung}
-\label{sycl:ueberblick:saxpy:zusammenfassung}
-
-\section{API-Konzepte}\label{sycl:api}
-
-\subsection{Konventionen}\label{sycl:api:konventionen}
-
-Der gesamte Umfang des \gls{sycl}-\gls{api} ist in der Header-Datei
-\texttt{sycl.hpp} enthalten. Diese wird gemeinsam mit dem \gls{sycl}-Compiler
-des jeweiligen Herstellers bzw.\ Software-Anbieters ausgeliefert (siehe
-Abschnitt~\ref{sycl:implementierungen} für eine Übersicht der verfügbaren
-\gls{sycl}-Implementierungen). \cite[vgl.][Abschnitt 4.1]{sycl2019}
-
-\gls{sycl}s Klassen, Konstanten, Typen und Funktionen befinden sich im
-\texttt{cl::sycl}"=Namensraum, herstellerspezifische Erweiterungen sind in
-\texttt{cl::sycl::<hersteller>} definiert. \cite[vgl.][Abschnitt 4.1]{sycl2019}
-
-Die Erzeugung eines Objekts erfordert häufig den Einsatz von
-\texttt{enum class}-Werten oder anderen nicht-fundamentalen Typen als
-\texttt{template}-Parameter. Generell folgt die Objekterzeugung dem im
-Quelltext~\ref{sycl:api:konventionen:obj} dargestellten Muster.
+Nachdem der Kernel an die Befehlswarteschlange übergeben wurde, muss das
+Ergebnis überprüft werden. Um darauf zugreifen zu können, ist zunächst die
+Synchronisierung von \textit{Host} und \textit{Device} erforderlich, da beide
+asynchron zueinander arbeiten. Die \texttt{queue} verfügt jedoch über die
+Methode \texttt{wait}, die den \textit{Host} so lange warten lässt, bis alle bis
+zu diesem Zeitpunkt eingereihten Befehle abgearbeitet wurden. Dies ist in
+Quelltext~\ref{sycl:ueberblick:saxpy:sync:wait} dargestellt. Anschließend
+lassen sich die Elemente des Vektors $\vec{y}$ auf der \textit{Host}"=Seite
+über den während der Initialisierung der Puffer angelegten \texttt{accessor}
+überprüfen.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
-auto sycl_object = cl::sycl::sycl_class<
-                    int,             // gewünschter Datentyp
-                    1,               // gewünschte Dimensionalität
-                    cl::sycl::config // SYCL-Typ oder enum-class-Wert
-                    >{
-                        cl::sycl::range<1> // Dimensionalität wie oben
-                            {42}           // Anzahl enthaltener Elemente
-                    };
+queue.wait();
     \end{minted}
-    \caption{Objekterzeugung mit SYCL}
-    \label{sycl:api:konventionen:obj}
+    \caption{Struktur einer \textit{command group} mit Kernel"=Aufruf}
+    \label{sycl:ueberblick:saxpy:sync:wait}
 \end{code}
 
-\subsection{Referenz-Semantik}\label{sycl:api:referenz}
+\subsubsection{Zusammenfassung}
+\label{sycl:ueberblick:saxpy:zusammenfassung}
+
+Das gesamte SYCL"=AXPY"=Beispiel findet sich in
+Quelltext~\ref{sycl:ueberblick:saxpy:zusammenfassung:code}, einschließlich
+einiger kleinerer, in den vorigen Abschnitten ausgelassener, Details.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+#include <cstdlib>
+#include <CL/sycl.hpp>
+
+class XOCLDeviceSelector : public cl::sycl::device_selector {
+    public:
+        int operator()(const cl::sycl::device &Device) const override {
+            const std::string DeviceVendor =
+                            Device.get_info<cl::sycl::info::device::vendor>();
+            return (DeviceVendor.find("Xilinx") != std::string::npos) ? 1 : -1;
+        }
+};
+
+auto main() -> int {
+    constexpr auto a = 42;
+
+    // Beschleunigerwahl und Befehlswarteschlange
+    auto queue = cl::sycl::queue{XOCLDeviceSelector{}};
+
+    // Speicherreservierung und -initialisierung
+    const auto buf_range = cl::sycl::range<1>{1024};
+
+    auto buf_x = cl::sycl::buffer<int, 1>{buf_range};
+    auto buf_y = cl::sycl::buffer<int, 1>{buf_range};
+
+    auto h_acc_x = buf_x.get_access<cl::sycl::access::mode::discard_write>();
+    auto h_acc_y = buf_x.get_access<cl::sycl::access::mode::discard_write>();
+
+    for(auto i = 0; i < 1024; ++i)
+    {
+        h_acc_x[i] = /* ... */;
+        h_acc_y[i] = /* ... */;
+    }
+
+    // Kerneldefinition und -ausführung
+    queue.submit([&](cl::sycl::handler& cgh)
+    {
+        auto d_acc_x = buf_x.get_access<cl::sycl::access::mode::read>(cgh);
+        auto d_acc_y = buf_y.get_access<cl::sycl::access::mode::read_write>(cgh);
+
+        cgh.parallel_for<class axpy>(cl::sycl::range<1>{1024},
+        [=](cl::sycl::item<1> work_item)
+        {
+            auto idx = work_item.get_id();
+            d_acc_y[idx] = a * d_acc_x[idx] + d_acc_y[idx];
+        });
+    });
+
+    // Synchronisierung
+    queue.wait();
+
+    return EXIT_SUCCESS;
+}
+    \end{minted}
+    \caption{AXPY -- vollständiges SYCL"=Beispiel}
+    \label{sycl:ueberblick:saxpy:zusammenfassung:code}
+\end{code}
+
+\section{Weiterführende Konzepte}\label{sycl:konzepte}
+
+\subsection{Hardware"=Abstraktion}
+
+\subsection{Abhängigkeitsverwaltung}
+\label{sycl:konzepte:abhaengigkeiten}
+
+\subsection{Fehlerbehandlung}
+
+\subsection{Profiling}
+
+\subsection{Referenz-Semantik}
 
 Ein wichtiger Unterschied zur üblichen C++"=Programmierung sind SYCLs
 Referenz"=Semantiken. Die Spezifikation schreibt vor
@@ -88,16 +488,6 @@ verwalten. Die SYCL-Objekte beziehen sich jedoch nach dem Kopiervorgang auf den
 selben Speicherbereich, es wird also bei der Objektkopie kein neuer Speicher
 angelegt. De facto handelt es sich bei der Kopie eines SYCL-Objekts daher
 lediglich um eine Referenz auf das ursprüngliche Objekt.
-
-\subsection{Ausnahmefehler}\label{sycl:api:exceptions}
-
-\subsection{Profiling}\label{sycl:api:profiling}
-
-\section{Hardware-Abstraktion}\label{sycl:api:abstraktion}
-
-\subsection{GPUs und FPGAs}\label{sycl:api:abstraktion:gpufpga}
-
-\section{Weiterführende Konzepte}\label{sycl:konzepte}
 
 \section{Implementierungen}\label{sycl:implementierungen}
 
