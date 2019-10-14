@@ -1,3 +1,15 @@
+\begin{code}
+    \begin{minted}[fontsize=\small,escapeinside=||]{c}
+|\textbf{\textcolor{keyword-green}{\_\_kernel}}| __attribute__((xcl_dataflow))
+void kernel(/* ... */)
+{
+    /* Funktionskörper */
+}
+    \end{minted}
+    \caption{Datenfluss-Erweiterung in OpenCL C}
+    \label{sycl:erweiterungen:xilinx:dataflow:opencl}
+\end{code}
+
 \chapter{Der SYCL-Standard}\label{sycl}
 
 Die vor einigen Jahren veröffentlichte SYCL"=Spezifikation bietet eine neue
@@ -315,8 +327,8 @@ wird.
 
 SYCL bietet für verschiedene Anwendungsfälle unterschiedliche Methoden für den
 Aufruf der Kernel"=Funktion. Für datenparallele Algorithmen bietet sich vor
-allem der Aufruf über \texttt{parallel\_for} an. Dieser entspricht dem aus
-\gls{opencl} bekannten \textit{NDRange}"=Kernel und nutzt die
+allem der Aufruf mittels der Methode \texttt{parallel\_for} an. Diese
+entspricht dem aus \gls{opencl} bekannten \textit{NDRange}"=Kernel und nutzt die
 SIMD"=Eigenschaften der zur Verfügung stehenden Beschleuniger. Auf CPUs können
 so durch einen Aufruf mehrere Kerne und deren SIMD"=Register genutzt werden oder
 auf einer GPU die Multiprozessoren und SIMD"=Einheiten. Auf einem FPGA kann
@@ -448,14 +460,185 @@ auto main() -> int {
 
 \section{Weiterführende Konzepte}\label{sycl:konzepte}
 
+Die Entwicklung komplexerer Programme mit SYCL erfordert die Kenntnis einiger
+weiterer Konzepte, die in der obigen Einführung nicht berücksichtigt wurden.
+Dazu zählen die in SYCL vorhandene Hardware"=Abstraktion sowie die
+Abhängigkeiten zwischen Kerneln. Für die Analyse des entwickelten Programms
+sind außerdem SYCLs Fähigkeiten zur Fehlerbehandlung und zum Profiling relevant.
+
 \subsection{Hardware"=Abstraktion}
 
-\subsection{Abhängigkeitsverwaltung}
+Um eine bessere Anpassung des Programms auf die genutzte Hardware zu
+ermöglichen, ohne die Plattformunabhängigkeit aufzugeben, führte die
+\gls{opencl}"=Spezifikation eine Reihe von Abstraktionen ein. Diese entsprechen
+konzeptionell den in der Hardware vorhandenen Fähigkeiten und wurden ebenfalls
+von SYCL übernommen.
+
+Eine wichtige Abstraktion sind die \textit{compute units} (CU). Diese lassen
+sich auf einen oder mehrere Teile des Beschleunigers abbilden und sind in der
+Lage, einen Kernel auszuführen. Bei einer CPU lässt sich eine CU also auf einen
+Kern abbilden oder bei einer GPU auf einen Multiprozessor. Bei FPGAs ist die
+Abbildung dynamischer: hier hängt die Zahl der verfügbaren CUs davon ab, wie
+viele Ressourcen der Kernel verbraucht. Die Zahl der gleichzeitig platzierbaren
+Kernel entspricht damit der Zahl der möglichen CUs, sofern die Implementierung
+keine Obergrenze für die CU"=Anzahl vorgibt.
+
+Um die Parallelität mehrerer CUs nutzen zu können, ist es sinnvoll, die Arbeit
+des Kernels aufzuteilen. Bei acht verfügbaren CUs wäre es daher wünschenswert,
+die Berechnungen in mindestens acht Blöcken (oder einem Vielfachen davon)
+parallel durchzuführen. Diese Aufteilung wird in \gls{opencl} und SYCL
+\textit{work"=group} genannt. \textit{Work"=groups} werden durch ihre Zuordnung
+zu unterschiedlichen CUs asynchron zueinander ausgeführt und eine
+Synchronisierung der Gruppen ist nicht ohne weiteres möglich.
+
+Die SIMD"=Fähigkeiten der CUs werden ebenfalls abstrahiert und als
+\textit{work"=item} bezeichnet. Eine \textit{work"=group} besteht aus mindestens
+einem \textit{work"=item}, wobei die Implementierung auch eine maximale Anzahl
+von \textit{work"=items} festlegen kann. \textit{Work"=items} werden zueinander
+asynchron ausgeführt, lassen sich jedoch über Funktionen der gemeinsamen
+\textit{work"=group} synchronisieren. Es ist jedoch nicht möglich,
+\textit{work"=items} verschiedener \textit{work"=groups} zu synchronisieren.
+
+Durch diese Hardware"=Abstraktion wird aus Sicht der Programmierers ein
+Indexraum aufgespannt, in dem jedem \textit{work"=item} ein eindeutiger Index
+innerhalb der \textit{work"=group} sowie der Menge aller \textit{work"=items}
+zugewiesen wird. Diese Indizes werden als lokale bzw. globale Indizes
+bezeichnet.
+
+Diese Form der Hardware"=Abstraktion erlaubt dem Programmierer auch die
+einfache Implementierung mehrdimensionaler Probleme, da sowohl die
+\textit{work"=groups} als auch die \textit{work"=items} in bis zu drei
+Dimensionen angeordnet werden können.
+
+Im Unterschied zu \gls{opencl} kann bei SYCL die Angabe der Aufteilung in
+\textit{work"=groups} und \textit{work"=items} entfallen, lediglich die
+Gesamtzahl der \textit{work"=items} muss angegeben werden. In diesem Fall ist
+es Aufgabe der SYCL"=Implementierung, die Zahl der nötigen \textit{work"=groups}
+zu bestimmen sowie die Zuordnung der \textit{work"=items} durchzuführen. Dadurch
+verliert der Programmierer jedoch die Möglichkeit, gruppenweite Operationen
+durchzuführen, wie z.B. die Synchronisierung innerhalb der \textit{work"=group}.
+
+\subsection{Abhängigkeiten zwischen Kerneln}
 \label{sycl:konzepte:abhaengigkeiten}
+
+Alle \textit{command groups}, die der Programmierer in eine
+SYCL"=\texttt{queue} einreiht, werden grundsätzlich asynchron ausgeführt, sofern
+keine Abhängigkeiten zueinander bestehen. Vorhandene Abhängigkeiten werden über
+die von den Kerneln verwendeten Puffer durch die SYCL"=Laufzeitumgebung
+automatisch erkannt und die Kernel in der richtigen Reihenfolge ausgeführt. In
+diesem Aspekt unterscheidet sich SYCL von \gls{opencl}, das neben vollständig
+seriellen Warteschlangen nur asynchrone Warteschlangen kennt, bei denen die
+richtige Sortierung der Kernel Aufgabe des Programmierers ist.
 
 \subsection{Fehlerbehandlung}
 
+SYCL übernimmt das System der Ausnahmefehler (engl. \textit{exceptions}) aus
+der C++"=Standardbibliothek. Das Fehlersystem ist in SYCL asynchron:
+grundsätzlich werden nur (synchrone) Fehler der Host"=Seite ausgegeben, während
+auf der Device"=Seite aufgetretene Fehler ignoriert werden. Das Abfangen der
+Device"=Fehler erfordert einen weiteren Parameter für die \texttt{queue}. Dieser
+ist eine Datenstruktur, welche die asynchronen Fehler der Device"=Seite abfängt
+und in synchrone Host"=Fehler umwandt, die dann vom Programmierer weiter
+verarbeitet werden können (siehe Quelltext~\ref{sycl:konzepte:exceptions:src}).
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+#include <cstdlib>
+#include <CL/sycl.hpp>
+
+class XOCLDeviceSelector : public cl::sycl::device_selector {
+    /* ... */
+};
+
+auto main() -> int
+{
+    try
+    {
+        auto exception_handler = [] (cl::sycl::exception_list exceptions)
+        {
+            for(std::exception_ptr e : exceptions)
+            {
+                try
+                {
+                    std::rethrow_exception(e);
+                }
+                catch(const cl::sycl::exception& err)
+                {
+                    /* Fehlerbehandlung Device */
+                }
+            }
+        };
+
+        // Beschleunigerwahl und Befehlswarteschlange
+        auto queue = cl::sycl::queue{XOCLDeviceSelector{},
+                                     exception_handler};
+
+        /* ... */
+
+        // Synchronisierung und Ausnahmefehler
+        queue.wait_and_throw();
+    }
+    catch(const cl::sycl::exception& err)
+    {
+        /* Fehlerbehandlung Host */
+    }
+
+    return EXIT_SUCCESS;
+}
+    \end{minted}
+    \caption{Verwendung von SYCL"=Ausnahmefehlern}
+    \label{sycl:konzepte:exceptions:src}
+\end{code}
+
 \subsection{Profiling}
+
+SYCL ermöglicht über die \texttt{queue} ein rudimentäres Profiling. Dieses
+bietet dem Programmierer die Möglichkeit, über von der \texttt{queue} generierte
+\texttt{events} Informationen über Start- und Endzeitpunkt der Kernel sowie den
+gegenwärtigen Ausführungsstand eines Kernels zu erhalten. Dazu muss der
+\texttt{queue} ein besonderer Parameter während der Konstruktion übergeben
+werden (siehe Quelltext~\ref{sycl:konzepte:profiling:src}).
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+#include <cstdlib>
+#include <CL/sycl.hpp>
+
+class XOCLDeviceSelector : public cl::sycl::device_selector {
+    /* ... */
+};
+
+auto main() -> int
+{
+    // Beschleunigerwahl und Befehlswarteschlange
+    auto queue = cl::sycl::queue{XOCLDeviceSelector{},
+                                 cl::sycl::property::queue::enable_profiling{}};
+
+    // Kernel-Event generieren
+    auto event = queue.submit(/* ... */);
+
+    // Ausführungsstatus abfragen - Rückgabe: submitted, running oder complete
+    auto status =
+        event.get_info<cl::sycl::info::event::command_execution_status>();
+
+    // Synchronisierung
+    queue.wait();
+
+    // Profilinginformationen abfragen - Rückgabe: Zeitpunkt in ns
+    auto start =
+        event.get_profiling_info<
+                            cl::sycl::info::event_profiling::command_start>();
+    auto stop =
+        event.get_profiling_info<cl::sycl::info::event_profiling::command_end>();
+
+    auto duration = stop - start;
+
+    return EXIT_SUCCESS;
+}
+    \end{minted}
+    \caption{Verwendung von SYCL"=Profiling}
+    \label{sycl:konzepte:profiling:src}
+\end{code}
 
 \subsection{Referenz-Semantik}
 
@@ -567,96 +750,30 @@ mindestens den Standard in Version 1.2 unterstützt.
 
 \section{Erweiterungen für FPGAs}\label{sycl:erweiterungen}
 
-Wie im vorherigen Abschnitt dargestellt wurde, stehen für die \gls{fpga}s der
-großen Hersteller Intel und Xilinx bereits experimentelle
-\gls{sycl}"=Implementierungen zur Verfügung. Um die speziellen Eigenschaften
-dieses Hardware"=Typs besser nutzen zu können, gibt es in beiden
-Implementierungen Erweiterungen, die \gls{sycl}s Umfang um
-\gls{fpga}"=spezifische Funktionalität ergänzen.
-
-\subsection{Intel-FPGAs}\label{sycl:erweiterungen:intel}
-
-Die Firma Intel will mit ihrer SYCL-Implementierung wahrscheinlich mittel- bis
-langfristig auch die eigenen \glspl{fpga} ansprechen. Um die Eigenheiten dieses
-Hardware-Typs besser nutzen zu können, werden in der Header-Datei
-\texttt{CL/sycl/intel/fpga\_extensions.hpp} bereits zwei FPGA-spezifische
-Erweiterungen mitgeliefert, die in den nächsten Abschnitten kurz vorgestellt
-werden.
-
-\subsubsection{Beschleuniger-Auswahl}\label{sycl:erweiterungen:intel:selector}
-
-SYCL bietet im Rahmen der Spezifikation nur \texttt{device\_selector}-Typen
-für \gls{cpu}s und \gls{gpu}s an. Um einfach auf Intel-\gls{fpga}s zugreifen
-zu können, gibt es die Erweiterung \texttt{fpga\_selector} innerhalb des
-für Intel-Erweiterungen vorgesehenen Namensraums. Diese kann wie die in der
-Spezifikation vorhandenen Varianten an den Konstruktor einer \texttt{queue}
-übergeben werden (siehe Quelltext~\ref{sycl:erweiterungen:intel:selector:src}).
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-auto queue = cl::sycl::queue{cl::sycl::intel::fpga_selector{}};
-    \end{minted}
-    \caption{Auswahl eines Intel-FPGA}
-    \label{sycl:erweiterungen:intel:selector:src}
-\end{code}
-
-\subsubsection{Register-Markierung}\label{sycl:erweiterungen:intel:register}
-
-Um dem Programmierer mehr Kontrolle über die Ressource des generierten
-Bitstreams zu geben und um den Compiler bei der Synthese eines effizienten
-Bitstreams zu unterstützen, können Variablen durch die Erweiterung
-\texttt{fpga\_reg} direkt in einem Register platziert werden (siehe
-Quelltext~\ref{sycl:erweiterungen:intel:register:src}). Wie das Beispiel zeigt,
-lassen sich auf diese Art auch ganze Felder in einzelne Register zerlegen.
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-auto c = cl::sycl::intel::fpga_reg(a[k]) + b[k];
-    \end{minted}
-    \caption{Zuordnung einer Variable zu einem FPGA-Register}
-    \label{sycl:erweiterungen:intel:register:src}
-\end{code}
-
-\subsection{Xilinx-FPGAs}\label{sycl:erweiterungen:xilinx}
-
-Der im Rahmen des triSYCL-Projekts entwickelte Compiler basiert auf der
-Intel-Implementierung und wird maßgeblich von Xilinx entwickelt. Aus diesem
-Grund finden sich in dieser Implementierung einige Erweiterungen, die auf den
-Einsatz von Xilinx-\gls{fpga}s zugeschnitten sind. Diese sind in der
-Header-Datei \texttt{CL/sycl/xilinx/fpga.hpp} definiert und werden in den
-folgenden Abschnitten vorgestellt.
+Für die \gls{fpga}s des Herstellers Xilinx steht bereits eine experimentelle
+\gls{sycl}"=Implementierung zur Verfügung. Um die speziellen Eigenschaften
+dieses Hardware"=Typs besser nutzen zu können, gibt es Erweiterungen, die
+\gls{sycl}s Funktionsumfang um \gls{fpga}"=spezifische Funktionalität ergänzen.
+Diese sind in der Header-Datei \texttt{CL/sycl/xilinx/fpga.hpp} definiert und
+werden in den folgenden Abschnitten vorgestellt.
 
 \subsubsection{Datenflussorientierte Ausführung}
 \label{sycl:erweiterungen:xilinx:dataflow}
 
 Aus Xilinx' OpenCL-Implementierung übernimmt der triSYCL-Compiler eine
-datenflussbasierte Erweiterung. Diese Erweiterung ermöglicht die task-parallele
-Ausführung aufeinanderfolgender Funktionen und Schleifen. Mit ihr wird der
-Compiler angewiesen, die Abhängigkeiten zwischen den einzelnen Schritten zu
-analysieren und für diese Schritte das
+datenflussbasierte Erweiterung. Diese Erweiterung ermöglicht die
+aufgabenparallele Ausführung aufeinanderfolgender Funktionen und Schleifen. Mit
+ihr wird der Compiler angewiesen, die Abhängigkeiten zwischen den einzelnen
+Schritten zu analysieren und für diese Schritte das
 \textit{Producer}/\textit{Consumer}-Prinzip durch eine Zwischenschaltung von
 Puffern durchzusetzen. \cite[siehe][70\psqq]{sdaccelopt2019}
 
 In OpenCL ist diese Erweiterung als \texttt{xcl\_dataflow} verfügbar und wird
 im OpenCL"=C"=Dialekt einem Kernel, einer Funktion oder einer Schleife als
-Attribut zugewiesen (siehe
-Quelltext~\ref{sycl:erweiterungen:xilinx:dataflow:opencl}). Der
-SYCL-Implementierung steht diese Erweiterung unter dem Namen \texttt{dataflow}
-zur Verfügung. Mit ihr werden Funktionen markiert, auf deren innere Funktionen
-und Schleifen die entsprechenden Bitstream-Optimierungen angewandt werden (siehe
-Quelltext~\ref{sycl:erweiterungen:xilinx:dataflow:sycl}).
-
-\begin{code}
-    \begin{minted}[fontsize=\small,escapeinside=||]{c}
-|\textbf{\textcolor{keyword-green}{\_\_kernel}}| __attribute__((xcl_dataflow))
-void kernel(/* ... */)
-{
-    /* Funktionskörper */
-}
-    \end{minted}
-    \caption{Datenfluss-Erweiterung in OpenCL C}
-    \label{sycl:erweiterungen:xilinx:dataflow:opencl}
-\end{code}
+Attribut zugewiesen. Der SYCL"=Implementierung steht diese Erweiterung unter dem
+Namen \texttt{dataflow} zur Verfügung. Mit ihr werden Funktionen markiert, auf
+deren innere Funktionen und Schleifen die entsprechenden Optimierungen angewandt
+werden (siehe Quelltext~\ref{sycl:erweiterungen:xilinx:dataflow:sycl}).
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -680,8 +797,8 @@ struct kernel
 \subsubsection{Pipeline-basierte Ausführung}
 \label{sycl:erweiterungen:xilinx:pipeline}
 
-Die triSYCL-Implementierung übernimmt aus Xilinx' OpenCL-Umgebung eine
-pipeline-basierte Erweiterung. Mit dieser kann der Compiler angewiesen werden,
+Die triSYCL"=Implementierung übernimmt aus Xilinx' OpenCL-Umgebung eine
+pipeline"=basierte Erweiterung. Mit dieser kann der Compiler angewiesen werden,
 die Iterationen einer Schleife zu überlappen. Dadurch können die Iterationen
 bestimmte Ressourcen zeitgleich nutzen, wodurch sich der Ressourcenverbrauch
 insgesamt sowie die Latenz verringern können.
@@ -689,26 +806,10 @@ insgesamt sowie die Latenz verringern können.
 
 In der von Xilinx ausgelieferte OpenCL-Implementierung handelt es sich bei
 dieser Erweiterung um das Attribut \texttt{xcl\_pipeline\_loop}, mit dem
-Schleifen markiert werden (siehe
-Quelltext~\ref{sycl:erweiterungen:xilinx:pipeline:opencl}). In SYCL ist sie
-unter dem Namen \texttt{pipeline} verfügbar und wird auf Funktionen angewendet,
-deren innere Schleifen dann dieser Optimierung unterzogen werden (siehe
+Schleifen markiert werden. In SYCL ist sie unter dem Namen \texttt{pipeline}
+verfügbar und wird auf Funktionen angewendet, deren innere Schleifen dann dieser
+Optimierung unterzogen werden (siehe
 Quelltext~\ref{sycl:erweiterungen:xilinx:pipeline:sycl}).
-
-\begin{code}
-    \begin{minted}[fontsize=\small,escapeinside=||]{c}
-|\textbf{\textcolor{keyword-green}{\_\_kernel}}| void kernel(/* ... */)
-{
-    __attribute__((xcl_pipeline_loop))
-    for(int i = 0; i < 32; ++i)
-    {
-        /* Schleifenkörper */
-    }
-}
-    \end{minted}
-    \caption{Pipeline-Erweiterung in OpenCL C}
-    \label{sycl:erweiterungen:xilinx:pipeline:opencl}
-\end{code}
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -770,32 +871,11 @@ definiert. \cite[vgl.][17]{sdxpragma2019}
 \texttt{<Dimension>} gibt an, welche Dimension des Feldes auf die beschriebene
 Weise partitioniert werden soll. \cite[vgl.][17]{sdxpragma2019}
 
-Der Quelltext~\ref{sycl:erweiterungen:xilinx:partitioning:opencl} zeigt den
-Gebrauch dieser Erweiterung in einem OpenCL-Kernel.
-
 In SYCL steht diese Erweiterung unter dem Namen \texttt{partition\_array} zur
 Verfügung, wobei die Zuweisung der oben aufgeführten Parameter hier über
 Templates erfolgt. Der
 Quelltext~\ref{sycl:erweiterungen:xilinx:partitioning:sycl} zeigt die Anwendung
 dieser Erweiterung.
-
-\begin{code}
-    \begin{minted}[fontsize=\small,escapeinside=||]{c}
-|\textbf{\textcolor{keyword-green}{\_\_kernel}}| void kernel(/* ... */)
-{
-    // zyklische Verteilung von a auf 4 physische Speicher
-    int a[16] __attribute__((xcl_array_partition(cyclic, 4, 1)));
-
-    // blockweise Verteilung von b mit 4 Elementen pro physischem Speicher
-    int b[16] __attribute__((xcl_array_partition(block, 4, 1)));
-
-    // Zerlegung von c in 16 Register
-    int c[16] __attribute__((xcl_array_partition(complete, 1)));
-}
-    \end{minted}
-    \caption{Feldpartitionierung in OpenCL C}
-    \label{sycl:erweiterungen:xilinx:partitioning:opencl}
-\end{code}
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
