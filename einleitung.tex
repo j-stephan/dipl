@@ -1,14 +1,80 @@
 \chapter{Einleitung}\label{einleitung}
 
-\section{Motivation}\label{einleitung:motivation}
+Die Hardware"=Konfiguration moderner Computersysteme ist seit einigen Jahren
+zunehmend heterogen geworden. Mobiltelefone und PCs verfügen nicht nur über
+mehrkernige, leistungsstarke Prozessoren (\gls{cpu}), sondern auch über
+dedizierte Chips zur Grafikherstellung (\gls{gpu}). Dagegen verschwimmt bei
+Spielekonsolen und die Unterscheidung zwischen Haupt- und Grafikprozessoren in
+Form integrierter Chips, die beide Funktionalitäten performant abdecken können
+(\gls{apu}). Im Bereich des \gls{hpc} sind viele verschiedene Beschleuniger seit
+jeher im Einsatz, seien es CPUs mit besonders vielen Kernen, von den GPUs
+abstammende Beschleuniger ohne grafische Ausgabe wie NVIDIAs Tesla"=Reihe, oder
+Hybride wie Intels kurzlebiges Xeon"=Phi"=Projekt.
 
-\gls{cpu}
-\gls{gpu}
-\gls{fpga}
+Allen gemeinsam ist die Idee der Beschleunigung eines Algorithmus durch dessen
+Parallelisierung, also die parallele Ausführung einzelner Schleifeniterationen
+auf den in den Beschleunigern vorhandenen Kernen, Multiprozessoren usw. Wie eine
+CPU sind die Beschleuniger allerdings darauf ausgelegt, von verschiedenen
+Algorithmen genutzt werden zu können, und entsprechend allgemein aufgebaut. Der
+Programmierer findet also möglicherweise eine Hardware"=Plattform vor, die für
+seinen Algorithmus nicht ideal geeignet ist.
 
-\gls{gpgpu}
+In dieses Feld stoßen seit einigen Jahren die Hersteller Intel und Xilinx mit
+programmierbarer Hardware (\gls{fpga}) vor. Gegenüber den oben genannten
+Beschleunigern haben diese den Vorteil, dass die einzelnen Bestandteile der
+Hardware weitestgehend frei verschaltbar sind, wenngleich mit deutlich höherem
+Zeitaufwand. Dies ist vor allem für Programmierer interessant, die die Hardware
+für genau einen Zweck verwenden möchten. Lange Zeit stand dem jedoch die
+vergleichsweise schwierige Verwendung der FPGAs entgegen, da diese einen
+Schaltungsentwurf auf der Register"=Ebene (im Gegensatz zur Programmierung auf
+der algorithmischen Ebene) benötigten. Durch das Aufkommen automatischer
+Synthese"=Werkzeuge, die Algorithmen in Schaltungen umwandeln können, wurde der
+Entwicklungsprozess in jüngerer Zeit allerdings deutlich vereinfacht.
 
-\gls{kernel}
+Ein weiteres Hindernis für die Entwicklung paralleler Programme ist die
+fehlende Portabilität der Werkzeuge: anfangs waren nur GPUs des Herstellers
+NVIDIA ohne Umwege über Schnittstellen zur Grafikdarstellung programmierbar,
+erforderten dafür aber die Nutzung der NVIDIA"=eigenen CUDA"=Schnittstelle, die
+mit Konkurrenzprodukten nicht kompatibel war. Für CPUs etablierte sich schnell
+die OpenMP"=Schnittstelle als Mittel der Wahl für die Nutzung mehrerer Kerne.
+Die Vektorisierung hingegen erfordert noch immer entweder befehlssatzspezifische
+Erweiterungen (die auch innerhalb derselben Befehlssatzfamilie mitunter
+inkompatibel sind) oder sehr gut optimierende Compiler. Die Synthese"=Werkzeuge
+der FPGA"=Hersteller ermöglichten zwar die Nutzung der Hochsprachen, reicherten
+diese aber mit zahlreichen Erweiterungen an, was die Übertragung auf andere
+Plattformen erschwerte.
+
+Um die Entwicklung portabler Programme zu ermöglichen, wurden früh verschiedene
+Ansätze entwickelt. Das Khronos"=Industriekonsortium gab wenige Jahre nach der
+ersten CUDA"=Veröffentlichung die Spezifikation der OpenCL"=Schnittstelle
+heraus. Dahinter verbarg sich die Idee, eine einheitliche Schnittstelle für den
+Programmierer zu schaffen, die im Hintergrund von jedem Hardware"=Hersteller für
+die eigenen Produkte implementiert und optimiert wird. Die OpenCL"=Entwicklung
+wurde anfangs von zahlreichen namhaften Hard- und Software"=Herstellern
+unterstützt (z.B. Apple, AMD, NVIDIA, Intel und Xilinx), flachte jedoch nach
+wenigen Jahren wieder ab und konnte sich in der GPU"=Welt nicht gegen CUDA
+und auf CPUs nicht gegen OpenMP durchsetzen.
+
+Ein anderer Ansatz liegt in der Entwicklung eines abstrakten Interfaces, das im
+Hintergrund auf die herstellereigenen Schnittstellen abgebildet wird. Ein solches
+Interface transformiert einen vom Programmierer entwickelten Quelltext in einen
+äquivalenten CUDA- oder OpenMP"=Quelltext, ohne dass der Programmierer selbst
+weitere Anstrengungen in dieser Richtung unternehmen muss. So genügt ein
+einfacher Austausch der Zielplattform und eine erneute Kompilierung für die
+Nutzung eines anderen Hardware"=Typs. Dieses Prinzip wird von mehreren
+parallelen Projekten verfolgt, wie etwa der vom Helmholtz"=Zentrum
+Dresden"=Rossendorf entwickelten Alpaka"=Bibliothek oder der Kokkos"=Bibliothek,
+die von einer Forschungseinrichtung des US"=amerikanischen Energieministeriums
+stammt. Bisher bieten jedoch weder Alpaka noch Kokkos eine Unterstützung für
+FPGAs an.
+
+Seit einigen Jahren versucht das Khronos"=Konsortium erneut, einen Standard für
+die parallele Programmierung zu etablieren. Dieser SYCL genannte Ansatz basiert
+auf dem einige Jahre älteren OpenCL, bietet aber eine deutlich modernere und
+fortschrittlichere Programmierschnittstelle. Der neue Standard wird unter
+anderem von den FPGA"=Herstellern Xilinx und Intel vorangetrieben und ist damit
+ein interessantes Implementierungsziel für die oben genannten
+Abstraktionsbibliotheken.
 
 \section{Forschungsstand}\label{einleitung:forschung}
 
