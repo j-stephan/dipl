@@ -1,7 +1,59 @@
 \chapter{Die Alpaka-Bibliothek}\label{alpaka}
 
-\section{Einführung}\label{alpaka:intro}
+Dieses Kapitel führt in die Alpaka"=Bibliothek ein. Wie im vorherigen
+SYCL"=Kapitel wird der grundlegende Aufbau eines Alpaka"=Programms anhand des
+AXPY"=Beispiels dargestellt. Ein weiterer Abschnitt ist den darauf aufbauenden,
+erweiterten Konzepten, wie etwa der Hardware"=Abstraktion, gewidmet.
 
-\section{Grundlagen}\label{alpaka:grundlagen}
+\section{Überblick}\label{alpaka:ueberblick}
 
-\section{Weiterführende Konzepte}\label{alpaka:struktur}
+Alpaka (Eigenschreibweise: \textit{alpaka}) steht für
+\textit{Abstraction Library for Parallel Kernel Acceleration} und wurde
+ursprünglich von Benjamin Worpitz im Rahmen seiner Masterarbeit entwickelt
+\cite[vgl.][]{worpitz2015}. Mittlerweile wird die Entwicklung durch
+die Gruppe \textit{Computergestützte Strahlenphysik} des
+\textit{Instituts für Strahlenphysik} am
+\textit{Helmholtz"=Zentrum Dresden"=Rossendorf} fortgeführt.
+
+Die Alpaka"=Bibliothek definiert eine abstrakte C++"=Schnittstelle, mit deren
+Hilfe parallele Programme geschrieben werden können. Im Hintergrund wird Alpaka
+auf hersteller- oder hardware"=spezifische Schnittstellen, wie CUDA oder OpenMP,
+-- im Folgenden als \textit{Backend} bezeichnet -- abgebildet. Alpaka ist somit
+ein einheitliches Paket, das die abstrakte Schnittstelle nach außen und die
+konkrete Implementierung vereinigt. Damit unterscheidet sich die Bibliothek von
+ähnlichen Ansätzen wie OpenCL oder SYCL, die ebenfalls eine abstrakte
+Schnittstelle definieren, die Implementierung jedoch den Hardware- und
+Software"=Herstellern überlassen.
+
+Wie bei SYCL sind die Quelltexte für \textit{Host} und \textit{Device} nicht
+voneinander getrennt. Die Abbildung auf ein oder mehrere Backends erfolgt zur
+Compile"=Zeit durch Template"=Metaprogrammierung, wodurch ein
+Abstraktions"=Overhead zur Laufzeit vermieden wird.
+
+\subsection{AXPY und Alpaka}\label{alpaka:ueberblick:axpy}
+
+\subsubsection{Beschleunigerwahl und Befehlswarteschlange}
+\label{alpaka:ueberblick:axpy:queue}
+
+\subsubsection{Speicherreservierung und -initialisierung}
+\label{alpaka:ueberblick:axpy:buffer}
+
+\subsubsection{Kerneldefinition und -ausführung}
+\label{alpaka:ueberblick:axpy:kernel}
+
+\subsubsection{Synchronisierung}
+\label{alpaka:ueberblick:axpy:sync}
+
+\subsubsection{Zusammenfassung}
+\label{alpaka:ueberblick:axpy:zusammenfassung}
+
+\section{Weiterführende Konzepte}\label{alpaka:konzepte}
+
+\subsection{Hardware"=Abstraktion}
+
+\subsection{Abhängigkeiten zwischen Kerneln}
+\label{alpaka:konzepte:abhaengigkeiten}
+
+\subsection{Fehlerbehandlung}
+
+\subsection{Profiling}

@@ -81,6 +81,19 @@
     doi = {10.1109/FPL.2006.311203}
 }
 
+@inproceedings{papakonstantinou2009,
+    author = {Papakonstantinou, Alexandros and Gururaj, Karthik and
+              Stratton, John A. and Chen, Deming and Cong, Jason and
+              Hwu, Wen-Mei W.},
+    title = {{FCUDA}: Enabling efficient compilation of {CUDA} kernels onto
+             {FPGAs}},
+    year = 2009,
+    month = jul,
+    booktitle = {2009 IEEE \nth{7} Symposium on Application Specific Processors},
+    pages = {35--42},
+    doi = {10.1109/SASP.2009.5226333}
+}
+
 @book{hawkins2010,
     author = {Hawkins, Charles and Segura, Jaume},
     title = {Introduction to Modern Digital Electronics},
@@ -88,6 +101,16 @@
     publisher = {SciTech Publishing, Inc.},
     edition = {Preliminary Edition},
     isbn = {978-1-891-12107-4}
+}
+
+@manual{opencl2012,
+    editor = {Munshi, Aaftab},
+    title = {The OpenCL Specification},
+    year = 2012,
+    month = nov,
+    edition = {Version 1.2, Revision 19},
+    organization = {The Khronos Group},
+    address = {9450 SW Gemini \mbox{Drive} \#45043, Beaverton, OR 97009-6018, Vereinigte Staaten von Amerika}
 }
 
 @article{khronosspir2012,
@@ -109,6 +132,18 @@
     doi = {10.1145/2458523.2458532}
 }
 
+@inproceedings{settle2013,
+    author = {Settle, Sean O.},
+    title = {High"=performance Dynamic Programming on FPGAs with OpenCL},
+    year = {2013},
+    month = sep,
+    booktitle = {2013 IEEE High Performance Extreme Computing Conference},
+    pages = {},
+    doi = {},
+    note = {Laut Angabe im Artikel Teil des genannten Konferenzbandes, wird
+            jedoch nicht im Inhaltsverzeichnis des besagten Bandes aufgeführt.}
+}
+
 @book{kesel2013,
     author = {Kesel, Frank and Bartholomä, Ruben},
     title = {Entwurf von digitalen Schaltungen und Systemen mit HDLs und FPGAs -- Einführung mit VHDL und SystemC},
@@ -125,6 +160,19 @@
     journal = {The Khronos Group Inc},
     url = {https://www.khronos.org/news/press/khronos-releases-sycl-1.2-provisional-specification},
     urldate = {2019-09-26}
+}
+
+@thesis{worpitz2015,
+    author = {Worpitz, Benjamin},
+    title = {Investigating performance portability of a highly scalable
+             particle"=in"=cell simulation code on various multi"=core
+             architectures},
+    year = 2015,
+    month = oct,
+    school = {Technische Universität Dresden},
+    type = {Masterarbeit},
+    address = {Fakultät Informatik, Helmholtzstraße 10, 01069 Dresden},
+    doi = {10.5281/zenodo.49768}
 }
 
 @techreport{wong2016,
@@ -170,7 +218,7 @@
 @inproceedings{copik2017,
     author = {Copik, Marcin and Kaiser, Hartmut},
     title = {Using SYCL as an Implementation Framework for HPX.Compute},
-    year = {2017},
+    year = 2017,
     month = may,
     booktitle = {Proceedings of the \nth{5} International Workshop on OpenCL},
     articleno = {30},
@@ -180,11 +228,21 @@
 @inproceedings{doumoulakis2017,
     author = {Doumoulakis, Anastasios and Keryell, Ronan and O'Brien, Kenneth},
     title = {SYCL C++ and \mbox{OpenCL} interoperability experimentation with triSYCL},
-    year = {2017},
+    year = 2017,
     month = may,
     booktitle = {Proceedings of the \nth{5} International Workshop on OpenCL},
     articleno = {31},
     doi = {10.1145/3078155.3078188}
+}
+
+@inproceedings{aliaga2017,
+    author = {Aliaga, José Ignacio and Reyes, Ruymán and Goli, Mehdi},
+    title = {SYCL"=BLAS: Leveraging Expression Trees for Linear Algebra},
+    year = 2017,
+    month = may,
+    booktitle = {Proceedings of \nth{5} International Workshop on OpenCL},
+    articleno = {32},
+    doi = {10.1145/3078155.3078189}
 }
 
 @thesis{benner2018,
@@ -258,6 +316,23 @@
     doi = {10.1109/ISCA.2018.00012}
 }
 
+@article{duarte2018,
+    author = {Duarte, Javier and Han, Song and Harris, Philip and
+              Jindariani, Sergo and Kreinar, Edward and Kreis, Benjamin and
+              Loncar, Vladimir and Ngadiuba, Jennifer and Pierini, Maurizio
+              and Rivera, Ryan and Tran, Nhan and Wu, Zhenbin},
+    title = {Fast inference of deep neural networks in {FPGAs} for particle
+             physics},
+    year = 2018,
+    month = jul,
+    publisher = {{IOP} Publishing},
+    journal = {Journal of Instrumentation},
+    volume = {Jahrgang 13},
+    issue = {Ausgabe 07},
+    doi = {10.1088/1748-0221/13/07/p07027},
+    articleno = {27}
+}
+
 @manual{alveobrief2018,
     author = {{Xilinx, Inc.}},
     title = {Xilinx Alveo -- Adaptable Accelerator Cards for Data Center Workloads},
@@ -302,8 +377,19 @@
     year = {2019},
     month = may,
     booktitle = {Proceedings of the \nth{7} International Workshop on OpenCL},
-    articleno = {??},
+    articleno = {10},
     doi = {10.1145/3318170.3318183}
+}
+
+@inproceedings{hammond2019,
+    author = {Hammond, Jeff R. and Kinsner, Michael and Brodman, James},
+    title = {A comparative analysis of Kokkos and SYCL as heterogeneous, parallel
+             programming models for C++ applications},
+    year = 2019,
+    month = may,
+    booktitle = {Proceedings of the \nth{7} International Workshop on OpenCL},
+    articleno = {15},
+    doi = {10.1145/3318170.3318193}
 }
 
 @manual{ultrascaledsp2019,
@@ -319,21 +405,11 @@
 @standard{sycl2019,
     editor = {Keryell, Ronan and Rovatsou, Maria and Howes, Lee},
     title = {SYCL\texttrademark\ Specification},
-    year = {2019},
+    year = 2019,
     edition = {Version 1.2.1, Revision 5},
     month = apr,
     organization = {The Khronos Group},
     address = {9450 SW Gemini \mbox{Drive} \#45043, Beaverton, OR 97008-6018, Vereinigte Staaten von Amerika}
-}
-
-@article{rodriguez-gutiez2019,
-    author = {Rodriguez-Gutiez, Eduardo and Moreton-Fernandez, Ana and Gonzalez-Escribano, Arturo and Llanos, Diego R.},
-    title = {Toward a BLAS library truly portable across different accelerator types},
-    year = {2019},
-    month = jun,
-    journal = {The Journal of Supercomputing},
-    note = {Nach Auskunft des Verlages keiner speziellen Ausgabe zugeordnet.},
-    doi = {10.1007/s11227-019-02925-3}
 }
 
 @manual{sdaccelopt2019,

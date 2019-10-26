@@ -1,15 +1,16 @@
 \chapter{Einleitung}\label{einleitung}
 
-Die Hardware"=Konfiguration moderner Computersysteme ist seit einigen Jahren
-zunehmend heterogen geworden. Mobiltelefone und PCs verfügen nicht nur über
-mehrkernige, leistungsstarke Prozessoren (\gls{cpu}), sondern auch über
+Die Hardware"=Konfigurationen moderner Computersysteme sind in den letzten
+Jahren deutlich heterogener geworden. Mobiltelefone und PCs verfügen nicht nur
+über mehrkernige, leistungsstarke Prozessoren (\gls{cpu}), sondern auch über
 dedizierte Chips zur Grafikherstellung (\gls{gpu}). Dagegen verschwimmt bei
-Spielekonsolen und die Unterscheidung zwischen Haupt- und Grafikprozessoren in
-Form integrierter Chips, die beide Funktionalitäten performant abdecken können
-(\gls{apu}). Im Bereich des \gls{hpc} sind viele verschiedene Beschleuniger seit
-jeher im Einsatz, seien es CPUs mit besonders vielen Kernen, von den GPUs
-abstammende Beschleuniger ohne grafische Ausgabe wie NVIDIAs Tesla"=Reihe, oder
-Hybride wie Intels kurzlebiges Xeon"=Phi"=Projekt.
+Spielekonsolen und Laptops die Unterscheidung zwischen Haupt- und
+Grafikprozessoren in Form integrierter Chips, die beide Funktionalitäten
+performant abdecken können (\gls{apu}). Im Bereich des \gls{hpc} sind
+verschiedene Beschleunigertypen seit jeher im Einsatz, seien es CPUs mit
+besonders vielen Kernen, von den GPUs abstammende Beschleuniger ohne grafische
+Ausgabe wie NVIDIAs Tesla"=Reihe, oder Hybride wie Intels
+kurzlebiges Xeon"=Phi"=Projekt.
 
 Allen gemeinsam ist die Idee der Beschleunigung eines Algorithmus durch dessen
 Parallelisierung, also die parallele Ausführung einzelner Schleifeniterationen
@@ -78,18 +79,81 @@ Abstraktionsbibliotheken.
 
 \section{Forschungsstand}\label{einleitung:forschung}
 
-\cite{howes2006} - Vergleich zwischen GPUs, FPGAs und Playstation-2-Vektoreinheit durch einheitlichen Quellcode (A Stream Compiler / ASC) \\
-\cite{gaster2013} - SYCL-Vorläufer OpenCL C++ \\
-\cite{wong2016} - Wechselwirkung zwischen SYCL und C++ (inkl. Problemen) \\
-\cite{fifield2016} - OpenCL-Optimierung auf Xilinx-FPGAs \\
-\cite{copik2017} - SYCL-Backend für HPX.Compute\\
-\cite{doumoulakis2017} - SYCL-OpenCL-Interoperabilität auf Xilinx-FPGAs \\
-\cite{burns2019} - SYCL-DNN (plattformunabhängig) vs. cuDNN, MIOpen (plattformabhängig) \\
-\cite{sycl2019} - SYCL-Spec.\\
-\cite{rodriguez-gutiez2019} - portables BLAS
+In den letzten Jahren befassten sich mehrere Forschungsgruppen mit der
+automatischen \mbox{FPGA}"=Synthese für hochparallele Programme.
 
-Hervorzuheben ist außerdem Peter Žužeks Masterarbeit aus dem Jahre 2016, in
-deren Rahmen eine eigene \gls{sycl}"=Implementierung entwickelt wurde. \cite{zuzek2016}
+Schon 2009 veröffentlichten Papakonstantinou \textit{et al.} einen Ansatz, der
+die Synthese einer Schaltung auf Basis der eigentlich für GPUs gedachten
+CUDA"=Schnittstelle ermöglichte. \cite[vgl.][]{papakonstantinou2009} 
+
+Diese Arbeit konnte sich jedoch nicht langfristig durchsetzen. Seit der ersten
+Veröffentlichung einer OpenCL"=Implementierung für FPGAs durch den Hersteller
+Altera (heute Intel) im Jahr 2013 verlagerte sich das Interesse der Forschung
+auf diese Plattform. 
+
+Eine der ersten Arbeiten in diesem Bereich wurde 2013 von Settle, einem
+damaligen Altera"=Mitarbeiter, veröffentlicht. In ihr zeigte Settle den durch
+eine abstrakte Sprache wie OpenCL zu erreichenden Produktivitätsgewinn bei
+gleichzeitiger Beibehaltung der erreichten Leistung. \cite[vgl.][]{settle2013}
+
+Fifield \textit{et al.} demonstrierten 2016 die Optimierung von
+OpenCL"=Programmen für die im Vorjahr veröffentlichte
+Xilinx"=OpenCL"=Implementierung. \cite[vgl.][]{fifield2016}
+
+Duarte \textit{et al.} stellten 2018 das \textit{hls4ml}"=Projekt vor. Dabei
+handelt es sich um Implementierungen neuraler Netzwerke, die durch automatische
+Synthese in Schaltungen für Xilinx"=FPGAs umgewandelt werden. In diesem Projekt
+kommt allerdings nicht OpenCL zum Einsatz, sondern die Xilinx"=Erweiterungen für
+die Programmiersprache C++. \cite[vgl.][]{duarte2018}
+
+Die SYCL"=Spezifikation wurde in der Literatur in den ersten Jahren ihres
+Bestehens vornehmlich als einfacher Aufsatz für OpenCL betrachtet. Erst in
+jüngerer Zeit kam es zu eigenständigen Untersuchungen SYCLs.
+
+Eine der frühen Arbeiten, die sich von dieser unscharfen Betrachtungsweise
+abhebt, ist Žužeks Masterarbeit aus dem Jahre 2016, in deren Rahmen eine
+eigenständige \gls{sycl}"=Implementierung entwickelt wurde.
+\cite[vgl.][]{zuzek2016}
+
+Wong \textit{et al.}, Mitarbeiter der Firma Codeplay -- einer der führenden
+Firmen im SYCL"=Umfeld --, befassten sich ebenfalls 2016 mit den
+Wechselwirkungen zwischen dem C++"=Standard und der auf diesem Standard
+aufbauenden SYCL"=Spezifikation. Aufmerksamkeit wurde insbesondere den bei der
+Codeplay"=SYCL"=Implementierung aufgetretenen Probleme sowie Unzulänglichkeiten
+des C++"=Standards zuteil.
+\cite[vgl.][]{wong2016}
+
+Aliaga \textit{et al.} veröffentlichten 2017 eine in C++ und SYCL geschriebene
+Implementierung der BLAS"=Schnittstelle, die sie \textit{SYCL"=BLAS} nannten.
+\cite[vgl.][]{aliaga2017}
+
+Burns \textit{et al.} stellten 2019 das \textit{SYCL"=DNN}"=Projekt vor, eine in
+C++ und SYCL geschriebene Bibliothek für die Beschleunigung von Operationen, die
+typischerweise in neuralen Netzwerken verwendet werden. Teil der Arbeit war auch
+ein Vergleich mit den konkurrierenden Bibliotheken cuDNN (NVIDIA) und
+MIOpen (AMD). Im Gegensatz zu diesen herstellerspezifischen Bibliotheken soll
+SYCL"=DNN auf einer Vielzahl OpenCL"=fähiger Beschleuniger lauffähig sein.
+\cite[vgl.][]{burns2019}
+
+Hinsichtlich der Verwendung von SYCL auf FPGAs ist in der Literatur -- neben
+einigen weitestgehend inhaltsgleichen Vorträgen des Xilinx"=Mitarbeiters Ronan
+Keryell -- bisher nur der 2017 von Doumoulakis \textit{et al.} veröffentlichte
+Artikel zu finden, der sich mit der Interoperabilität von SYCL und OpenCL auf
+Xilinx"=FPGAs befasst.
+\cite[vgl.][]{doumoulakis2017}
+
+Als Backend für Abstraktionsbibliotheken wie Alpaka oder Kokkos fand SYCL bisher
+keine Verwendung. Zwar veröffentlichten Copik \textit{et al.} 2017 einen Artikel
+über die experimentelle Implementierung eines solchen Backends für die Kokkos
+und Alpaka sehr ähnliche Bibliothek \textit{HPX.Compute}, bis heute ist dieser
+Entwicklungszweig aber nicht in das Hauptprojekt aufgenommen worden.
+\cite[vgl.][]{copik2017}
+
+Im Zusammenhang mit Kokkos findet SYCL bisher nur in Form einer von Hammond
+\textit{et al.} 2019 durchgeführten Studie Erwähnung. Dabei handelt es sich
+jedoch um einen Vergleich der Programmiermodelle von Kokkos und SYCL und nicht
+um eine Implementierung eines Kokkos"=Backends.
+\cite[vgl.][]{hammond2019}
 
 \section{Ziel der Arbeit}\label{einleitung:ziel}
 

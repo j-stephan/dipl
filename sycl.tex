@@ -1,15 +1,3 @@
-\begin{code}
-    \begin{minted}[fontsize=\small,escapeinside=||]{c}
-|\textbf{\textcolor{keyword-green}{\_\_kernel}}| __attribute__((xcl_dataflow))
-void kernel(/* ... */)
-{
-    /* Funktionskörper */
-}
-    \end{minted}
-    \caption{Datenfluss-Erweiterung in OpenCL C}
-    \label{sycl:erweiterungen:xilinx:dataflow:opencl}
-\end{code}
-
 \chapter{Der SYCL-Standard}\label{sycl}
 
 Die vor einigen Jahren veröffentlichte SYCL"=Spezifikation bietet eine neue
@@ -21,12 +9,12 @@ das Thema dieses Kapitels.
 \section{Überblick}\label{sycl:ueberblick}
 
 Mit dem SYCL"=Standard\footnote{Entgegen des optischen Anscheins ist
-\glqq SYCL\grqq\ kein Akronym, sondern ein Eigenname.} verfolgt die
-herausgebende Khronos"=Gruppe das Ziel eines abstrakten C++"=Programmiermodells
-für \gls{opencl}, das die Modernität, Flexibilität und Einfachheit moderner
-C++"=Standards bieten soll, während gleichzeitig die Konzeption und Portabilität
-des \gls{opencl}"=1.2"=Standards beibehalten wird.
-\cite[vgl.][15]{sycl2019}
+\glqq SYCL\grqq\ kein Akronym, sondern ein Eigenname.}\cite[vgl.][]{sycl2019}
+verfolgt die herausgebende Khronos"=Gruppe das Ziel eines abstrakten
+C++"=Programmiermodells für \gls{opencl}, das die Modernität, Flexibilität und
+Einfachheit moderner C++"=Standards bieten soll, während gleichzeitig
+Konzeption und Portabilität des \gls{opencl}"=1.2"=Standards
+\cite[vgl.][]{opencl2012} beibehalten werden.
 
 Von \gls{opencl} erbt SYCL damit den Anspruch, ein einheitliche
 Programmierschnittstelle für verschiedene Beschleunigertypen unterschiedlicher
@@ -86,12 +74,11 @@ befasst sich mit allen verfügbaren Implementierungen).
 \subsection{AXPY und SYCL}\label{sycl:ueberblick:saxpy}
 
 Ein im Bereich der Programmierung häufig verwendetes einführendes Beispiel
-ist der sogenannte AXPY"=Algorithmus, der ursprünglich aus der BLAS"=Bibliothek
-stammt. Dieser führt die Berechnung
+ist der sogenannte AXPY"=Algorithmus, der ursprünglich aus der Bibliothek
+\gls{blas} stammt \cite[vgl.][]{lawson1979}. Dieser führt die Berechnung
 \[\vec{y} = a \cdot \vec{x} + \vec{y}\]
 aus und ist aufgrund seiner Einfachheit und hohen erreichbaren Parallelität
 (sofern $\vec{x}$ und $\vec{y}$ viele Elemente enthalten) sehr beliebt.
-\cite[vgl.][]{lawson1979}
 
 AXPY lässt sich auch für eine Einführung in SYCL gut verwenden und wird daher in
 den folgenden Abschnitten als illustrierendes Beispiel genutzt.
@@ -474,14 +461,122 @@ ermöglichen, ohne die Plattformunabhängigkeit aufzugeben, führte die
 konzeptionell den in der Hardware vorhandenen Fähigkeiten und wurden ebenfalls
 von SYCL übernommen.
 
-Eine wichtige Abstraktion sind die \textit{compute units} (CU). Diese lassen
-sich auf einen oder mehrere Teile des Beschleunigers abbilden und sind in der
-Lage, einen Kernel auszuführen. Bei einer CPU lässt sich eine CU also auf einen
+Eine \textit{Plattform} ist in OpenCL und SYCL aus dem \textit{Host} und
+mindestens einem \textit{Device} zusammengesetzt. Jedes \textit{Device} besteht
+wiederum aus mindestens einer \textit{compute unit} (CU). Eine CU lässt sich auf
+einen oder mehrere Teile des Beschleunigers abbilden und ist in der Lage, einen
+Kernel auszuführen. Bei einer CPU lässt sich eine CU also auf einen
 Kern abbilden oder bei einer GPU auf einen Multiprozessor. Bei FPGAs ist die
 Abbildung dynamischer: hier hängt die Zahl der verfügbaren CUs davon ab, wie
 viele Ressourcen der Kernel verbraucht. Die Zahl der gleichzeitig platzierbaren
 Kernel entspricht damit der Zahl der möglichen CUs, sofern die Implementierung
-keine Obergrenze für die CU"=Anzahl vorgibt.
+keine Obergrenze für die CU"=Anzahl vorgibt. Eine CU besteht aus mindestens
+einem \textit{processing element} (PE). Ein PE lässt sich dabei als Abstraktion
+der SIMD"=Fähigkeiten einer CU verstehen, also z.B. als ein Element innerhalb
+eines SIMD"=Vektorregisters.
+Die Abbildung~\ref{sycl:konzepte:abstraktion:plattform} veranschaulicht dieses
+Modell.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        % hinterstes Device
+        \draw [fill = white] (2.499, 2.499) rectangle ++(5, 2.5);
+        \draw [fill = white] (4.249, 3.416) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (4.349, 3.516) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (4.749, 3.516) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (5.149, 3.516) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (6.949, 3.516) rectangle ++(0.2, 1.133);
+        \draw [fill = white] (3.499, 3.0825) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (3.599, 3.1825) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.999, 3.1825) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (4.399, 3.1825) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (6.199, 3.1825) rectangle ++(0.2, 1.133);
+        \draw [fill = white] (2.749, 2.749) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (2.849, 2.849) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.249, 2.849) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.649, 2.849) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (5.449, 2.849) rectangle ++(0.2, 1.133);
+
+        % erstes von hinten
+        \draw [fill = white] (1.666, 1.666) rectangle ++(5, 2.5);
+        \draw [fill = white] (3.416, 2.583) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (3.516, 2.683) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.916, 2.683) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (4.316, 2.683) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (6.116, 2.683) rectangle ++(0.2, 1.133);
+        \draw [fill = white] (2.666, 2.2495) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (2.766, 2.3495) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.166, 2.3495) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.566, 2.3495) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (5.366, 2.3495) rectangle ++(0.2, 1.133);
+        \draw [fill = white] (1.916, 1.916) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (2.016, 2.016) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (2.416, 2.016) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (2.816, 2.016) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (4.616, 2.016) rectangle ++(0.2, 1.133);
+
+        % zweites von hinten
+        \draw [fill = white] (0.833, 0.833) rectangle ++(5, 2.5);
+        \draw [fill = white] (2.583, 1.75) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (2.683, 1.85) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.083, 1.85) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.483, 1.85) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (5.283, 1.85) rectangle ++(0.2, 1.133);
+        \draw [fill = white] (1.833, 1.4165) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (1.933, 1.5165) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (2.333, 1.5165) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (2.733, 1.5165) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (4.533, 1.5165) rectangle ++(0.2, 1.133);
+        \draw [fill = white] (1.083, 1.083) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (1.183, 1.183) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (1.583, 1.183) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (1.983, 1.183) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.783, 1.183) rectangle ++(0.2, 1.133);
+
+        % vorderstes Device
+        \draw [fill = white] (0.0, 0.0) rectangle ++(5, 2.5);
+        \draw [fill = white] (1.75, 0.917) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (1.85, 1.017) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (2.25, 1.017) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (2.65, 1.017) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (4.45, 1.017) rectangle ++(0.2, 1.133);
+        \draw [fill = white] (1.0, 0.5835) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (1.1, 0.6835) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (1.5, 0.6835) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (1.9, 0.6835) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (3.7, 0.6835) rectangle ++(0.2, 1.133);
+        \draw [fill = white] (0.25, 0.25) rectangle ++(3, 1.333);
+        \draw [fill = HKS41!20] (0.35, 0.35) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (0.75, 0.35) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (1.15, 0.35) rectangle ++(0.2, 1.133);
+        \draw [fill = HKS41!20] (2.95, 0.35) rectangle ++(0.2, 1.133);
+        % Punkte sind nur hier notwendig, Rest wird überdeckt
+        \draw [fill = black] (1.825, 0.9165) circle [radius = 0.5mm];
+        \draw [fill = black] (2.125, 0.9165) circle [radius = 0.5mm];
+        \draw [fill = black] (2.425, 0.9165) circle [radius = 0.5mm];
+
+        % Host
+        \draw (10.0, 1.2497) rectangle (13.0, 3.7493)
+                      node[pos = 0.5, align = center] {Host};
+
+        % Verbindungen
+        \draw [line width = 1mm] (5, 1.25) -- (6, 1.25) -- (8.499, 3.749) -- (7.499, 3.749);
+        \draw [line width = 1mm] (5.833, 2.083) -- (6.833, 2.083);
+        \draw [line width = 1mm] (6.666, 2.916) -- (7.666, 2.916);
+        \draw [line width = 1mm] (10.0, 2.4995) -- (7.25, 2.4995);
+
+        % Beschriftungen
+        \draw (5, 0.25) -- (6.666, -0.3)
+                      node[pos = 1.0, align = center, xshift = 6mm] {Device};
+        \draw (2.125, 0.25) -- (0.5, -0.75)
+                      node[pos = 1.0, align = center, yshift = -2mm] {Compute Unit};
+        \draw (0.45, 0.75) -- (-1, 2.35)
+                      node[pos = 1.0, align = left, xshift = -6mm] {Processing\\Element};
+    \end{tikzpicture}
+    \caption{SYCLs Plattform-Modell \cite[nach][23]{opencl2012}}
+    \label{sycl:konzepte:abstraktion:plattform}
+\end{figure}
 
 Um die Parallelität mehrerer CUs nutzen zu können, ist es sinnvoll, die Arbeit
 des Kernels aufzuteilen. Bei acht verfügbaren CUs wäre es daher wünschenswert,
@@ -491,24 +586,187 @@ parallel durchzuführen. Diese Aufteilung wird in \gls{opencl} und SYCL
 zu unterschiedlichen CUs asynchron zueinander ausgeführt und eine
 Synchronisierung der Gruppen ist nicht ohne weiteres möglich.
 
-Die SIMD"=Fähigkeiten der CUs werden ebenfalls abstrahiert und als
-\textit{work"=item} bezeichnet. Eine \textit{work"=group} besteht aus mindestens
-einem \textit{work"=item}, wobei die Implementierung auch eine maximale Anzahl
-von \textit{work"=items} festlegen kann. \textit{Work"=items} werden zueinander
-asynchron ausgeführt, lassen sich jedoch über Funktionen der gemeinsamen
-\textit{work"=group} synchronisieren. Es ist jedoch nicht möglich,
-\textit{work"=items} verschiedener \textit{work"=groups} zu synchronisieren.
+Eine \textit{work"=group} besteht aus mindestens einem \textit{work"=item},
+wobei die Implementierung auch eine maximale Anzahl von \textit{work"=items}
+festlegen kann. Ein \textit{work"=item} wird während der Ausführung einem PE
+zugeteilt. \textit{Work"=items} werden zueinander asynchron ausgeführt, lassen
+sich jedoch über Funktionen der gemeinsamen \textit{work"=group}
+synchronisieren. Es ist jedoch nicht möglich, \textit{work"=items} verschiedener
+\textit{work"=groups} zu synchronisieren.
 
 Durch diese Hardware"=Abstraktion wird aus Sicht der Programmierers ein
-Indexraum aufgespannt, in dem jedem \textit{work"=item} ein eindeutiger Index
-innerhalb der \textit{work"=group} sowie der Menge aller \textit{work"=items}
-zugewiesen wird. Diese Indizes werden als lokale bzw. globale Indizes
-bezeichnet.
+Indexraum aufgespannt -- in OpenCL und SYCL \textit{NDRange} genannt --, in dem
+jedem \textit{work"=item} ein eindeutiger Index innerhalb der
+\textit{work"=group} sowie der Menge aller \textit{work"=items} zugewiesen wird.
+Diese Indizes werden als lokale bzw. globale Indizes bezeichnet. Die
+Abbildung~\ref{sycl:konzepte:abstraktion:ndrange} zeigt diese Aufteilung am
+Beispiel einer zweidimensionalen \textit{NDRange}. Dabei stehen $G_x$ und 
+$G_y$ für die Gesamtzahl der \textit{work"=items} sowie $S_x$ und $S_y$ für die
+Zahl der \textit{work"=items} pro \textit{work"=group}, jeweils in x- und
+y-Richtung. $w_x$ und $w_y$ bezeichnen die Position der \textit{work"=group}
+innerhalb der \textit{NDRange}, während $s_x$ und $s_y$ die Position eines
+\textit{work"=items} in der \textit{work"=group} -- also den lokalen Index --
+darstellen. Der globale Index $(g_x, g_y)$ eines \textit{work"=items} lässt sich
+demnach wie folgt berechnen \cite[vgl.][24]{opencl2012}:
+\[
+    (g_x, g_y) = (w_x \cdot S_x + s_x, w_y \cdot S_y + s_y)
+\]
+Die Zahl $(W_x, W_y)$ der \textit{work"=groups} innerhalb der \textit{NDRange}
+lässt sich ebenfalls bestimmen \cite[vgl.][25]{opencl2012}:
+\[
+    (W_x, W_y) = \left(\frac{G_x}{S_x}, \frac{G_y}{S_y}\right)
+\]
 
-Diese Form der Hardware"=Abstraktion erlaubt dem Programmierer auch die
-einfache Implementierung mehrdimensionaler Probleme, da sowohl die
-\textit{work"=groups} als auch die \textit{work"=items} in bis zu drei
-Dimensionen angeordnet werden können.
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        % NDRange
+        \draw (0, 0) rectangle ++(4, 4);
+
+        \draw (0.4, 0.4) rectangle ++(1, 1);
+        \draw (0.65, 0.4) -- ++(0, 1);
+        \draw (0.9, 0.4) -- ++(0, 1);
+        \draw (1.15, 0.4) -- ++(0, 1);
+        \draw (0.4, 0.65) -- ++(1, 0);
+        \draw (0.4, 0.9) -- ++(1, 0);
+        \draw (0.4, 1.15) -- ++(1, 0);
+
+        \draw (1.5, 0.4) rectangle ++(1, 1);
+        \draw (1.75, 0.4) -- ++(0, 1);
+        \draw (2, 0.4) -- ++(0, 1);
+        \draw (2.25, 0.4) -- ++(0, 1);
+        \draw (1.5, 0.65) -- ++(1, 0);
+        \draw (1.5, 0.9) -- ++(1, 0);
+        \draw (1.5, 1.15) -- ++(1, 0);
+
+        \draw (2.6, 0.4) rectangle ++(1, 1);
+        \draw (2.85, 0.4) -- ++(0, 1);
+        \draw (3.1, 0.4) -- ++(0, 1);
+        \draw (3.35, 0.4) -- ++(0, 1);
+        \draw (2.6, 0.65) -- ++(1, 0);
+        \draw (2.6, 0.9) -- ++(1, 0);
+        \draw (2.6, 1.15) -- ++(1, 0);
+        
+        \draw (0.4, 1.5) rectangle ++(1, 1);
+        \draw (0.65, 1.5) -- ++(0, 1);
+        \draw (0.9, 1.5) -- ++(0, 1);
+        \draw (1.15, 1.5) -- ++(0, 1);
+        \draw (0.4, 1.75) -- ++(1, 0);
+        \draw (0.4, 2) -- ++(1, 0);
+        \draw (0.4, 2.25) -- ++(1, 0);
+
+        \draw (1.5, 1.5) rectangle ++(1, 1);
+        \draw (1.75, 1.5) -- ++(0, 1);
+        \draw (2, 1.5) -- ++(0, 1);
+        \draw (2.25, 1.5) -- ++(0, 1);
+        \draw (1.5, 1.75) -- ++(1, 0);
+        \draw (1.5, 2) -- ++(1, 0);
+        \draw (1.5, 2.25) -- ++(1, 0);
+
+        \draw (2.6, 1.5) rectangle ++(1, 1);
+        \draw (2.85, 1.5) -- ++(0, 1);
+        \draw (3.1, 1.5) -- ++(0, 1);
+        \draw (3.35, 1.5) -- ++(0, 1);
+        \draw (2.6, 1.75) -- ++(1, 0);
+        \draw (2.6, 2) -- ++(1, 0);
+        \draw (2.6, 2.25) -- ++(1, 0);
+
+        \draw (0.4, 2.6) rectangle ++(1, 1);
+        \draw (0.65, 2.6) -- ++(0, 1);
+        \draw (0.9, 2.6) -- ++(0, 1);
+        \draw (1.15, 2.6) -- ++(0, 1);
+        \draw (0.4, 2.85) -- ++(1, 0);
+        \draw (0.4, 3.1) -- ++(1, 0);
+        \draw (0.4, 3.35) -- ++(1, 0);
+
+        \draw (1.5, 2.6) rectangle ++(1, 1);
+        \draw (1.75, 2.6) -- ++(0, 1);
+        \draw (2, 2.6) -- ++(0, 1);
+        \draw (2.25, 2.6) -- ++(0, 1);
+        \draw (1.5, 2.85) -- ++(1, 0);
+        \draw (1.5, 3.1) -- ++(1, 0);
+        \draw (1.5, 3.35) -- ++(1, 0);
+
+        \draw (2.6, 2.6) rectangle ++(1, 1);
+        \draw (2.85, 2.6) -- ++(0, 1);
+        \draw (3.1, 2.6) -- ++(0, 1);
+        \draw (3.35, 2.6) -- ++(0, 1);
+        \draw (2.6, 2.85) -- ++(1, 0);
+        \draw (2.6, 3.1) -- ++(1, 0);
+        \draw (2.6, 3.35) -- ++(1, 0);
+
+        \draw [Latex-Latex] (-0.4, 0) -- ++(0, 4)
+            node [pos = 0.5, left] {$G_y$};
+        \draw [Latex-Latex] (0, -0.4) -- ++(4, 0)
+            node [pos = 0.5, below] {$G_x$};
+
+        % work-group
+        \draw [dashed] (1.5, 1.5) -- (5, -0.2);
+        \draw [dashed] (2.5, 1.5) -- (13, -0.2);
+        \draw [dashed] (1.5, 2.5) -- (5, 8.3);
+        \draw [dashed] (2.5, 2.5) -- (13, 8.3);
+        \draw [fill = white] (5, -0.2) rectangle ++(8, 8.5);
+
+        \node [align=center] (wgtext) at (9, 7.9) {\textbf{work-group}};
+
+        \draw [Latex-Latex] (5, 8.7) -- ++(8, 0)
+            node [pos = 0.5, above] {$S_x$};
+        \draw [Latex-Latex] (13.4, -0.2) -- ++(0, 8.5)
+            node [pos = 0.5, right] {$S_y$};
+
+        % work-items
+        \draw (5.25, 0.05) rectangle ++(3.25, 3.25)
+            node [pos = 0.5, align=center] {\textbf{work-item}\\~\\
+                                            {\small globaler Index:}\\
+                                            ${\scriptstyle (w_x \cdot S_x + s_x, w_y \cdot S_y + s_y)}$\\
+                                            {\small lokaler Index:}\\
+                                            ${\scriptstyle (s_x, s_y) = (0, S_y - 1)}$};
+        \draw (9.5, 0.05) rectangle ++(3.25, 3.25)
+            node [pos = 0.5, align=center] {\textbf{work-item}\\~\\
+                                            {\small globaler Index:}\\
+                                            ${\scriptstyle (w_x \cdot S_x + s_x, w_y \cdot S_y + s_y)}$\\
+                                            {\small lokaler Index:}\\
+                                            ${\scriptstyle (s_x, s_y) = (S_x - 1, S_y - 1)}$};
+        \draw (5.25, 4.3) rectangle ++(3.25, 3.25)
+            node [pos = 0.5, align=center] {\textbf{work-item}\\~\\
+                                            {\small globaler Index:}\\
+                                            ${\scriptstyle (w_x \cdot S_x + s_x, w_y \cdot S_y + s_y)}$\\
+                                            {\small lokaler Index:}\\
+                                            ${\scriptstyle (s_x, s_y) = (0, 0)}$};
+        \draw (9.5, 4.3) rectangle ++(3.25, 3.25)
+            node [pos = 0.5, align=center] {\textbf{work-item}\\~\\
+                                            {\small globaler Index:}\\
+                                            ${\scriptstyle (w_x \cdot S_x + s_x, w_y \cdot S_y + s_y)}$\\
+                                            {\small lokaler Index:}\\
+                                            ${\scriptstyle (s_x, s_y) = (S_x - 1, 0)}$};
+
+        % Punkte
+        \draw [fill = black] (8.8, 1.675) circle [radius = 0.5mm];
+        \draw [fill = black] (9, 1.675) circle [radius = 0.5mm];
+        \draw [fill = black] (9.2, 1.675) circle [radius = 0.5mm];
+
+        \draw [fill = black] (8.8, 5.925) circle [radius = 0.5mm];
+        \draw [fill = black] (9, 5.925) circle [radius = 0.5mm];
+        \draw [fill = black] (9.2, 5.925) circle [radius = 0.5mm];
+
+        \draw [fill = black] (6.875, 3.6) circle [radius = 0.5mm];
+        \draw [fill = black] (6.875, 3.8) circle [radius = 0.5mm];
+        \draw [fill = black] (6.875, 4.0) circle [radius = 0.5mm];
+
+        \draw [fill = black] (11.125, 3.6) circle [radius = 0.5mm];
+        \draw [fill = black] (11.125, 3.8) circle [radius = 0.5mm];
+        \draw [fill = black] (11.125, 4.0) circle [radius = 0.5mm];
+
+        \draw [fill = black] (8.8, 4.0) circle [radius = 0.5mm];
+        \draw [fill = black] (9, 3.8) circle [radius = 0.5mm];
+        \draw [fill = black] (9.2, 3.6) circle [radius = 0.5mm];
+    \end{tikzpicture}
+    \caption{SYCLs Indexraum \cite[nach][25]{opencl2012}}
+    \label{sycl:konzepte:abstraktion:ndrange}
+\end{figure}
+
+Da eine \textit{NDRange} bis zu drei Dimensionen umfassen kann, lassen sich
+mehrdimensionale Algorithmen auf diese Weise einfach implementieren.
 
 Im Unterschied zu \gls{opencl} kann bei SYCL die Angabe der Aufteilung in
 \textit{work"=groups} und \textit{work"=items} entfallen, lediglich die
@@ -525,10 +783,53 @@ Alle \textit{command groups}, die der Programmierer in eine
 SYCL"=\texttt{queue} einreiht, werden grundsätzlich asynchron ausgeführt, sofern
 keine Abhängigkeiten zueinander bestehen. Vorhandene Abhängigkeiten werden über
 die von den Kerneln verwendeten Puffer durch die SYCL"=Laufzeitumgebung
-automatisch erkannt und die Kernel in der richtigen Reihenfolge ausgeführt. In
-diesem Aspekt unterscheidet sich SYCL von \gls{opencl}, das neben vollständig
-seriellen Warteschlangen nur asynchrone Warteschlangen kennt, bei denen die
-richtige Sortierung der Kernel Aufgabe des Programmierers ist.
+automatisch erkannt und die Kernel in der richtigen Reihenfolge ausgeführt
+\cite[vgl.][21--23]{sycl2019}. In diesem Aspekt unterscheidet sich SYCL von
+\gls{opencl}, das neben vollständig seriellen Warteschlangen nur asynchrone
+Warteschlangen kennt, bei denen die richtige Sortierung der Kernel Aufgabe des
+Programmierers ist.
+
+Graphisch lässt sich dies in Form eines gerichteten Graphen veranschaulichen,
+wie für einen einfachen Fall in
+Abbildung~\ref{sycl:konzepte:abhaengigkeiten:graph}gezeigt. Im Beispiel hängen
+die \textit{command groups} B und C von der \textit{command group} A ab, sind
+jedoch voneinander unabhängig. Dadurch müssen sie beide auf das Ende von A
+warten, können danach jedoch parallel ausgeführt werden. Die
+\textit{command group} D benötigt wiederum die in B und C berechneten
+Ergebnisse und wartet daher auf deren Ende.
+
+Quelltext~\ref{sycl:konzepte:abhaengigkeiten:src} zeigt die dem Graphen
+entsprechende Verwendung einer SYCL"=\texttt{queue}. Wie man leicht sieht, ist
+der Aufwand hinsichtlich der Abhängigkeitsverwaltung für den Programmierer sehr
+gering.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \draw (0, 0) circle [radius = 5mm] node {A};
+        \draw (-1.5, -2.5) circle [radius = 5mm] node {B};
+        \draw (1.5, -2.5) circle [radius = 5mm] node {C};
+        \draw (0, -5) circle [radius = 5mm] node {D};
+
+        \draw [-Latex] (0, -0.5) -- (-1.5, -2);
+        \draw [-Latex] (0, -0.5) -- (1.5, -2);
+        \draw [-Latex] (-1.5, -3) -- (0, -4.5);
+        \draw [-Latex] (1.5, -3) -- (0, -4.5);
+    \end{tikzpicture}
+    \caption{Einfacher Aufgabengraph}
+    \label{sycl:konzepte:abhaengigkeiten:graph}
+\end{figure}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+queue.submit(/* A */);
+queue.submit(/* B */);
+queue.submit(/* C */);
+queue.submit(/* D */);
+    \end{minted}
+    \caption{Einfacher SYCL-Aufgabengraph}
+    \label{sycl:konzepte:abhaengigkeiten:src}
+\end{code}
 
 \subsection{Fehlerbehandlung}
 
