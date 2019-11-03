@@ -30,13 +30,157 @@ voneinander getrennt. Die Abbildung auf ein oder mehrere Backends erfolgt zur
 Compile"=Zeit durch Template"=Metaprogrammierung, wodurch ein
 Abstraktions"=Overhead zur Laufzeit vermieden wird.
 
+Ähnlich wie SYCL bietet auch Alpaka ein beschleunigerunabhängiges Backend, das
+sich prinzipiell mit jedem modernen C++"=Compiler kompilieren lässt. Dieses
+wird in der Alpaka"=Terminologie \texttt{CpuSerial} genannt und führt jeden
+Befehl seriell aus. Während der Kernel"=Ausführung existiert also keinerlei
+Parallelität. Daneben gibt es weitere Implementierungen für CPUs auf Basis des
+OpenMP"=Standards, der ebenfalls von den meisten modernen C++"=Compilern
+unterstützt wird.
+
 \subsection{AXPY und Alpaka}\label{alpaka:ueberblick:axpy}
+
+Zum Zwecke der einfachen Vergleichbarkeit der von SYCL und Alpaka gebotenen
+Programmiermodelle wird das im vorigen Kapitel verwendete AXPY"=Beispiel der
+BLAS"=Bibliothek hier erneut aufgegriffen. Strukturell ähneln sich SYCL und
+Alpaka recht stark, wie der
+Platzhalter"=Quelltext~\ref{alpaka:ueberblick:axpy:struktur} zeigt. Wie im
+vorigen Kapitel wird auch dieser Quelltext nach und nach mit Inhalt gefüllt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+#include <cstdlib>
+
+#include <alpaka/alpaka.hpp>
+
+auto main() -> int
+{
+    // Beschleunigerwahl und Befehlswarteschlange
+
+    // Speicherreservierung und -initialisierung
+
+    // Kerneldefinition und -ausführung
+
+    // Synchronisierung
+
+    return EXIT_SUCCESS;
+}
+    \end{minted}
+    \caption{Struktur eines Alpaka-Programms}
+    \label{alpaka:ueberblick:axpy:struktur}
+\end{code}
 
 \subsubsection{Beschleunigerwahl und Befehlswarteschlange}
 \label{alpaka:ueberblick:axpy:queue}
 
+Die Auswahl des Beschleunigers erfolgt bei Alpaka bereits zur Compile"=Zeit. Der
+Programmierer muss also im Vorfeld eine Entscheidung darüber treffen, auf
+welchen Systemen sein Programm lauffähig sein soll. Dazu wählt der Programmierer
+zunächst einen der im Umfang von Alpaka vorhandenen beschleunigerspezifischen
+Datentypen aus und definiert, welche Datentypen für die Angabe der im Programm
+verwendeten Dimensionen und Indizes verwendet werden sollen. Dieser Vorgang ist
+in Quelltext~\ref{alpaka:ueberblick:axpy:queue:acc_src} dargestellt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+// Definition für ein eindimensionales Problem
+using Dim = alpaka::dim::DimInt<1u>;
+using Idx = std::size_t;
+using Acc = alpaka::acc::AccGpuCudaRt<Dim, Idx>;
+    \end{minted}
+    \caption{Auswahl der in Alpaka vorhandenen NVIDIA"=CUDA"=Implementierung}
+    \label{alpaka:ueberblick:axpy:queue:acc_src}
+\end{code}
+
+In der Folge wird der definierte Typ \texttt{Acc} als Parameter für weitere
+Datentypen verwendet. Bei letzteren handelt es sich um die Klassen für die
+Verwaltung konkreter Beschleuniger. Diese sind in Alpaka als abstrakte
+Template"=Klassen mit einer aus Sicht des Programmierers einheitlichen
+Schnittstelle vorhanden. Durch den \texttt{Acc}"=Parameter werden diese Klassen
+zur Compile"=Zeit spezialisiert und enthalten die für die jeweilige Hardware
+korrekten Code"=Pfade. Dadurch ist der Gesamtquelltext mit wenig Aufwand
+portabel, da ein einfacher Austausch des \texttt{Acc}"=Parameters passenden Code
+für andere Hardware"=Architekturen generieren kann. Neben der Auswahl des
+Beschleunigers ist außerdem die Auswahl eines Datentypen für den
+\textit{Host} erforderlich, der später die Verwaltung einiger
+\textit{Host}"=seitiger Befehle übernehmen wird. Der
+Quelltext~\ref{alpaka:ueberblick:axpy:queue:dev_src} zeigt die Verwendung der
+genannten Strukturen für die oben gewünschte CUDA"=Implementierung.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+using DevAcc = alpaka::dev::Dev<Acc>;
+using PltfAcc = alpaka::pltf::Pltf<Acc>;
+using PltfHost = alpaka::pltf::PltfCpu;
+    \end{minted}
+    \caption{Spezialisierung abstrakter Alpaka"=Klassen}
+    \label{alpaka:ueberblick:axpy:queue:dev_src}
+\end{code}
+
+In einem weiteren Schritt muss die Befehlswarteschlange initialisiert werden.
+Diese dient -- wie auch in SYCL -- als Verbindungselement zwischen \textit{Host}
+und \textit{Device}. Alle das \textit{Device} betreffenden Befehle werden in
+ihr eingereiht. Anders als in SYCL gibt es in Alpaka die Möglichkeit, eine zum
+\textit{Host} synchrone Warteschlange zu verwenden -- der \textit{Host} wird von
+der Warteschlange also so lange blockiert, bis die Verarbeitung auf dem
+\textit{Device} abgeschlossen ist. In diesem Beispiel ist dies jedoch nicht
+notwendig, weshalb eine asynchrone Warteschlange verwendet wird, wie
+Quelltext~\ref{alpaka:ueberblick:axpy:queue:queue_src} zeigt. Wie man schnell
+erkennt, existiert kein \texttt{Acc}"=Parameter für eine Alpaka"=\texttt{queue}
+-- der Programmierer muss diese also ebenfalls selbst passend wählen.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+using Queue = alpaka::queue::QueueCudaRtNonBlocking;
+    \end{minted}
+    \caption{Auswahl der Alpaka"=Befehlswarteschlange}
+    \label{alpaka:ueberblick:axpy:queue:queue_src}
+\end{code}
+
+Im letzten Schritt werden die oben definierten Datentypen instanziiert oder als
+Parameter für die Instanziierung weiterer Datenstrukturen verwendet. Mit dem
+in Quelltext~\ref{alpaka:ueberblick:axpy:queue:inst_src} gezeigten Vorgehen ist
+der erste Abschnitt eines Alpaka"=Programms beendet.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+// instanziiere Host und Device
+auto devHost = alpaka::pltf::getDevByIdx<PltfHost>(0u);
+auto devAcc = alpaka::pltf::getDevByIdx<PltfAcc>(0u);
+
+// instanziiere Befehlswarteschlange
+auto queue = Queue{devAcc};
+    \end{minted}
+    \caption{Instanziierung der Alpaka"=Datentypen}
+    \label{alpaka:ueberblick:axpy:queue:inst_src}
+\end{code}
+
 \subsubsection{Speicherreservierung und -initialisierung}
 \label{alpaka:ueberblick:axpy:buffer}
+
+Die für die AXPY"=Operation nötigen Vektoren müssen zunächst im Speicher
+angelegt und initialisiert werden. Dies erfolgt in drei Stufen:
+
+\begin{enumerate}
+    \item Reserviere gleich große Speicherbereiche sowohl auf dem \textit{Host}
+          als auch auf dem \textit{Device}.
+    \item Initialisiere den \textit{Host}"=Speicher mit den gewünschten Werten.
+    \item Kopiere die initialisierten Werte auf das \textit{Device}.
+\end{enumerate}
+
+Ähnlich wie bei SYCL werden Speicherbereiche in Alpaka durch Puffer dargestellt,
+die die reinen Zeiger kapseln. Für die Erzeugung von Puffern ist es zunächst
+nötig, die gewünschte Größe des Puffers durch eine spezielle Datenstruktur zu
+definieren, wie der Quelltext~\ref{alpaka:ueberblick:axpy:buffer:extent_src}
+zeigt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto extent = alpaka::vec::Vec<Dim, Idx>{numElements};
+    \end{minted}
+\end{code}
+
+In der Folge kann 
 
 \subsubsection{Kerneldefinition und -ausführung}
 \label{alpaka:ueberblick:axpy:kernel}
@@ -57,3 +201,12 @@ Abstraktions"=Overhead zur Laufzeit vermieden wird.
 \subsection{Fehlerbehandlung}
 
 \subsection{Profiling}
+
+Im Gegensatz zu SYCL bringt Alpaka keine eigenen Werkzeuge für das Profiling
+mit. Da Alpaka zur Compile"=Zeit auf die herstellerspezifischen Schnittstellen
+abgebildet wird, ist dies auch nicht nötig -- dem Programmierer stehen so die
+vom jeweiligen Hardware"=Hersteller mitgelieferten Profiling"=Werkzeuge zur
+Verfügung. So lässt sich beispielsweise der CUDA"=Profiler \texttt{nvprof} für
+das Profiling eines mit Alpaka auf NVIDIA"=Hardware portierten Programms
+verwenden, was mit den für NVIDIA"=GPUs existierenden SYCL"=Implementierungen
+nicht möglich ist.
