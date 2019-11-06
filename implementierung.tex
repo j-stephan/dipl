@@ -19,18 +19,226 @@ TODO
 \label{implementierung:besonderheiten:zeiger}
 
 Die Übergabe von Datenfeldern an \gls{device}- und \gls{kernel}-Funktionen
-erfolgt in Alpaka über die von C, älterem C++ und CUDA bekannten Zeiger. Pro
+erfolgt in Alpaka über die von C oder älterem C++ bekannten Zeiger. Pro
 Datenfeld erhält die Funktion üblicherweise einen Zeiger, z.B. vom Typ
 \texttt{float*}, und einen ganzzahligen Parameter (meist vom Typ
-\texttt{size\_t}), der die Länge des Speicherbereichs angibt.
+\texttt{size\_t}), der die Länge des Speicherbereichs angibt. Der
+device"=seitige Zeiger wird über die Funktion \texttt{getPtrNative()} aus einem
+Alpaka"=Puffer extrahiert und an den Kernel übergeben.
 
-\begin{itemize}
-    \item Alpaka: Will überall reine Zeiger (Kernel-Code)
-    \item SYCL: Will überall \texttt{accessor}, alternativ \texttt{multi\_ptr}
-    \item Lösung: \texttt{multi\_ptr} lässt sich implizit zu reinem Zeiger casten
-    \item Hinweis: SYCL-Spezifikation gibt fälschlicherweise an, dass
-          \texttt{accessor} implizit castbar ist.
-\end{itemize}
+Diese Vorgehensweise war mit allen bisher in Alpaka vorhandenen Backends
+unproblematisch, wenngleich etwas altmodisch. SYCL verlangt als Parameter für
+die Kernel"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen,
+eine Übergabe von Zeigern an den Kernel wird in der Spezifikation explizit
+verboten \cite[vgl.][192]{sycl2019}. Zwar gibt die Spezifikation an, dass sich
+die \texttt{accessor}"=Typen implizit in reine Zeiger umwandeln lassen
+\cite[vgl.][27]{sycl2019}, was jedoch von keiner der verfügbaren
+Implementierungen unterstützt wird. Im Rahmen dieser Arbeit wurde dieser Umstand
+an das SYCL"=Spezifikationskomitee gemeldet und infolgedessen als Fehler in der
+Spezifikation anerkannt, der in zukünftigen Versionen behoben sein wird (siehe
+die Diskussion in Anhang~\ref{anhang:diskussion:syclspec:implicitaccessor}).
+
+Innerhalb eines Kernels lassen sich die \texttt{accessor}"=Typen in spezielle
+Zeigertypen (\texttt{multi\_ptr}) umwandeln, die wiederum in \glqq reine\grqq\
+Zeiger konvertierbar sind. Dadurch lässt sich die geschilderte Problematik in
+mehreren Stufen lösen:
+
+Auf der Host"=Seite wird beim Aufruf der Funktion \texttt{getPtrNative()} eine
+Datenstruktur angelegt, die den SYCL"=Puffer kapselt und sich aus Sicht des
+Programmierers weitestgehend wie ein Zeiger verhält. Daneben enthält diese
+Struktur ein spezielles Attribut mit dem Namen
+\texttt{is\_alpaka\_sycl\_buffer\_wrapper}. (Der Quelltext dieser Struktur ist
+in Anhang~\ref{anhang:source:cpp:bufferwrapper} zu finden.)
+
+Dieses Attribut wird bei der Nutzung des Kernel"=Objekts verwendet, um die
+Puffer"=Strukturen von den restlichen Parametern abzugrenzen. Strukturen, die
+dieses Attribut besitzen, werden an eine spezielle Funktion weitergereicht, die
+den Zusammenhang zwischen SYCL"=Puffer und SYCL"=\texttt{accessor} herstellt.
+Alle anderen Datentypen werden unverändert zurückgegeben. Da Techniken der
+Template"=Meta"=Programmierung verwendet werden, finden diese Transformationen
+zur Compile"=Zeit statt. Der gesamte Vorgang ist in
+Quelltext~\ref{implementierung:besonderheiten:zeiger:wrappertrans} dargestellt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+namespace alpaka {
+    namespace kernel {
+        namespace sycl {
+            namespace detail {
+                struct general {};
+                struct special : general{};
+                template <typename> struct acc_t { using type = int; };
+
+                // spezieller Fall: Puffer-Struktur
+                template <typename TDim, typename TBuf,
+                    typename acc_t<
+                        typename TBuf::is_alpaka_sycl_buffer_wrapper>::type = 0>
+                inline auto get_access(cl::sycl::handler& cgh, TBuf buf,
+                                       special)
+                {
+                    return buf.buf.template get_access<
+                            cl::sycl::access::mode::read_write,
+                            cl::sycl::access::target::global_buffer>(cgh);
+                }
+
+                // allgemeiner Fall: kein Puffer
+                template <typename TDim, typename TBuf>
+                inline auto get_access(cl::sycl::handler& cgh, TBuf buf,
+                                       general)
+                {
+                    return buf;
+                }
+
+                template <typename TDim, typename... TArgs, std::size_t... Is>
+                constexpr auto bind_buffers(cl::sycl::handler& cgh,
+                                            std::tuple<TArgs...> args,
+                                            std::index_sequence<Is...>)
+                {
+                    return std::make_tuple(get_access<TDim>(cgh,
+                                                            std::get<Is>(args),
+                                                            special{})...);
+                }
+            }
+        }
+    }
+}
+    \end{minted}
+    \caption{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
+             Template"=Meta"=Programmierung}
+    \label{implementierung:besonderheiten:zeiger:wrappertrans}
+\end{code}
+
+Der Quelltext~\ref{implementierung:besonderheiten:zeiger:transusage} zeigt die
+Nutzung der Template"=Meta"=Funktionen innerhalb der Alpaka"=Kernel"=Struktur:
+die in einem \texttt{std::tuple} gespeicherten Kernel"=Parameter werden in ein
+SYCL"=kompatibles Format umgewandelt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+namespace alpaka
+{
+    namespace kernel
+    {
+        template <typename TDim, typename TIdx,
+                  typename TKernelFnObj, typename... TArgs>
+        class TaskKernelSycl
+        {
+            /* weitere Attribute, Konstruktoren, etc. */
+
+            TKernelFnObj m_kernelFnObj;
+            std::tuple<TArgs...> m_args;
+
+        public:
+            inline operator()(cl::sycl::handler& cgh)
+            {
+                // transformiere alle Puffer-Parameter in Accessor-Parameter
+                auto accessor_args = sycl::detail::bind_buffers<TDim>(
+                            cgh, m_args,
+                            std::make_index_sequence<sizeof...(TArgs)>{});
+
+                /* weitere Operationen */
+            }
+        };
+    }
+}
+    \end{minted}
+    \caption{Nutzung der Template"=Meta"=Funktionen zur Umwandlung der
+             Puffer"=Wrapper in SYCL"=\texttt{accessor}"=Typen}
+    \label{implementierung:besonderheiten:zeiger:transusage}
+\end{code}
+
+Innerhalb des Kernels werden die \texttt{accessor}"=Typen (über SYCLs
+\texttt{multi\_ptr}) nach einem ähnlichen Prinzip in reine Zeiger transformiert.
+Die Template"=Meta"=Funktionen sind in
+Quelltext~\ref{implementierung:besonderheiten:zeiger:acctrans} gezeigt, deren
+Nutzung in Quelltext~\ref{implementierung:besonderheiten:zeiger:acctransusage}.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+namespace alpaka {
+    namespace kernel {
+        namespace sycl {
+            namespace detail {
+                struct general {};
+                struct special : general{};
+                template <typename> struct acc_t { using type = int; };
+
+                // spezieller Fall: Accessor
+                template <typename TAccessor,
+                    typename acc_t<decltype(
+                        std::declval<TAccessor>().get_pointer())>::type = 0>
+                inline auto get_pointer(TAccessor accessor, special)
+                {
+                    return static_cast<typename TAccessor::value_type*>(
+                                                    accessor.get_pointer());
+                }
+
+                // allgemeiner Fall: kein Accessor
+                template <typename TAccessor>
+                inline auto get_pointer(TAccessor accessor, general)
+                {
+                    return accessor;
+                }
+
+                template <typename... TArgs, std::size_t... Is>
+                constexpr auto transform(std::tuple<TArgs...> args,
+                                         std::index_sequence<Is...>)
+                {
+                    return std::make_tuple(get_pointer(std::get<Is>(args),
+                                                       special{})...);
+                }
+            }
+        }
+    }
+}
+    \end{minted}
+    \caption{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
+             Template"=Meta"=Programmierung}
+    \label{implementierung:besonderheiten:zeiger:acctrans}
+\end{code}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+namespace alpaka
+{
+    namespace kernel
+    {
+        template <typename TDim, typename TIdx,
+                  typename TKernelFnObj, typename... TArgs>
+        class TaskKernelSycl
+        {
+            /* weitere Attribute, Konstruktoren, etc. */
+
+        public:
+            inline operator()(cl::sycl::handler& cgh)
+            {
+                /* vorherige Operationen */
+
+                cgh.parallel_for<sycl::detail::kernel<TKernelFnObj>>(
+                    cl::sycl::nd_range<TDim::value> {
+                        global_size, local_size
+                    },
+                [=](cl::sycl::nd_item<TDim::value> work_item)
+                {
+                    auto pointer_args = transform(
+                                accessor_args,
+                                std::make_index_sequence<sizeof...(TArgs)>{});
+
+                    /* weitere Operationen und Alpaka-Kernel-Aufruf */
+                }
+            }
+        };
+    }
+}
+    \end{minted}
+    \caption{Nutzung der Template"=Meta"=Funktionen zur Umwandlung der
+             \texttt{accessor}"=Typen in Zeiger}
+    \label{implementierung:besonderheiten:zeiger:acctransusage}
+\end{code}
+Letztere werden dann an den vom SYCL"=Kernel aufgerufenen
+Alpaka"=Kernel übergeben, sodass der Programmierer in seinem Kernel nur die
+reinen Zeiger vorfindet. Dadurch lässt sich das SYCL"=Backend analog zu den
+restlichen Implementierungen verwenden.
 
 \subsection{Block-Synchronisierung}
 \label{implementierung:besonderheiten:synchronisierung}
