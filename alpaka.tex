@@ -169,31 +169,277 @@ angelegt und initialisiert werden. Dies erfolgt in drei Stufen:
 \end{enumerate}
 
 Ähnlich wie bei SYCL werden Speicherbereiche in Alpaka durch Puffer dargestellt,
-die die reinen Zeiger kapseln. Für die Erzeugung von Puffern ist es zunächst
-nötig, die gewünschte Größe des Puffers durch eine spezielle Datenstruktur zu
-definieren, wie der Quelltext~\ref{alpaka:ueberblick:axpy:buffer:extent_src}
-zeigt.
+die die reinen Zeiger kapseln. Im Gegensatz zu SYCL sind die Puffer auf dem Host
+und Device jedoch voneinander unabhängig. Es ist also nicht möglich, einen
+gemeinsamen Puffer zu erzeugen, der die notwendigen Kopien für den Programmierer
+unsichtbar im Hintergrund durchführt, wie dies in
+Abschnitt~\ref{sycl:ueberblick:saxpy:buffer} für SYCL demonstriert wurde.
+
+Für die Erzeugung von Puffern ist es zunächst nötig, die gewünschte Größe des
+Puffers durch eine spezielle Datenstruktur zu definieren, wie der
+Quelltext~\ref{alpaka:ueberblick:axpy:buffer:extent_src} zeigt.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
 auto extent = alpaka::vec::Vec<Dim, Idx>{numElements};
     \end{minted}
+    \caption{Definition eines Größenvektors mit Alpaka}
+    \label{alpaka:ueberblick:axpy:buffer:extent_src}
 \end{code}
 
-In der Folge kann 
+In der Folge kann die Größe verwendet werden, um den Speicher sowohl auf dem
+\textit{Host} als auch auf dem \textit{Device} zu reseriveren. Dies ist in
+Quelltext~\ref{alpaka:ueberblick:axpy:buffer:alloc} dargestellt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto hostBufX = alpaka::mem::buf::alloc<int, Idx>(devHost, extent);
+auto hostBufY = alpaka::mem::buf::alloc<int, Idx>(devHost, extent);
+
+auto devBufX = alpaka::mem::buf::alloc<int, Idx>(devAcc, extent);
+auto devBufY = alpaka::mem::buf::alloc<int, Idx>(devAcc, extent);
+    \end{minted}
+    \caption{Speicherallokation mit Alpaka}
+    \label{alpaka:ueberblick:axpy:buffer:alloc}
+\end{code}
+
+Die in Quelltext~\ref{alpaka:ueberblick:axpy:buffer:init} durchgeführte
+Initialisierung erfolgt über die von den \textit{Host}"=Puffern gekapselten
+Zeiger, auf die man bei Alpaka direkt zugreifen kann.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto hostPtrX = alpaka::mem::view::getPtrNative(hostBufX);
+auto hostPtrY = alpaka::mem::view::getPtrNative(hostBufY);
+
+for(auto i = 0; i < numElements; ++i)
+{
+    hostPtrX[i] = /* ... */;
+    hostPtrY[i] = /* ... */;
+}
+    \end{minted}
+    \caption{Initialisierung eines Alpaka-Puffers}
+    \label{alpaka:ueberblick:axpy:buffer:init}
+\end{code}
+
+Im letzten Schritt (siehe Quelltext~\ref{alpaka:ueberblick:axpy:buffer:copy})
+müssen die Daten vom \textit{Host} auf das \textit{Device} kopiert werden. Dazu
+werden Kopieroperationen in der oben angelegten Warteschlange eingereiht.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+alpaka::mem::view::copy(queue, devBufX, hostBufX, extent);
+alpaka::mem::view::copy(queue, devBufY, hostBufY, extent);
+    \end{minted}
+    \caption{Kopie der initialisierten Daten mit Alpaka}
+    \label{alpaka:ueberblick:axpy:buffer:copy}
+\end{code}
 
 \subsubsection{Kerneldefinition und -ausführung}
 \label{alpaka:ueberblick:axpy:kernel}
 
+Um die parallelen Eigenschaften der Ziel"=Hardware nutzen zu können, erfordert
+Alpaka eine Information, wie das zu bearbeitende Problem auf die
+Hardware"=Ressourcen aufgeteilt werden soll. Dazu kann der Programmierer eine
+in Alpaka vorhandene Funktion nutzen, die eine gute Aufteilung schätzen kann,
+oder selbst Definitionen für die Größe des \textit{Grids}, die Zahl der
+\textit{Threads} sowie der \textit{Elements} pro \textit{Thread} angeben. Die
+Aufteilung in \textit{Grid}, \textit{Threads} und \textit{Elements} ist ein
+Konzept der in Alpaka verwendeten Hardware"=Abstraktion und wird detailliert in
+Abschnitt~\ref{alpaka:konzepte:abstraktion} behandelt. Für dieses Beispiel
+genügt die Verwendung der Schätzfunktion, wie sie in
+Quelltext~\ref{alpaka:ueberblick:axpy:kernel:workdiv} gezeigt wird.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto workDiv = alpaka::workdiv::getValidWorkDiv<Acc>(
+                devAcc,                 // für welches Device?
+                extent,                 // für welche Problemgröße?
+                static_cast<Idx>(1u));  // wie viele Elemente pro Thread?
+    \end{minted}
+    \caption{Arbeitsaufteilung durch Alpaka"=Schätzfunktion}
+    \label{alpaka:ueberblick:axpy:kernel:workdiv}
+\end{code}
+
+Alpaka"=Kernel werden in Form von C++"=Funktoren -- das heißt Strukturen mit
+einem überladenen \texttt{()}"=Operator -- definiert. Der \texttt{()}"=Operator
+wird mit einem speziellen Funktionsattribut versehen (\texttt{ALPAKA\_FN\_ACC}),
+der im Hintergrund dafür sorgt, dass diese Funktion für das \textit{Device} und
+nicht den \textit{Host} kompiliert wird.
+
+Als Parameter nimmt der Kernel zunächst die oben definierte
+\texttt{devAcc}"=Instanz entgegen. Dies ist nötig, um von dieser Struktur
+gekapselte \textit{device}"=seitige Funktionen im Kernel nutzen zu können.
+Daneben ist nur die Angabe der eigentlichen Funktionsparameter erforderlich,
+in diesem Fall also die für den AXPY"=Algorithmus nötige Konstante \texttt{a}
+sowie die Ein- bzw. Ausgangsvektoren. Wie auf dem \textit{Host} erfolgt auch auf
+dem \textit{Device} der Zugriff auf die Speicherbereiche durch reine Zeiger.
+
+Innerhalb des Kernels wird ein Index"=Raum aufgespannt (eine genaue Erläuterung
+dieses Prinzips folgt in Abschnitt~\ref{alpaka:konzepte:abstraktion}), in dem
+jeder ausführenden Einheit des Beschleunigers ein eindeutiger Index sowie zu
+bearbeitende Elemente zugeordnet werden. Über in Alpaka vorhandene Funktionen
+ist eine Orientierung innerhalb des Index"=Raums möglich, wodurch die
+AXPY"=Funktion auf alle Vektor"=Elemente angewendet werden kann.
+
+Die gesamte Kernel"=Definition ist in
+Quelltext~\ref{alpaka:ueberblick:axpy:kernel:kernel_src} dargestellt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+struct AxpyKernel
+{
+    template <typename TAcc, typename TIdx>
+    ALPAKA_FN_ACC auto operator()(
+        const TAcc& acc,
+        const TIdx& numElements,
+        const int a,
+        const int* X,
+        int* Y
+        ) const -> void
+    {
+        auto gridThreadIdx = alpaka::idx::getIdx<
+                                    alpaka::Grid, alpaka::Threads>(acc)[0u];
+        auto threadElemExtent = alpaka::workdiv::getWorkDiv<
+                                    alpaka::Thread, alpaka::Elems>(acc)[0u];
+        auto threadFirstElemIdx = gridThreadIdx * threadElemExtent;
+
+        if(threadFirstElemIdx < numElements)
+        {
+            auto threadLastElemIdx = threadFirstElemIdx + threadElemExtent;
+            
+            for(auto i = threadFirstElemIdx; i < threadLastElemIdx; ++i)
+            {
+                Y[i] = a * X[i] + Y[i];
+            }
+        }
+    }
+};
+    \end{minted}
+    \caption{Kernel"=Definition in Alpaka}
+    \label{alpaka:ueberblick:axpy:kernel:kernel_src}
+\end{code}
+
+Der so definierte Kernel wird im nächsten Schritt einem \textit{Task}
+zugeordnet. Ein \textit{Task} ist prinzipiell mit einer \textit{command group}
+in SYCL vergleichbar und umfasst neben der Kernel"=Definition die gewünschte
+Aufteilung der Arbeit sowie die konkreten Ein- und Ausgabeparameter für eine
+Kernel"=Ausführung. Ein Alpaka"=\textit{Task} wird einer Alpaka"=\textit{Queue}
+übergeben und von dieser auf dem \textit{Device} zur Ausführung gebracht.
+
+Der gesamte Prozess ist in Quelltext~\ref{alpaka:ueberblick:axpy:kernel:task}
+gezeigt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto taskKernel = alpaka::kernel::createTaskKernel<Acc>(
+                    workDiv,
+                    AxpyKernel{},
+                    numElements,
+                    a,
+                    alpaka::mem::view::getPtrNative(devBufX),
+                    alpaka::mem::view::getPtrNative(devBufY));
+
+alpaka::queue::enqueue(queue, taskKernel);
+    \end{minted}
+    \caption{Task"=Definition und -Ausführung in Alpaka}
+    \label{alpaka:ueberblick:axpy:kernel:task}
+\end{code}
+
 \subsubsection{Synchronisierung}
 \label{alpaka:ueberblick:axpy:sync}
+
+Nach dem Abschluss der Berechnung ist die Prüfung der Ergebnisse erforderlich.
+Dazu werden diese durch eine Kopieroperation zunächst wieder auf den
+\textit{Host} übertragen. Dies geschieht wieder in einer \textit{Queue}. Um
+auf den Abschluss aller ausstehenden Operationen zu warten, kann der
+\textit{Host} durch eine Wartefunktion blockiert werden. Dieser Vorgang wird in
+Quelltext~\ref{alpaka:ueberblick:axpy:sync:src} demonstriert.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+alpaka::mem::view::copy(queue, hostBufX, devBufX, extent);
+alpaka::mem::view::copy(queue, hostBufY, devBufY, extent);
+
+alpaka::wait::wait(queue); // warte auf ausstehende Operationen
+
+/* ab hier Überprüfung der Ergebnisse möglich */
+    \end{minted}
+    \caption{Synchronisation zwischen Host und Device in Alpaka}
+    \label{alpaka:ueberblick:axpy:sync:src}
+\end{code}
 
 \subsubsection{Zusammenfassung}
 \label{alpaka:ueberblick:axpy:zusammenfassung}
 
+Der Quelltext~\ref{alpaka:ueberblick:axpy:zusammenfassung:src} zeigt das gesamte
+Alpaka"=AXPY"=Beispiel, jedoch aus Platzgründen ohne die Kernel"=Definition.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+#include <cstdlib>
+#include <alpaka/alpaka.hpp>
+
+struct AxpyKernel
+{
+    template <typename TAcc, typename TIdx>
+    ALPAKA_FN_ACC auto operator()(const TAcc& acc, const TIdx& numElements,
+                            const int a, const int* X, int* Y) const -> void
+    {
+        /* ... */
+    }
+};
+
+auto main() -> int
+{
+    using Dim = alpaka::dim::DimInt<1u>;
+    using Idx = std::size_t;
+    using Acc = alpaka::acc::AccGpuCudaRt<Dim, Idx>;
+    using DevAcc = alpaka::dev::Dev<Acc>;
+    using PltfAcc = alpaka::pltf::Pltf<Acc>;
+    using PltfHost = alpaka::pltf::PltfCpu;
+    using Queue = alpaka::queue::QueueCudaRtNonBlocking;
+
+    auto devHost = alpaka::pltf::getDevByIdx<PltfHost>(0u);
+    auto devAcc = alpaka::pltf::getDevByIdx<PltfAcc>(0u);
+    auto queue = Queue{devAcc};
+    auto extent = alpaka::vec::Vec<Dim, Idx>{numElements};
+    auto hostBufX = alpaka::mem::buf::alloc<int, Idx>(devHost, extent);
+    auto hostBufY = alpaka::mem::buf::alloc<int, Idx>(devHost, extent);
+    auto devBufX = alpaka::mem::buf::alloc<int, Idx>(devAcc, extent);
+    auto devBufY = alpaka::mem::buf::alloc<int, Idx>(devAcc, extent);
+    auto hostPtrX = alpaka::mem::view::getPtrNative(hostBufX);
+    auto hostPtrY = alpaka::mem::view::getPtrNative(hostBufY);
+
+    for(auto i = 0; i < numElements; ++i) {
+        hostPtrX[i] = /* ... */;
+        hostPtrY[i] = /* ... */;
+    }
+    alpaka::mem::view::copy(queue, devBufX, hostBufX, extent);
+    alpaka::mem::view::copy(queue, devBufY, hostBufY, extent);
+
+    auto workDiv = alpaka::workdiv::getValidWorkDiv<Acc>(
+                    devAcc, extent, static_cast<Idx>(1u));
+    auto taskKernel = alpaka::kernel::createTaskKernel<Acc>(
+                        workDiv, AxpyKernel{}, numElements, a,
+                        alpaka::mem::view::getPtrNative(devBufX),
+                        alpaka::mem::view::getPtrNative(devBufY));
+    alpaka::queue::enqueue(queue, taskKernel);
+    alpaka::mem::view::copy(queue, hostBufX, devBufX, extent);
+    alpaka::mem::view::copy(queue, hostBufY, devBufY, extent);
+    alpaka::wait::wait(queue);
+
+    return EXIT_SUCCESS;
+}
+    \end{minted}
+    \caption{Vollständiges Alpaka-AXPY-Beispiel}
+    \label{alpaka:ueberblick:axpy:zusammenfassung:src}
+\end{code}
+
 \section{Weiterführende Konzepte}\label{alpaka:konzepte}
 
 \subsection{Hardware"=Abstraktion}
+\label{alpaka:konzepte:abstraktion}
 
 \subsection{Abhängigkeiten zwischen Kerneln}
 \label{alpaka:konzepte:abhaengigkeiten}
