@@ -240,20 +240,6 @@ Alpaka"=Kernel übergeben, sodass der Programmierer in seinem Kernel nur die
 reinen Zeiger vorfindet. Dadurch lässt sich das SYCL"=Backend analog zu den
 restlichen Implementierungen verwenden.
 
-\subsection{Block-Synchronisierung}
-\label{implementierung:besonderheiten:synchronisierung}
-
-\begin{itemize}
-    \item Alpaka will überall einen Dimensions-Parameter, nur nicht bei der
-          Block-Synchronisierung.
-    \item SYCL braucht den Dimensionsparameter bei der Block-Synchronisierung.
-    \item Lösung: Erfolgt, funktioniert über Templates.
-\end{itemize}
-
-\subsection{Besonderheiten für FPGAs}
-
-TODO
-
 \section{Probleme}\label{implementierung:probleme}
 
 Während der Implementierung traten einige Probleme auf, die sich vornehmlich
@@ -327,20 +313,34 @@ zwar bereits zur Compile-Zeit fest und kann daher schon vor dem Aufruf des
 Kernels alloziert werden. Der Zeiger auf diesen Speicherbereich kann durch einen
 C++-Compiler ohne SYCL-Unterstützung dem betreffenden Kernel vor dessen
 Ausführung jedoch gar nicht zugeordnet werden, da für diese Funktion noch kein
-Stapelrahmen existiert. (vgl. die GitHub"=Diskussion mit Mitgliedern des
+Stapelrahmen existiert. Vom SYCL"=Spezifikationskomitee wird jedoch zur Zeit
+untersucht, inwieweit diese Funktionalität trotzdem verfügbar gemacht werden
+kann (vgl. die GitHub"=Diskussion mit Mitgliedern des
 SYCL"=Spezifikationskomitees im
-Anhang~\ref{anhang:diskussionen:syclspec:staticshared})
+Anhang~\ref{anhang:diskussionen:syclspec:staticshared}).
 
 \subsection{Atomare Funktionen}\label{implementierung:probleme:atomics}
 
-\begin{itemize}
-    \item SYCL kann anhand eines rohen Zeigers nicht ableiten, welcher
-          \texttt{multi\_ptr}-Typ verwendet werden soll.
-    \item \texttt{multi\_ptr} wird für SYCL-Atomics benötigt.
-    \item Alpaka gibt uns nur rohe Zeiger.
-    \item Lösung: Keine. Im Moment funktionieren Atomics nur für den globalen
-          Addressraum. Begründung SYCL-Kommittee einfügen.
-\end{itemize}
+Durch die Nutzung von Zeigern kommt es zu gravierenden Problemen mit atomaren
+Funktionen. SYCLs vorhandene atomare Funktionen erfordern zwingend die Nutzung
+der \texttt{multi\_ptr}"=Strukturen, welche wiederum mit ihrem Adressraum
+verknüpft werden -- das heißt, sie werden eindeutig dem globalen, lokalen oder
+konstanten Adressraum zugeordnet. Da in Alpaka jedoch nur C"=Zeiger
+verwendet werden, ist diese Information innerhalb der Alpaka"=Hierarchie nicht
+mehr vorhanden. Dadurch kann in der Implementierungsschicht der
+Alpaka"=Funktionen kein lokaler \texttt{multi\_ptr} angelegt werden.
+
+Erschwerend kommt hinzu, dass auch die vorhandenen SYCL"=Compiler nicht in der
+Lage sind, den Adressraum selbst zu ermitteln. Diese Problematik wurde im Rahmen
+dem SYCL"=Spezifikationskomitee im Rahmen der Arbeit gemeldet, bisher gibt es
+jedoch noch keinen Lösungsansatz (vgl. die GitHub"=Diskussion mit Mitgliedern
+des SYCL"=Spezifikationskomitees im
+Anhang~\ref{anhang:diskussionen:syclspec:addressspac}).
+
+Zur Zeit wird in der SYCL"=Implementierung der atomaren Funktionen daher
+angenommen, dass jeder übergebene Zeiger dem globalen Adressraum angehört --
+atomare Funktionen im lokalen oder konstanten Adressraum werden deshalb nicht
+unterstützt.
 
 \subsection{FPGA-Erweiterungen}\label{implementierung:probleme:fpga}
 
@@ -348,7 +348,9 @@ Wie SYCL-FPGA-Erweiterungen nutzen?
 
 \subsection{Zufallszahlen und Zeit}
 
-\begin{itemize}
-    \item SYCLs Ökosystem ist noch nicht besonders gut ausgeprägt
-    \item es gibt noch keine Funktionen für Zufallszahlen und Zeit
-\end{itemize}
+Da SYCL erst wenige Jahre alt ist, ist das zugehörige Ökosystem noch nicht
+sonderlich stark ausgeprägt. So fehlt auch Funktionalität, die auf Seiten des
+\textit{Devices} die Generierung von Zufallszahlen oder Zeitmessung erlauben.
+Alpaka stellt diese Funktionen jedoch zur Verfügung. Eine Lösung für dieses
+Problem konnte im Rahmen dieser Arbeit nicht gefunden werden, diese
+Funktionalität fehlt daher für das SYCL"=Backend.
