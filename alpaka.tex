@@ -438,8 +438,164 @@ auto main() -> int
 
 \section{Weiterführende Konzepte}\label{alpaka:konzepte}
 
+Zum besseren Verständnis des obigen Beispiels sowie der in den nächsten Kapiteln
+geschilderten Schwierigkeiten beim Entwicklungsprozess des Backends ist die
+Kenntnis weiterführender Alpaka"=Konzepte notwendig. Dazu gehören insbesondere
+die in Alpaka verwendete Hardware"=Abstraktion und die Verwaltung der
+Abhängigkeiten zwischen Kerneln. Für den Entwicklungsprozess mit Alpaka sind
+außerdem die Methoden für die Fehlerbehandlung und das Profiling relevant.
+
 \subsection{Hardware"=Abstraktion}
 \label{alpaka:konzepte:abstraktion}
+
+Alpakas Hardware"=Abstraktion basiert auf dem Prinzip der Datenparallelität, das
+heißt der Idee, dass dieselbe Operation parallel auf verschiedene, gleichartige
+Daten angewendet werden kann. Ein triviales Beispiel für einen datenparallelen
+Algorithmus ist die in diesem Kapitel als Einführung verwendete AXPY"=Methode:
+sie führt dieselbe Operation für alle Elemente der Vektoren $\vec{x}$ und
+$\vec{y}$ durch. Die im Folgenden erläuterten Konzepte wurden stark durch die in
+CUDA und OpenCL vorhandenen Abstraktionen beeinflusst
+\cite[vgl.][17]{worpitz2015}.
+
+\subsubsection{Threads}
+
+Alpaka"=\textit{Threads} sind einer der Grundbausteine des Abstraktionskonzepts.
+Ein idealer datenparalleler Algorithmus lässt sich theoretisch optimal durch
+einen \textit{Thread} pro Datenelement parallelisieren. Der Begriff
+\glqq Thread\grqq\ ist in diesem Zusammenhang nicht mit einem Thread des
+Betriebssystems oder einem CUDA"=Thread zu verwechseln -- er repräsentiert
+lediglich eine Befehlssequenz, die den gewünschten Algorithmus auf ein einzelnes
+Datenelement anwendet \cite[vgl.][17]{worpitz2015}. Die Menge aller
+\textit{Threads} bildet ein $n$"=dimensionales Gitter (engl. \textit{Grid}).
+Da manche Algorithmen die Kommunikation zwischen \textit{Threads} erfordern,
+verfügen diese außerdem über entsprechende Mittel zur Synchronisation. Die
+genannte Befehlssequenz pro Element ist der \textit{Kernel}. Die
+Abbildung~\ref{alpaka:konzepte:abstraktion:threads:gridthreadhw} zeigt eine
+theoretische Hardware, die dieses Konzept ideal abbildet.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \node [align = center] (abstrtext) at (1.75, 6.5) {\textbf{Abstraktion}};
+        \node [align = center] (hwtext) at (8.75, 6.5) {\textbf{Theoretische Hardware}};
+
+        \draw [rounded corners, fill = HKS41!70] (0.0, 0.0) rectangle (3.5, 5.5);
+        \draw [rounded corners, fill = HKS07!70] (0.25, 0.25) rectangle (3.25, 2.5);
+
+        \node [align=center] (gridtext) at (1.75, 5) {\Large\color{white}\textbf{Grid}};
+        \node [align=center] (threadtext) at (1.75, 2) {\Large\color{white}\textbf{Thread}};
+
+        \draw [line width = 0.75mm] (4, -0.5) -- (4, 6);
+
+        \path [fill = HKS41!70] (4.75, 5.75) -- (11.75, 5.75) -- (12.75, 4.75)
+                                -- (12.75, -0.25) -- (5.75, -0.25)
+                                -- (4.75, 0.75) -- (4.75, 5.75);
+
+        \node [text width = 5cm, align = center] (desctext) at (8.75, 2.75)
+              {\color{white}\begin{enumerate}
+                  \item 1"=zu"=1"=Abbildung von \textit{Threads} auf Kerne
+                  \item n"=zu"=n"=Verbindungen gleicher Länge
+              \end{enumerate}};
+        \node [align = center] (proctext) at (8.75, 5) {\Large\color{white}\textbf{Prozessor}};
+
+        \path [fill = HKS07!70] (7, 4.5) -- (8, 4.5) -- (8.1, 4.4)
+                                -- (8.1, 3.9) -- (7.1, 3.9) -- (7, 4)
+                                -- (7, 4.5);
+        \node [align = center] (coretext0) at (7.55, 4.2) {\color{white}Kern};
+        \path [fill = HKS07!70] (8.2, 4.5) -- (9.2, 4.5) -- (9.3, 4.4)
+                                -- (9.3, 3.9) -- (8.3, 3.9) -- (8.2, 4)
+                                -- (8.2, 4.5);
+        \node [align = center] (coretext1) at (8.75, 4.2) {\color{white}Kern};
+        \path [fill = HKS07!70] (9.4, 4.5) -- (10.4, 4.5) -- (10.5, 4.4)
+                                -- (10.5, 3.9) -- (9.5, 3.9) -- (9.4, 4)
+                                -- (9.4, 4.5);
+        \node [align = center] (coretext2) at (9.95, 4.2) {\color{white}Kern};
+        \path [fill = HKS07!70] (10.6, 4.2) -- (11.6, 4.2) -- (11.7, 4.1)
+                                -- (11.7, 3.6) -- (10.7, 3.6) -- (10.6, 3.7)
+                                -- (10.6, 4.2);
+        \node [align = center] (coretext3) at (11.15, 3.9) {\color{white}Kern};
+        \path [fill = HKS07!70] (11.1, 3.5) -- (12.1, 3.5) -- (12.2, 3.4)
+                                -- (12.2, 2.9) -- (11.2, 2.9) -- (11.1, 3.0)
+                                -- (11.1, 3.5);
+        \node [align = center] (coretext4) at (11.65, 3.2) {\color{white}Kern};
+
+        \path [fill = HKS07!70] (11.3, 2.8) -- (12.3, 2.8) -- (12.31, 2.79)
+                                -- (12.31, 2.69) -- (11.31, 2.69)
+                                -- (11.3, 2.7) -- (11.3, 2.8);
+
+        \path [fill = HKS07!70] (11.3, 2.59) -- (12.3, 2.59) -- (12.31, 2.58)
+                                -- (12.31, 2.48) -- (11.31, 2.48)
+                                -- (11.3, 2.49) -- (11.3, 2.59);
+        \path [fill = HKS07!70] (11.3, 2.38) -- (12.3, 2.38) -- (12.31, 2.37)
+                                -- (12.31, 2.27) -- (11.31, 2.27)
+                                -- (11.3, 2.28) -- (11.3, 2.38);
+        \path [fill = HKS07!70] (11.3, 2.17) -- (12.3, 2.17) -- (12.31, 2.16)
+                                -- (12.31, 2.06) -- (11.31, 2.06)
+                                -- (11.3, 2.07) -- (11.3, 2.17);
+        \path [fill = HKS07!70] (11.3, 1.96) -- (12.3, 1.96) -- (12.31, 1.95)
+                                -- (12.31, 1.85) -- (11.31, 1.85)
+                                -- (11.3, 1.86) -- (11.3, 1.96);
+        \path [fill = HKS07!70] (11.3, 1.75) -- (12.3, 1.75) -- (12.31, 1.74)
+                                -- (12.31, 1.64) -- (11.31, 1.64)
+                                -- (11.3, 1.65) -- (11.3, 1.75);
+
+        \path [fill = HKS07!70] (11.3, 1.41) -- (12.3, 1.41) -- (12.31, 1.4)
+                                -- (12.31, 1.3) -- (11.31, 1.3)
+                                -- (11.3, 1.31) -- (11.3, 1.41);
+
+
+        \path [fill = HKS07!70] (11.1, 1.4) -- (12.1, 1.4) -- (12.2, 1.3)
+                                -- (12.2, 0.8) -- (11.2, 0.8) -- (11.1, 0.9)
+                                -- (11.1, 1.4);
+        \node [align = center] (coretext5) at (11.65, 1.1) {\color{white}Kern};
+        \path [fill = HKS07!70] (10.6, 0.7) -- (11.6, 0.7) -- (11.7, 0.6)
+                                -- (11.7, 0.1) -- (10.7, 0.1) -- (10.6, 0.2)
+                                -- (10.6, 0.7);
+        \node [align = center] (coretext6) at (11.15, 0.4) {\color{white}Kern};
+        \path [fill = HKS07!70] (9.4, 0.4) -- (10.4, 0.4) -- (10.5, 0.3)
+                                -- (10.5, -0.2) -- (9.5, -0.2) -- (9.4, -0.1)
+                                -- (9.4, 0.4);
+        \node [align = center] (coretext7) at (9.95, 0.1) {\color{white}Kern};
+        \path [fill = HKS07!70] (8.2, 0.4) -- (9.2, 0.4) -- (9.3, 0.3)
+                                -- (9.3, -0.2) -- (8.3, -0.2) -- (8.2, -0.1)
+                                -- (8.2, 0.4);
+        \node [align = center] (coretext8) at (8.75, 0.1) {\color{white}Kern};
+        \path [fill = HKS07!70] (7, 0.4) -- (8, 0.4) -- (8.1, 0.3)
+                                -- (8.1, -0.2) -- (7.1, -0.2) -- (7, -0.1)
+                                -- (7, 0.4);
+        \node [align = center] (coretext9) at (7.55, 0.1) {\color{white}Kern};
+        \path [fill = HKS07!70] (5.8, 0.7) -- (6.8, 0.7) -- (6.9, 0.6)
+                                -- (6.9, 0.1) -- (5.9, 0.1) -- (5.8, 0.2)
+                                -- (5.8, 0.7);
+        \node [align = center] (coretext10) at (6.35, 0.4) {\color{white}Kern};
+        \path [fill = HKS07!70] (5.2, 1.4) -- (6.2, 1.4) -- (6.3, 1.3)
+                                -- (6.3, 0.8) -- (5.3, 0.8) -- (5.2, 0.9)
+                                -- (5.2, 1.4);
+        \node [align = center] (coretext11) at (5.75, 1.1) {\color{white}Kern};
+        \path [fill = HKS07!70] (5.0, 2.1) -- (6.0, 2.1) -- (6.1, 2.0)
+                                -- (6.1, 1.5) -- (5.1, 1.5) -- (5.0, 1.6)
+                                -- (5.0, 2.1);
+        \node [align = center] (coretext12) at (5.55, 1.8) {\color{white}Kern};
+        \path [fill = HKS07!70] (5.0, 2.8) -- (6.0, 2.8) -- (6.1, 2.7)
+                                -- (6.1, 2.2) -- (5.1, 2.2) -- (5.0, 2.3)
+                                -- (5.0, 2.8);
+        \node [align = center] (coretext13) at (5.55, 2.5) {\color{white}Kern};
+        \path [fill = HKS07!70] (5.25, 3.5) -- (6.25, 3.5) -- (6.35, 3.4)
+                                -- (6.35, 2.9) -- (5.35, 2.9) -- (5.25, 3.0)
+                                -- (5.25, 3.5);
+        \node [align = center] (coretext14) at (5.8, 3.2) {\color{white}Kern};
+        \path [fill = HKS07!70] (5.8, 4.2) -- (6.8, 4.2) -- (6.9, 4.1)
+                                -- (6.9, 3.6) -- (5.9, 3.6) -- (5.8, 3.7)
+                                -- (5.8, 4.2);
+        \node [align = center] (coretext15) at (6.35, 3.9) {\color{white}Kern};
+    \end{tikzpicture}
+    \caption{Links: Abstraktionshierarchie mit einem aus \textit{Threads}
+             zusammengesetzten \textit{Grid}. Rechts: Ein hypothetischer
+             Prozessor, der datenparallele Anwendungen mit diesem
+             Abstraktionsschema ideal ausführen könnte.
+             \cite[nach][18]{worpitz2015}}
+    \label{alpaka:konzepte:abstraktion:threads:gridthreadhw}
+\end{figure}
 
 \subsection{Abhängigkeiten zwischen Kerneln}
 \label{alpaka:konzepte:abhaengigkeiten}
