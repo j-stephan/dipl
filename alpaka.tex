@@ -448,13 +448,14 @@ außerdem die Methoden für die Fehlerbehandlung und das Profiling relevant.
 \subsection{Hardware"=Abstraktion}
 \label{alpaka:konzepte:abstraktion}
 
-Alpakas Hardware"=Abstraktion basiert auf dem Prinzip der Datenparallelität, das
-heißt der Idee, dass dieselbe Operation parallel auf verschiedene, gleichartige
-Daten angewendet werden kann. Ein triviales Beispiel für einen datenparallelen
-Algorithmus ist die in diesem Kapitel als Einführung verwendete AXPY"=Methode:
-sie führt dieselbe Operation für alle Elemente der Vektoren $\vec{x}$ und
-$\vec{y}$ durch. Die im Folgenden erläuterten Konzepte wurden stark durch die in
-CUDA und OpenCL vorhandenen Abstraktionen beeinflusst
+Alpakas Hardware"=Abstraktion trägt den Namen \textit{Redundant Hierarchical
+Parallelism}\cite[vgl.][22]{worpitz2015}. Sie basiert auf dem Prinzip der
+Datenparallelität, das heißt der Idee, dass dieselbe Operation parallel auf
+verschiedene, gleichartige Daten angewendet werden kann. Ein triviales Beispiel
+für einen datenparallelen Algorithmus ist die in diesem Kapitel als Einführung
+verwendete AXPY"=Methode: sie führt dieselbe Operation für alle Elemente der
+Vektoren $\vec{x}$ und $\vec{y}$ durch. Die im Folgenden erläuterten Konzepte
+wurden stark durch die in CUDA und OpenCL vorhandenen Abstraktionen beeinflusst
 \cite[vgl.][17]{worpitz2015}.
 
 \subsubsection{Grid und Threads}
@@ -800,6 +801,24 @@ besitzen.
 
 \subsubsection{Warps}
 
+Auf einigen Hardware"=Plattformen können \textit{Thread}"=Gruppen innerhalb
+eines \textit{Blocks} taktgenau gemeinsam ausgeführt werden. Diese Gruppen
+werden in der Alpaka"=Hierarchie mit dem CUDA"=Begriff \textit{Warp} bezeichnet.
+Das \textit{Warp}"=Konzept findet sich beispielsweise auf GPUs, deren
+Multiprozessoren \textit{Threads} in \textit{Warp}"=Form ausführen. Dadurch
+können sich \textit{Threads} Hardware"=Ressourcen teilen, was die benötigte
+Chipfläche verkleinert. Die
+Abbildung~\ref{alpaka:konzepte:abstraktion:warps:warphw} zeigt einen
+theoretischen Prozessor, der in der Lage ist, das Abstraktionskonzept aus
+\textit{Grid}, \textit{Blocks}, \textit{Warps} und \textit{Threads} auszuführen.
+
+Die konkrete \textit{Warp}"=Größe unterscheidet sich zwischen verschiedenen
+Plattformen und Herstellern. Aufgrund ihrer Hardware"=Nähe steht diese
+Information in OpenCL und SYCL zur Laufzeit zur Verfügung, ist dort jedoch kein
+eigener Teil des Abstraktionskonzepts. Alpaka stellt diese Information dagegen
+nicht zur Verfügung, obwohl \textit{Warps} im theoretischen Konzept vorhanden
+sind.
+
 \begin{figure}
     \centering
     \begin{tikzpicture}
@@ -878,6 +897,42 @@ besitzen.
                                        -- (12.7, 2.8) -- (12.7, 2.45)
                                        -- (9.5, 2.45);
         \node [align = center] (sharedtext1) at (11.05, 2.675) {\small\color{white}geteilter Speicher};
+        \path [draw, fill = HKS07!70] (11.1, 3.9) -- (11.0, 4.0) -- (11.0, 4.5)
+                                -- (12.0, 4.5) -- (12.1, 4.4) -- (12.1, 3.9)
+                                -- (11.1, 3.9);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (11.55, 4.05) -- (11.55, 2.75);
+        \path [draw, fill = HKS07!70] (11.3, 3.9) -- (11.2, 4.0) -- (11.2, 4.5)
+                                -- (12.2, 4.5) -- (12.3, 4.4) -- (12.3, 3.9)
+                                -- (11.3, 3.9);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (11.75, 4.05) -- (11.75, 2.75);
+        \path [draw, fill = HKS07!70] (11.5, 3.9) -- (11.4, 4.0) -- (11.4, 4.5)
+                                -- (12.4, 4.5) -- (12.5, 4.4) -- (12.5, 3.9)
+                                -- (11.5, 3.9);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (11.95, 4.05) -- (11.95, 2.75);
+        \path [draw, fill = HKS07!70] (11.7, 3.9) -- (11.6, 4.0) -- (11.6, 4.5)
+                                -- (12.6, 4.5) -- (12.7, 4.4) -- (12.7, 3.9)
+                                -- (11.7, 3.9);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (12.15, 4.05) -- (12.15, 2.75);
+        \node [align = center] (coretext1) at (12.15, 4.2) {\color{white}Kern};
+        \path [draw, fill = HKS33!70] (9.5, 4.0) -- (9.4, 4.1) -- (9.4, 4.5)
+                                      -- (10.65, 4.5) -- (10.75, 4.4)
+                                      -- (10.75, 4.0) -- (9.5, 4.0);
+        \path [draw, fill = HKS33!70] (9.5, 3.8) -- (9.4, 3.9) -- (9.4, 4.3)
+                                      -- (10.65, 4.3) -- (10.75, 4.2)
+                                      -- (10.75, 3.8) -- (9.5, 3.8);
+        \path [draw, fill = HKS33!70] (9.5, 3.6) -- (9.4, 3.7) -- (9.4, 4.1)
+                                      -- (10.65, 4.1) -- (10.75, 4.0)
+                                      -- (10.75, 3.6) -- (9.5, 3.6);
+        \path [draw, fill = HKS33!70] (9.5, 3.4) -- (9.4, 3.5) -- (9.4, 3.9)
+                                      -- (10.65, 3.9) -- (10.75, 3.8)
+                                      -- (10.75, 3.4) -- (9.5, 3.4);
+        \path [draw, fill = HKS33!70] (9.5, 3.2) -- (9.4, 3.3) -- (9.4, 3.7)
+                                      -- (10.65, 3.7) -- (10.75, 3.6)
+                                      -- (10.75, 3.2) -- (9.5, 3.2);
+        \path [draw, fill = HKS33!70] (9.5, 3.0) -- (9.4, 3.1) -- (9.4, 3.5)
+                                      -- (10.65, 3.5) -- (10.75, 3.4)
+                                      -- (10.75, 3.0) -- (9.5, 3.0);
+        \node [align = center] (warptext1) at (10.075, 3.25) {\small\color{white}Warp};
 
         % untere Reihe
         \path [draw, fill = HKS57!70] (5.45, 0) -- (5.2, 0.25) -- (5.2, 2.25)
@@ -888,6 +943,42 @@ besitzen.
                                        -- (8.75, 0.45) -- (8.75, 0.1)
                                        -- (5.55, 0.1);
         \node [align = center] (sharedtext2) at (7.1, 0.325) {\small\color{white}geteilter Speicher};
+        \path [draw, fill = HKS07!70] (7.15, 1.55) -- (7.05, 1.65) -- (7.05, 2.15)
+                                -- (8.05, 2.15) -- (8.15, 2.05) -- (8.15, 1.55)
+                                -- (7.15, 1.55);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (7.6, 1.7) -- (7.6, 0.4);
+        \path [draw, fill = HKS07!70] (7.35, 1.55) -- (7.25, 1.65) -- (7.25, 2.15)
+                                -- (8.25, 2.15) -- (8.35, 2.05) -- (8.35, 1.55)
+                                -- (7.35, 1.55);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (7.8, 1.7) -- (7.8, 0.4);
+        \path [draw, fill = HKS07!70] (7.55, 1.55) -- (7.45, 1.65) -- (7.45, 2.15)
+                                -- (8.45, 2.15) -- (8.55, 2.05) -- (8.55, 1.55)
+                                -- (7.55, 1.55);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (8.0, 1.7) -- (8.0, 0.4);
+        \path [draw, fill = HKS07!70] (7.75, 1.55) -- (7.65, 1.65) -- (7.65, 2.15)
+                                -- (8.65, 2.15) -- (8.75, 2.05) -- (8.75, 1.55)
+                                -- (7.75, 1.55);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (8.2, 1.7) -- (8.2, 0.4);
+        \node [align = center] (coretext2) at (8.2, 1.85) {\color{white}Kern};
+        \path [draw, fill = HKS33!70] (5.55, 1.65) -- (5.45, 1.75) -- (5.45, 2.15)
+                                      -- (6.7, 2.15) -- (6.8, 2.05)
+                                      -- (6.8, 1.65) -- (5.55, 1.65);
+        \path [draw, fill = HKS33!70] (5.55, 1.45) -- (5.45, 1.55) -- (5.45, 1.95)
+                                      -- (6.7, 1.95) -- (6.8, 1.85)
+                                      -- (6.8, 1.45) -- (5.55, 1.45);
+        \path [draw, fill = HKS33!70] (5.55, 1.25) -- (5.45, 1.35) -- (5.45, 1.75)
+                                      -- (6.7, 1.75) -- (6.8, 1.65)
+                                      -- (6.8, 1.25) -- (5.55, 1.25);
+        \path [draw, fill = HKS33!70] (5.55, 1.05) -- (5.45, 1.15) -- (5.45, 1.55)
+                                      -- (6.7, 1.55) -- (6.8, 1.45)
+                                      -- (6.8, 1.05) -- (5.55, 1.05);
+        \path [draw, fill = HKS33!70] (5.55, 0.85) -- (5.45, 0.95) -- (5.45, 1.35)
+                                      -- (6.7, 1.35) -- (6.8, 1.25)
+                                      -- (6.8, 0.85) -- (5.55, 0.85);
+        \path [draw, fill = HKS33!70] (5.55, 0.65) -- (5.45, 0.75) -- (5.45, 1.15)
+                                      -- (6.7, 1.15) -- (6.8, 1.05)
+                                      -- (6.8, 0.65) -- (5.55, 0.65);
+        \node [align = center] (warptext2) at (6.125, 0.9) {\small\color{white}Warp};
 
         \path [draw, fill = HKS57!70] (9.4, 0) -- (9.15, 0.25) -- (9.15, 2.25)
                                       -- (12.7167, 2.25) -- (12.9667, 2)
@@ -897,6 +988,42 @@ besitzen.
                                        -- (12.7, 0.45) -- (12.7, 0.1)
                                        -- (9.5, 0.1);
         \node [align = center] (sharedtext3) at (11.05, 0.325) {\small\color{white}geteilter Speicher};
+        \path [draw, fill = HKS07!70] (11.1, 1.55) -- (11.0, 1.65) -- (11.0, 2.15)
+                                -- (12.0, 2.15) -- (12.1, 2.05) -- (12.1, 1.55)
+                                -- (11.1, 1.55);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (11.55, 1.7) -- (11.55, 0.4);
+        \path [draw, fill = HKS07!70] (11.3, 1.55) -- (11.2, 1.65) -- (11.2, 2.15)
+                                -- (12.2, 2.15) -- (12.3, 2.05) -- (12.3, 1.55)
+                                -- (11.3, 1.55);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (11.75, 1.7) -- (11.75, 0.4);
+        \path [draw, fill = HKS07!70] (11.5, 1.55) -- (11.4, 1.65) -- (11.4, 2.15)
+                                -- (12.4, 2.15) -- (12.5, 2.05) -- (12.5, 1.55)
+                                -- (11.5, 1.55);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (11.95, 1.7) -- (11.95, 0.4);
+        \path [draw, fill = HKS07!70] (11.7, 1.55) -- (11.6, 1.65) -- (11.6, 2.15)
+                                -- (12.6, 2.15) -- (12.7, 2.05) -- (12.7, 1.55)
+                                -- (11.7, 1.55);
+        \draw [{Latex[scale=0.5]}-{Latex[scale = 0.5]}, very thick] (12.15, 1.7) -- (12.15, 0.4);
+        \node [align = center] (coretext3) at (12.15, 1.85) {\color{white}Kern};
+        \path [draw, fill = HKS33!70] (9.5, 1.65) -- (9.4, 1.75) -- (9.4, 2.15)
+                                      -- (10.65, 2.15) -- (10.75, 2.05)
+                                      -- (10.75, 1.65) -- (9.5, 1.65);
+        \path [draw, fill = HKS33!70] (9.5, 1.45) -- (9.4, 1.55) -- (9.4, 1.95)
+                                      -- (10.65, 1.95) -- (10.75, 1.85)
+                                      -- (10.75, 1.45) -- (9.5, 1.45);
+        \path [draw, fill = HKS33!70] (9.5, 1.25) -- (9.4, 1.35) -- (9.4, 1.75)
+                                      -- (10.65, 1.75) -- (10.75, 1.65)
+                                      -- (10.75, 1.25) -- (9.5, 1.25);
+        \path [draw, fill = HKS33!70] (9.5, 1.05) -- (9.4, 1.15) -- (9.4, 1.55)
+                                      -- (10.65, 1.55) -- (10.75, 1.45)
+                                      -- (10.75, 1.05) -- (9.5, 1.05);
+        \path [draw, fill = HKS33!70] (9.5, 0.85) -- (9.4, 0.95) -- (9.4, 1.35)
+                                      -- (10.65, 1.35) -- (10.75, 1.25)
+                                      -- (10.75, 0.85) -- (9.5, 0.85);
+        \path [draw, fill = HKS33!70] (9.5, 0.65) -- (9.4, 0.75) -- (9.4, 1.15)
+                                      -- (10.65, 1.15) -- (10.75, 1.05)
+                                      -- (10.75, 0.65) -- (9.5, 0.65);
+        \node [align = center] (warptext3) at (10.075, 0.9) {\small\color{white}Warp};
 
     \end{tikzpicture}
     \caption{Links: Abstraktionshierarchie mit einem \textit{Grid}, das aus
@@ -910,6 +1037,7 @@ besitzen.
              \cite[nach][20]{worpitz2015}}
     \label{alpaka:konzepte:abstraktion:warps:warphw}
 \end{figure}
+
 \subsubsection{Elements}
 
 Mit dem \textit{Element}"=Konzept ermöglicht Alpaka dem Programmierer die
@@ -952,7 +1080,60 @@ dargestellt ist.
 \subsection{Abhängigkeiten zwischen Kerneln}
 \label{alpaka:konzepte:abhaengigkeiten}
 
+Im Gegensatz zu SYCL verfügt Alpaka nicht über ein System, um automatisch
+Abhängigkeiten zwischen Kerneln zu verwalten. Stattdessen ist es Aufgabe des
+Programmierers, Alpaka"=\textit{Events}zur Synchronisierung zwischen Kerneln zu
+verwenden. Dies ist nötig, da Operationen (Kopien, Kernel, \ldots) in derselben
+\textit{Queue} zwar sequentiell in der Reihenfolge ihrer Einreihung
+abgearbeitet werden, in verschiedenen \textit{Queues} dagegen zueinander
+asynchron laufen.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+auto queue1 = QueueCudaRtNonBlocking{/*...*/};
+auto queue2 = QueueCudaRtNonBlocking{/*...*/};
+
+// A ist Vorbedingung für B und C
+auto eventA = EventCudaRt{/* ... */};
+// führe A aus und markiere anschließendes Event
+alpaka::queue::enqueue(queue1, /* A */);
+alpaka::queue::enqueue(queue1, eventA);
+
+// B befindet sich in derselben Queue hinter A
+alpaka::queue::enqueue(queue1, /* B */);
+
+// C befindet sich in einer anderen Queue und muss auf eventA warten
+alpaka::wait::wait(queue2, eventA);
+// C ist Vorbedingung für D
+auto eventC = EventCudaRt{/* ... */};
+// führe C aus und markiere anschließendes Event
+alpaka::queue::enqueue(queue2, /* C */);
+alpaka::queue::enqueue(queue2, eventC);
+
+// D befindet sich in derselben Queue hinter B, muss aber auf eventC warten
+alpaka::wait::wait(queue1, eventC);
+alpaka::queue::enqueue(queue1, /* D */);
+    \end{minted}
+    \caption{Einfacher Alpaka"=Aufgabengraph}
+    \label{alpaka:konzepte:abhaengigkeiten:src}
+\end{code}
+
+\textit{Events} können zwischen \textit{Queue}"=Operationen eingefügt werden.
+Wurde eine Operation vollständig durchgeführt, so wird das nachfolgende
+\textit{Event} entsprechend markiert. Andere \textit{Queues} sowie der
+\textit{Host} können dadurch auf dieses \textit{Event} warten, bevor sie ihre
+eigenen Aufgaben fortsetzen.
+
+Der im vorigen Abschnitt (Abschnitt~\ref{sycl:konzepte:abhaengigkeiten})
+Beispiel"=Aufgabengraph erfordert demnach mehr Aufwand als das SYCL"=Äquivalent,
+wie der Quelltext~\ref{alpaka:konzepte:abhaengigkeiten:src} zeigt.
+
 \subsection{Fehlerbehandlung}
+
+Ähnlich wie SYCL verwendet Alpaka C++"=Exceptions für die Fehlerbehandlung zur
+Laufzeit. Allerdings wurde darauf verzichtet, spezielle Exceptions für Alpaka
+zu entwerfen. Stattdessen wird die Klasse \texttt{runtime\_error} der
+C++"=Standardbibliothek verwendet.
 
 \subsection{Profiling}
 
