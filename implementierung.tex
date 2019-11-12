@@ -4,16 +4,75 @@
 Mit Ausnahme der in den folgenden Abschnitten aufgeführten Besonderheiten
 (Abschnitt~\ref{implementierung:besonderheiten}) bzw.\ Probleme
 (Abschnitt~\ref{implementierung:probleme}) konnte die Implementierung des
-SYCL-Backends für Alpaka recht einfach durchgeführt werden. Als Vorlage für
+SYCL"=Backends für Alpaka recht einfach durchgeführt werden. Als Vorlage für
 dessen Aufbau dienten die bereits vorhandenen Backends, wobei hier besonders
-das CUDA-Backend hervorzuheben ist.
+das CUDA"=Backend hervorzuheben ist. Die Abbildung der in Alpaka vorhandenen
+Datenstrukturen bzw.\ Funktionen auf SYCL"=Funktionalität ist in
+Tabelle~\ref{implementierung:abbildung} dargestellt.
+
+\begin{table}[htb]
+    \centering
+    \begin{tabulary}{\textwidth}{@{}LLL@{}}
+        \toprule
+        % Überschrift
+        \textbf{Bereich} & \textbf{Alpaka} & \textbf{SYCL} \tabularnewline\midrule
+        % 1. Zeile
+        \multirow{3}{*}{Attribute} & \texttt{ALPAKA\_FN\_HOST}
+            & nicht nötig \tabularnewline
+        & \texttt{ALPAKA\_FN\_ACC} & nicht nötig \tabularnewline
+        & \texttt{ALPAKA\_FN\_HOST\_ACC} & nicht nötig \tabularnewline\midrule
+        % 2. Zeile
+        \multirow{3}{*}{Adressräume} &
+            \texttt{block::shared::st::allocVar()} &
+            siehe Abschnitt~\ref{implementierung:probleme:shared}\tabularnewline
+            & \texttt{ALPAKA\_STATIC\_ACC\_MEM\_CONSTANT} &
+            siehe Abschnitt~\ref{implementierung:probleme:globalvar}\tabularnewline
+            & \texttt{ALPAKA\_STATIC\_ACC\_MEM\_GLOBAL} &
+            siehe Abschnitt~\ref{implementierung:probleme:globalvar} \tabularnewline\midrule
+        \multirow{4}{*}{Indizes} & \texttt{getIdx<Block, Threads>()} &
+            \texttt{nd\_item::get\_local\_id()}\tabularnewline
+            & \texttt{getIdx<Grid, Blocks>()} &
+            \texttt{nd\_item::get\_group()}\tabularnewline
+            & \texttt{getWorkDiv<Block, Threads>()} &
+            \texttt{nd\_item::get\_local\_range()}\tabularnewline
+            & \texttt{getWorkDiv<Grid, Blocks>()} &
+            \texttt{nd\_item::get\_group\_range()}\tabularnewline\midrule
+        Typen & \texttt{Vec<TDim, TVal>} & \texttt{nd\_range<TDim>}\tabularnewline\midrule
+        \multirow{4}{*}{Devices} & \texttt{reset(device)} &
+            siehe Abschnitt~\ref{implementierung:probleme:device}\tabularnewline
+            & \texttt{wait(device)} &
+            siehe Abschnitt~\ref{implementierung:probleme:device}\tabularnewline
+            & \texttt{getDevCount()} & siehe Abschnitt~\ref{implementierung:probleme:device}\tabularnewline
+            & \texttt{getAccDevProps()} & \texttt{device::get\_info()}\tabularnewline\midrule
+        \multirow{5}{*}{Queues} & \texttt{QueueBlocking} & \texttt{queue}\tabularnewline
+            & \texttt{QueueNonBlocking} & \texttt{queue} \tabularnewline
+            & \texttt{empty(queue)} & siehe Abschnitt~\ref{implementierung:besonderheiten:queue}\tabularnewline
+            & \texttt{wait(queue)} & \texttt{queue::wait\_and\_throw()}\tabularnewline
+            & \texttt{wait(queue, event)}& siehe Abschnitt~\ref{implementierung:probleme:events}\tabularnewline\midrule
+        \multirow{4}{*}{Events} & \texttt{Event} & \texttt{event}\tabularnewline
+            & \texttt{test(event)} & \texttt{event::get\_info()}\tabularnewline
+            & \texttt{enqueue(queue, event)} & siehe Abschnitt~\ref{implementierung:probleme:events}\tabularnewline
+            & \texttt{wait(event)} & \texttt{event::wait\_and\_throw()}\tabularnewline\midrule
+        \multirow{7}{*}{Speicher} & \texttt{alloc()} & \texttt{buffer}\tabularnewline
+            & \texttt{copy()} (synchron) & \texttt{handler::copy()}\tabularnewline
+            & \texttt{copy()} (asynchron) & \texttt{handler::copy()}\tabularnewline
+            & \texttt{set()} (synchron) & \texttt{handler::fill()}\tabularnewline
+            & \texttt{set()} (asynchron) & \texttt{handler::fill()}\tabularnewline
+            & \texttt{getMemBytes()} & \texttt{device::get\_info()}\tabularnewline
+            & \texttt{getFreeMemBytes()} & siehe Abschnitt~\ref{implementierung:probleme:speicher}\tabularnewline\midrule
+        \multirow{2}{*}{Kernel} & \texttt{exec(queue, workDiv, kernel, ...)} &
+            \texttt{queue.enqueue()}\tabularnewline
+            & \texttt{BlockSharedExternMemSizeBytes}
+            & siehe Abschnitt~\ref{implementierung:besonderheiten:sharedmem}\tabularnewline\bottomrule
+    \end{tabulary}
+    \caption{Implementierung der Alpaka"=Funktionalität durch SYCL.}
+    \label{implementierung:abbildung}
+\end{table}
 
 \section{Besonderheiten des SYCL-Backends}
 \label{implementierung:besonderheiten}
 
-\subsection{Beschleuniger-Auswahl}
-
-TODO
+\subsection{Queue-Verwaltung}\label{implementierung:besonderheiten:queue}
 
 \subsection{Zeiger und \textit{accessors}}
 \label{implementierung:besonderheiten:zeiger}
@@ -240,12 +299,21 @@ Alpaka"=Kernel übergeben, sodass der Programmierer in seinem Kernel nur die
 reinen Zeiger vorfindet. Dadurch lässt sich das SYCL"=Backend analog zu den
 restlichen Implementierungen verwenden.
 
+\subsection{Dynamischer geteilter Speicher}
+\label{implementierung:besonderheiten:sharedmem}
+
 \section{Probleme}\label{implementierung:probleme}
 
 Während der Implementierung traten einige Probleme auf, die sich vornehmlich
 auf gravierende konzeptionelle Unterschiede zwischen Alpaka und SYCL
 zurückführen lassen. Diese werden in den folgenden Abschnitten näher
 beschrieben.
+
+\subsection{Globale Variablen}\label{implementierung:probleme:globalvar}
+
+\subsection{Device-Verwaltung}\label{implementierung:probleme:device}
+
+\subsection{Speicherverwaltung}\label{implementierung:probleme:speicher}
 
 \subsection{Event-System}\label{implementierung:probleme:events}
 
@@ -271,7 +339,8 @@ CUDAs Verhalten simuliert wird. Zur Zeit ist der Befehl
 Synchronisation in Alpaka nicht implementiert, wenn der \textit{waiter} eine
 Alpaka-\textit{queue} ist.
 
-\subsection{Geteilter Speicher}\label{implementierung:probleme:shared}
+\subsection{Statischer geteilter Speicher}
+\label{implementierung:probleme:shared}
 
 Einige Plattformen der parallelen Programmierung, wie etwa CUDA und OpenCL,
 kennen das Konzept eines Speichers auf Multiprozessor-Ebene, der ungefähr

@@ -787,7 +787,9 @@ automatisch erkannt und die Kernel in der richtigen Reihenfolge ausgeführt
 \cite[vgl.][21--23]{sycl2019}. In diesem Aspekt unterscheidet sich SYCL von
 \gls{opencl}, das neben vollständig seriellen Warteschlangen nur asynchrone
 Warteschlangen kennt, bei denen die richtige Sortierung der Kernel Aufgabe des
-Programmierers ist.
+Programmierers ist. Wichtig ist außerdem, dass die Abhängigkeiten über die
+Puffer"=Verfügbarkeit ermittelt werden -- und nicht über das Ende der Kernel
+\cite[vgl.][166]{sycl2019}.
 
 Graphisch lässt sich dies in Form eines gerichteten Graphen veranschaulichen,
 wie für einen einfachen Fall in
