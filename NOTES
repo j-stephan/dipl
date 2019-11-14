@@ -1,4 +1,4 @@
-LLVM Europe (SYCL)
+LLVM Europe (SYCL) 
 FPGA in Struktur (Grundlagen)
     * Unterschied zwischen FPGA und GPU hervorheben (SIMD-GPUs...)
     * SYCL-Sicht auf FPGAs
@@ -22,3 +22,13 @@ FPGA in Struktur (Grundlagen)
 * Skript für Matthias / fwk394
     * getting started gitlab
     * Präsentation aus gitlab für Alpaka allg.
+
+* SYCL besser motivieren (Rechenzentrum: konfigurierbare Hardware, HPC, ...)
+    * Fazit zu SYCL <-> Alpaka (FPGA-Sicht!)
+    * FPGA-Latenzen untersuchen
+    * sich ändernde Anforderungen für FPGAs
+    * FPGAs motivieren 
+    * Einleitung etwas überarbeiten, mehr Motivation / Vision
+
+* Verteidigung 16./17.12.
+    * 20 - 25 Minuten + Diskussion

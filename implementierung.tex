@@ -1,6 +1,40 @@
 \chapter{Implementierung des SYCL-Backends der Alpaka-Bibliothek}
 \label{implementierung}
 
+\section{Alternative Struktur}
+
+\subsection{Implementierung der Acc-Struktur}
+
+\subsection{Implementierung atomarer Funktionen}
+
+\subsection{Implementierung des geteilten Speichers}
+
+\subsection{Implementierung der Block-Synchronisation}
+
+\subsection{Implementierung der Dev-Struktur}
+
+\subsection{Implementierung der Events}
+
+\subsection{Implementierung der Index-Funktionen}
+
+\subsection{Implementierung der TaskKernel-Struktur}
+
+\subsection{Implementierung mathematischer Funktionen}
+
+\subsection{Implementierung der Speicherverwaltung}
+
+\subsection{Implementierung der Pltf-Struktur}
+
+\subsection{Implementierung der Queues}
+
+\subsection{Implementierung der workDiv-Struktur}
+
+\subsection{Implementierung der Zufallszahlen}
+
+\subsection{Implementierung der Zeitfunktionen}
+
+\subsection{Zusammenfassung}
+
 Mit Ausnahme der in den folgenden Abschnitten aufgeführten Besonderheiten
 (Abschnitt~\ref{implementierung:besonderheiten}) bzw.\ Probleme
 (Abschnitt~\ref{implementierung:probleme}) konnte die Implementierung des
@@ -72,7 +106,14 @@ Tabelle~\ref{implementierung:abbildung} dargestellt.
 \section{Besonderheiten des SYCL-Backends}
 \label{implementierung:besonderheiten}
 
-\subsection{Queue-Verwaltung}\label{implementierung:besonderheiten:queue}
+Durch die beschriebenen Unterschiede zwischen Alpaka und SYCL wurden
+stellenweise kreative Lösungen erforderlich, um Alpakas Funktionalität möglichst
+gut abbilden zu können. Diese werden in den folgenden Abschnitten näher
+beschrieben.
+
+\subsection{Queue- und Event-Verwaltung}\label{implementierung:besonderheiten:queue}
+
+
 
 \subsection{Zeiger und \textit{accessors}}
 \label{implementierung:besonderheiten:zeiger}
@@ -311,6 +352,40 @@ beschrieben.
 
 \subsection{Globale Variablen}\label{implementierung:probleme:globalvar}
 
+Die Makros \texttt{ALPAKA\_STATIC\_ACC\_MEM\_GLOBAL} und
+\texttt{ALPAKA\_STATIC\_ACC\_MEM\_CONSTANT} werden von Alpaka zur Verfügung
+gestellt, um globale Variablen direkt im globalen bzw. konstanten
+\textit{Device}"=Speicher anlegen zu können. Diese dienen vornehmlich der
+Abstraktion der CUDA"=Schlüsselwörter texttt{\_\_device\_\_} und
+\texttt{\_\_constant\_\_}, die dieselbe Funktion erfüllen. Diese Funktionalität
+wurde für die restlichen Alpaka"=Backends bisher nicht benötigt. Im Zusammenhang
+mit SYCL kommt es hier jedoch zu Problemen.
+
+Zwar ist das Anlegen globaler \textit{device}"=seitiger Variablen auch in SYCL
+möglich, erfordert hier aber den Weg über Puffer und \textit{accessors}. Die
+C++"=Makro"=Mächtigkeit reicht allerdings nicht aus, um aus einer
+Variablendeklaration
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+ALPAKA_STATIC_ACC_MEM_GLOBAL int x;
+    \end{minted}
+\end{code}
+
+eine Transformation in einen SYCL"=Puffer sowie einen zugehörigen
+\textit{accessor} durchzuführen:
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+cl::sycl::buffer<int, 1>{cl::sycl::range<1>{1}} x_buf;
+// im Kernel
+auto acc = x_buf.get_access</* ... */>(cgh);
+    \end{minted}
+\end{code}
+
+Daher konnte die Implementierung der obigen Makros für das SYCL"=Backend nicht
+durchgeführt werden.
+
 \subsection{Device-Verwaltung}\label{implementierung:probleme:device}
 
 \subsection{Speicherverwaltung}\label{implementierung:probleme:speicher}
@@ -413,7 +488,16 @@ unterstützt.
 
 \subsection{FPGA-Erweiterungen}\label{implementierung:probleme:fpga}
 
-Wie SYCL-FPGA-Erweiterungen nutzen?
+Wie in Abschnitt~\ref{sycl:erweiterungen} dargestellt wurde, existieren einige
+SYCL"=Erweiterungen für FPGAs, die eine bessere Nutzung dieser Hardware
+ermöglichen sollen. Diese sind naturgemäß nicht auf anderen
+Hardware"=Plattformen (oder auf FPGAs verschiedener Hersteller) nutzbar. Es
+stellt sich daher die Frage, wie diese herstellerabhängigen Erweiterungen
+innerhalb der Alpaka"=Bibliothek nutzbar gemacht werden können. Für den
+SYCL"=Backend"=Prototypen wurde auf Erweiterungen verzichtet, um die
+Hardware"=Unabhängigkeit nicht zu gefährden. Dies ist jedoch kein dauerhaft
+wünschenswerter Zustand, da die Erweiterungen ganz erhebliche Performanzgewinne
+zur Folge haben können.
 
 \subsection{Zufallszahlen und Zeit}
 
