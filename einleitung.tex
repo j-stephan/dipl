@@ -1,16 +1,15 @@
 \chapter{Einleitung}\label{einleitung}
 
-Die Hardware"=Konfigurationen moderner Computersysteme sind in den letzten
-Jahren deutlich heterogener geworden. Mobiltelefone und PCs verfügen nicht nur
-über mehrkernige, leistungsstarke Prozessoren (\gls{cpu}), sondern auch über
-dedizierte Chips zur Grafikherstellung (\gls{gpu}). Dagegen verschwimmt bei
-Spielekonsolen und Laptops die Unterscheidung zwischen Haupt- und
-Grafikprozessoren in Form integrierter Chips, die beide Funktionalitäten
-performant abdecken können (\gls{apu}). Im Bereich des \gls{hpc} sind
-verschiedene Beschleunigertypen seit jeher im Einsatz, seien es CPUs mit
-besonders vielen Kernen, von den GPUs abstammende Beschleuniger ohne grafische
-Ausgabe wie NVIDIAs Tesla"=Reihe, oder Hybride wie Intels
-kurzlebiges Xeon"=Phi"=Projekt.
+Die Hardware"=Ausstattungen moderner Computersysteme werden zunehmend heterogen.
+Mobiltelefone und PCs verfügen nicht nur über mehrkernige, leistungsstarke
+Prozessoren (\gls{cpu}), sondern auch über dedizierte Chips zur
+Grafikdarstellung (\gls{gpu}). Währenddessen verschwimmt bei Spielekonsolen und
+Laptops die Unterscheidung zwischen Haupt- und Grafikprozessoren dank
+integrierter Chips, die beide Funktionalitäten performant abdecken können
+(\gls{apu}). Im Bereich des \gls{hpc} sind verschiedene Beschleunigertypen seit
+jeher im Einsatz, seien es CPUs mit besonders vielen Kernen, von den GPUs
+abstammende Beschleuniger ohne grafische Ausgabe wie NVIDIAs Tesla"=Reihe, oder
+Hybride wie Intels kurzlebige Xeon"=Phi"=Produkte.
 
 Allen gemeinsam ist die Idee der Beschleunigung eines Algorithmus durch dessen
 Parallelisierung, also die parallele Ausführung einzelner Schleifeniterationen
@@ -20,30 +19,54 @@ Algorithmen genutzt werden zu können, und entsprechend allgemein aufgebaut. Der
 Programmierer findet also möglicherweise eine Hardware"=Plattform vor, die für
 seinen Algorithmus nicht ideal geeignet ist.
 
-In dieses Feld stoßen seit einigen Jahren die Hersteller Intel und Xilinx mit
-programmierbarer Hardware (\gls{fpga}) vor. Gegenüber den oben genannten
-Beschleunigern haben diese den Vorteil, dass die einzelnen Bestandteile der
-Hardware weitestgehend frei verschaltbar sind, wenngleich mit deutlich höherem
-Zeitaufwand. Dies ist vor allem für Programmierer interessant, die die Hardware
-für genau einen Zweck verwenden möchten. Lange Zeit stand dem jedoch die
-vergleichsweise schwierige Verwendung der FPGAs entgegen, da diese einen
-Schaltungsentwurf auf der Register"=Ebene (im Gegensatz zur Programmierung auf
-der algorithmischen Ebene) benötigten. Durch das Aufkommen automatischer
-Synthese"=Werkzeuge, die Algorithmen in Schaltungen umwandeln können, wurde der
-Entwicklungsprozess in jüngerer Zeit allerdings deutlich vereinfacht.
+Chips, die für einen speziellen Algorithmus entworfen werden, erfordern durch
+die Produktionskosten einen hohen finanziellen Aufwand und sind daher erst ab
+hohen Stückzahlen interessant. Darüber hinaus bergen sie das Risiko, geänderten
+Einsatzzwecken -- z.B. durch beim Schaltungsentwurf nicht bedachte Aspekte oder
+später geänderte Anforderungen -- nicht mehr zu genügen, was wiederum eine
+aufwendige Neuentwicklung und -produktion nötig macht. Im schlimmsten Fall ist
+der zu tauschende Chip für einen Menschen physisch nicht mehr zu erreichen, wie
+etwa in der Raumfahrt.
 
-Ein weiteres Hindernis für die Entwicklung paralleler Programme ist die
-fehlende Portabilität der Werkzeuge: anfangs waren nur GPUs des Herstellers
-NVIDIA ohne Umwege über Schnittstellen zur Grafikdarstellung programmierbar,
-erforderten dafür aber die Nutzung der NVIDIA"=eigenen CUDA"=Schnittstelle, die
-mit Konkurrenzprodukten nicht kompatibel war. Für CPUs etablierte sich schnell
-die OpenMP"=Schnittstelle als Mittel der Wahl für die Nutzung mehrerer Kerne.
-Die Vektorisierung hingegen erfordert noch immer entweder befehlssatzspezifische
+Durch dynamisch rekonfigurierbare bzw. programmierbare Hardware lassen sich die
+beschriebenen Herausforderungen besser meistern -- wenn auch mit dem Nachteil,
+gegenüber spezialisierten Chips deutlich langsamer zu sein. Auf diesem Gebiet
+ist vor allem der Hardware"=Typ \gls{fpga} zu nennen. Gegenüber den oben
+genannten Beschleunigern und spezialisierten Chips haben FPGAs den Vorteil, dass
+die einzelnen Chip"=Bestandteile -- also Logikfunktionen, On"=Chip"=Speicher
+usw. -- weitestgehend frei verschaltbar sind. 
+Lange Zeit stand dem jedoch die vergleichsweise schwierige Verwendung der
+FPGAs entgegen, da diese einen Schaltungsentwurf auf der Register"=Ebene (im
+Gegensatz zur Programmierung auf der algorithmischen Ebene) benötigten. Durch
+das Aufkommen automatischer Synthese"=Werkzeuge, die Algorithmen in Schaltungen
+umwandeln können, wurde der Entwicklungsprozess in jüngerer Zeit
+aber deutlich vereinfacht.
+
+Dadurch sind FPGAs auch für Anwendungen abseits des klassischen
+Schaltungsentwurfs interessant. Insbesondere latenzkritische Anwendungen können
+von FPGAs profitieren, da der Zeitpunkt der Ergebnisausgabe taktgenau
+vorhersagbar ist. Die Inferenz neuronaler Netzwerke oder die Verarbeitung großer
+Datenströme im \gls{hpc}"=Bereich sind Beispiele für \textit{stream}"=artige
+Probleme, die vom Einsatz eines FPGAs profitieren können.
+
+Da die Synthese einer Schaltung je nach Komplexität des Algorithmus einige
+Stunden bis Tage benötigen kann, ist für das \textit{Prototyping} ratsam,
+schnellere Methoden für die inkrementelle Entwicklung zu wählen -- also z.B.
+Beschleuniger. Wünschenswert ist hier vor allem Portabilität zwischen den
+verschiedenen Hardware"=Plattformen.
+
+Das ist durchaus nicht unproblematisch: so waren in den Anfangsjahren der
+GPU"=Programmierung nur die Produkte des Herstellers NVIDIA ohne Umwege über
+Grafikschnittstellen programmierbar, erforderten dafür aber die Nutzung der
+NVIDIA"=eigenen CUDA"=Schnittstelle. Diese war (und ist) jedoch nicht mit
+Konkurrenzprodukten kompatibel. Für CPUs etablierte sich schnell die
+OpenMP"=Schnittstelle als Mittel der Wahl für die Nutzung mehrerer Kerne.
+Die Vektorisierung erfordert dagegen entweder befehlssatzspezifische
 Erweiterungen (die auch innerhalb derselben Befehlssatzfamilie mitunter
 inkompatibel sind) oder sehr gut optimierende Compiler. Die Synthese"=Werkzeuge
-der FPGA"=Hersteller ermöglichten zwar die Nutzung der Hochsprachen, reicherten
-diese aber mit zahlreichen Erweiterungen an, was die Übertragung auf andere
-Plattformen erschwerte.
+der FPGA"=Hersteller ermöglichen zwar die Nutzung der Hochsprachen, reichern
+diese aber mit zahlreichen Erweiterungen an, was die Übertragung zwischen den
+Plattformen erschwert.
 
 Um die Entwicklung portabler Programme zu ermöglichen, wurden früh verschiedene
 Ansätze entwickelt. Das Khronos"=Industriekonsortium gab wenige Jahre nach der
@@ -57,24 +80,23 @@ wenigen Jahren wieder ab und konnte sich in der GPU"=Welt nicht gegen CUDA
 und auf CPUs nicht gegen OpenMP durchsetzen.
 
 Ein anderer Ansatz liegt in der Entwicklung eines abstrakten Interfaces, das im
-Hintergrund auf die herstellereigenen Schnittstellen abgebildet wird. Ein solches
-Interface transformiert einen vom Programmierer entwickelten Quelltext in einen
-äquivalenten CUDA- oder OpenMP"=Quelltext, ohne dass der Programmierer selbst
+Hintergrund auf die herstellereigenen Schnittstellen abgebildet wird. Ein
+solches Interface transformiert einen vom Programmierer entwickelten Quelltext
+z.B. in einen äquivalenten CUDA"=Quelltext, ohne dass der Programmierer selbst
 weitere Anstrengungen in dieser Richtung unternehmen muss. So genügt ein
 einfacher Austausch der Zielplattform und eine erneute Kompilierung für die
 Nutzung eines anderen Hardware"=Typs. Dieses Prinzip wird von mehreren
 parallelen Projekten verfolgt, wie etwa der vom Helmholtz"=Zentrum
 Dresden"=Rossendorf entwickelten Alpaka"=Bibliothek oder der Kokkos"=Bibliothek,
 die von einer Forschungseinrichtung des US"=amerikanischen Energieministeriums
-stammt. Bisher bieten jedoch weder Alpaka noch Kokkos eine Unterstützung für
-FPGAs an.
+stammt. Bisher bieten jedoch weder Alpaka noch Kokkos ein Backend für FPGAs an.
 
 Seit einigen Jahren versucht das Khronos"=Konsortium erneut, einen Standard für
 die parallele Programmierung zu etablieren. Dieser SYCL genannte Ansatz basiert
 auf dem einige Jahre älteren OpenCL, bietet aber eine deutlich modernere und
-fortschrittlichere Programmierschnittstelle. Der neue Standard wird unter
-anderem von den FPGA"=Herstellern Xilinx und Intel vorangetrieben und ist damit
-ein interessantes Implementierungsziel für die oben genannten
+fortschrittlichere C++"=Programmierschnittstelle. Der neue Standard wird unter
+anderem von den FPGA"=Herstellern Xilinx und Intel vorangetrieben und wäre damit
+eine interessante Backend"=Variante für die oben genannten
 Abstraktionsbibliotheken.
 
 \section{Forschungsstand}\label{einleitung:forschung}
@@ -83,7 +105,7 @@ In den letzten Jahren befassten sich mehrere Forschungsgruppen mit der
 automatischen \mbox{FPGA}"=Synthese für hochparallele Programme.
 
 Schon 2009 veröffentlichten Papakonstantinou \textit{et al.} einen Ansatz, der
-die Synthese einer Schaltung auf Basis der eigentlich für GPUs gedachten
+die Synthese einer Schaltung auf Basis der eigentlich für NVIDIA"=GPUs gedachten
 CUDA"=Schnittstelle ermöglichte. \cite[vgl.][]{papakonstantinou2009} 
 
 Diese Arbeit konnte sich jedoch nicht langfristig durchsetzen. Seit der ersten
@@ -92,9 +114,10 @@ Altera (heute Intel) im Jahr 2013 verlagerte sich das Interesse der Forschung
 auf diese Plattform. 
 
 Eine der ersten Arbeiten in diesem Bereich wurde 2013 von Settle, einem
-damaligen Altera"=Mitarbeiter, veröffentlicht. In ihr zeigte Settle den durch
-eine abstrakte Sprache wie OpenCL zu erreichenden Produktivitätsgewinn bei
-gleichzeitiger Beibehaltung der erreichten Leistung. \cite[vgl.][]{settle2013}
+damaligen Altera"=Mitarbeiter, veröffentlicht. In ihr zeigte Settle den
+-- gegenüber der Entwicklung auf Registerebene -- durch eine Hochsprache wie
+OpenCL zu erreichenden Produktivitätsgewinn bei gleichzeitiger Beibehaltung der
+erreichten Leistung. \cite[vgl.][]{settle2013}
 
 Fifield \textit{et al.} demonstrierten 2016 die Optimierung von
 OpenCL"=Programmen für die im Vorjahr veröffentlichte
@@ -107,7 +130,7 @@ kommt allerdings nicht OpenCL zum Einsatz, sondern die Xilinx"=Erweiterungen fü
 die Programmiersprache C++. \cite[vgl.][]{duarte2018}
 
 Die SYCL"=Spezifikation wurde in der Literatur in den ersten Jahren ihres
-Bestehens vornehmlich als einfacher Aufsatz für OpenCL betrachtet. Erst in
+Bestehens vornehmlich als einfacher Überbau für OpenCL betrachtet. Erst in
 jüngerer Zeit kam es zu eigenständigen Untersuchungen SYCLs.
 
 Eine der frühen Arbeiten, die sich von dieser unscharfen Betrachtungsweise
@@ -119,12 +142,13 @@ Wong \textit{et al.}, Mitarbeiter der Firma Codeplay -- einer der führenden
 Firmen im SYCL"=Umfeld --, befassten sich ebenfalls 2016 mit den
 Wechselwirkungen zwischen dem C++"=Standard und der auf diesem Standard
 aufbauenden SYCL"=Spezifikation. Aufmerksamkeit wurde insbesondere den bei der
-Codeplay"=SYCL"=Implementierung aufgetretenen Probleme sowie Unzulänglichkeiten
+Codeplay"=SYCL"=Implementierung aufgetretenen Problemen sowie Unzulänglichkeiten
 des C++"=Standards zuteil.
 \cite[vgl.][]{wong2016}
 
 Aliaga \textit{et al.} veröffentlichten 2017 eine in C++ und SYCL geschriebene
-Implementierung der BLAS"=Schnittstelle, die sie \textit{SYCL"=BLAS} nannten.
+Implementierung der BLAS"=Schnittstelle -- ein Quasistandard für
+Rechenoperationen der linearen Algebra --, die sie \textit{SYCL"=BLAS} nannten.
 \cite[vgl.][]{aliaga2017}
 
 Burns \textit{et al.} stellten 2019 das \textit{SYCL"=DNN}"=Projekt vor, eine in
@@ -136,7 +160,7 @@ SYCL"=DNN auf einer Vielzahl OpenCL"=fähiger Beschleuniger lauffähig sein.
 \cite[vgl.][]{burns2019}
 
 Hinsichtlich der Verwendung von SYCL auf FPGAs ist in der Literatur -- neben
-einigen weitestgehend inhaltsgleichen Vorträgen des Xilinx"=Mitarbeiters Ronan
+einigen untereinander recht ähnlichen Vorträgen des Xilinx"=Mitarbeiters Ronan
 Keryell -- bisher nur der 2017 von Doumoulakis \textit{et al.} veröffentlichte
 Artikel zu finden, der sich mit der Interoperabilität von SYCL und OpenCL auf
 Xilinx"=FPGAs befasst.
@@ -157,9 +181,12 @@ um eine Implementierung eines Kokkos"=Backends.
 
 \section{Ziel der Arbeit}\label{einleitung:ziel}
 
-In dieser Arbeit soll für die Alpaka-Bibliothek ein SYCL-Backend implementiert
-und ausgewertet werden. Aufgrund der bereits vorhandenen \gls{gpu}-Backends
-erfolgt die Analyse vorrangig im Hinblick auf die Nutzbarkeit von \gls{fpga}s,
-womit aufgrund der während des Bearbeitungszeitruams verfügbaren und von SYCL
-unterstützten Hardware insbesondere \gls{fpga}s des Herstellers Xilinx gemeint
-sind.
+In dieser Arbeit wird der SYCL"=Standard hinsichtlich der verfügbaren
+Implementierungen und deren Nutzbarkeit untersucht. Dies geschieht vor im
+Hinblick auf FPGAs, die durch ihre frei veränderbare Hardware"=Konfiguration in
+Verbindung mit einer modernen C++"=Programmierschnittstelle eine
+vielversprechende Hardware"=Plattform darstellen. Dabei wird ein
+experimentelles SYCL"=Backend für die Alpaka-Bibliothek implementiert. Die
+während des Entwicklungsprozesses aufgetretenen Schwierigkeiten und
+Unzulänglichkeiten werden analysiert, sowie erste Einschätzungen der
+Leistungsfähigkeit vorgenommen.
