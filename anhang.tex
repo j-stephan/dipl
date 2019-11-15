@@ -82,6 +82,24 @@ END beh;
 \section{C++"=Quelltexte}
 \label{anhang:source:cpp}
 
+\subsection{Implementierung des TaskKernelSycl-Konstruktors}
+\label{anhang:source:cpp:taskkernelsyclkonst}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+template <typename TWorkDiv>
+TaskKernelSycl(TWorkDiv&& workDiv,
+               const TKernelFnObj& kernelFnObj,
+               const TArgs&... args)
+: workdiv::WorkDivMembers<TDim, TIdx>(std::forward<TWorkDiv>(workDiv))
+, m_kernelFnObj{kernelFnObj}
+, m_args{args...}
+{
+}
+    \end{minted}
+    \caption{Implementierung des Konstruktors der \texttt{TaskKernelSycl}"=Klasse}
+\end{code}
+
 \subsection{Implementierung des SYCL-Puffer-Wrappers}
 \label{anhang:source:cpp:bufferwrapper}
 

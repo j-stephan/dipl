@@ -1,49 +1,15 @@
 \chapter{Implementierung des SYCL-Backends der Alpaka-Bibliothek}
 \label{implementierung}
 
-\section{Alternative Struktur}
-
-\subsection{Implementierung der Acc-Struktur}
-
-\subsection{Implementierung atomarer Funktionen}
-
-\subsection{Implementierung des geteilten Speichers}
-
-\subsection{Implementierung der Block-Synchronisation}
-
-\subsection{Implementierung der Dev-Struktur}
-
-\subsection{Implementierung der Events}
-
-\subsection{Implementierung der Index-Funktionen}
-
-\subsection{Implementierung der TaskKernel-Struktur}
-
-\subsection{Implementierung mathematischer Funktionen}
-
-\subsection{Implementierung der Speicherverwaltung}
-
-\subsection{Implementierung der Pltf-Struktur}
-
-\subsection{Implementierung der Queues}
-
-\subsection{Implementierung der workDiv-Struktur}
-
-\subsection{Implementierung der Zufallszahlen}
-
-\subsection{Implementierung der Zeitfunktionen}
-
-\subsection{Zusammenfassung}
-
 Mit Ausnahme der in den folgenden Abschnitten aufgeführten Besonderheiten
 (Abschnitt~\ref{implementierung:besonderheiten}) bzw.\ Probleme
 (Abschnitt~\ref{implementierung:probleme}) konnte die Implementierung des
 SYCL"=Backends für Alpaka recht einfach durchgeführt werden. Als Vorlage für
 dessen Aufbau dienten die bereits vorhandenen Backends, wobei hier besonders
-das CUDA"=Backend hervorzuheben ist. Die Abbildung der in Alpaka vorhandenen
-Datenstrukturen bzw.\ Funktionen auf SYCL"=Funktionalität ist in
-Tabelle~\ref{implementierung:abbildung} dargestellt.
-
+das CUDA"=Backend hervorzuheben ist. %Die Abbildung der in Alpaka vorhandenen
+%Datenstrukturen bzw.\ Funktionen auf SYCL"=Funktionalität ist in
+%Tabelle~\ref{implementierung:abbildung} dargestellt.
+\iffalse
 \begin{table}[htb]
     \centering
     \begin{tabulary}{\textwidth}{@{}LLL@{}}
@@ -102,6 +68,399 @@ Tabelle~\ref{implementierung:abbildung} dargestellt.
     \caption{Implementierung der Alpaka"=Funktionalität durch SYCL.}
     \label{implementierung:abbildung}
 \end{table}
+\fi
+
+\section{Implementierung des Queue"=Konzepts}
+
+\section{Implementierung des Task"=Konzepts}
+\label{implementierung:task}
+
+Wie im vorherigen Kapitel dargestellt wurde, werden \textit{device}"=seitige
+Operationen in Alpaka unter dem Begriff \textit{Task} zusammengefasst. Dazu
+gehören neben dem Kernel die Kopier"= und \texttt{memset}"=Operationen.
+Alpaka"=Tasks werden in einer Alpaka"=Queue eingereiht und von dieser in der
+Reihenfolge ihrer Einreihung ausgeführt. In diesem Abschnitt wird die
+Implementierung dieses fundamentalen Alpaka"=Konzepts beschrieben.
+
+\subsection{Kernel"=Tasks}
+\label{implementierung:task:kernel}
+
+Ein Alpaka"=Kernel"=Task verknüpft die eigentliche Kernel"=Funktion mit
+konkreten Daten. Damit ähnelt ein Kernel"=Task stark SYCLs
+\textit{command groups}, was die Umsetzung dieses Konzepts stark vereinfacht.
+
+Die Struktur \texttt{TaskKernelSycl} enthält die SYCL"=Implementierung der
+Kernel"=Tasks. Diese ist aus mehreren Teilen aufgebaut (siehe
+Quelltext~\ref{implementierung:task:kernel:struktur}):
+
+\begin{itemize}
+    \item Die Struktur wird mit den vier Template"=Parametern \texttt{TDim},
+          \texttt{TIdx}, \texttt{TKernelFnObj} und \texttt{TArgs}
+          parametrisiert. \texttt{TDim} bezeichnet den Datentyp, der später die
+          Dimensionaliät des Algorithmus beschreibt, während \texttt{TIdx} den
+          Datentyp des bearbeiteten Indexraums angibt. Diese Parameter werden
+          innerhalb des Work=Division=Konzepts -- gekennzeichnet durch die
+          Elternklasse \texttt{workDivMembers} -- verwendet, um innerhalb des
+          Kernels die Position des jeweiligen \textit{Blocks} oder
+          \textit{Threads} bestimmen zu können \texttt{TKernelFnObj} ist der Typ
+          bzw. die Signatur der vom Nutzer implementierten Kernel"=Funktion. Der
+          variadische Parameter \texttt{TArgs} umfasst die Typen der Parameter
+          der Kernel"=Funktion.
+    \item Der Konstruktor der Klasse wird während der Instanziierung der Klasse
+          aufgerufen und nimmt konkrete Werte für die gewünschte
+          Arbeitsaufteilung, den auszuführenden Kernel und die zugehörigen Daten
+          an. Die Implementierung des Konstruktors ist im
+          Anhang~\ref{anhang:implementierung:task:kernel:konstruktor} zu finden.
+    \item Den Variablen \texttt{m\_kernelFnObj} und \texttt{m\_args} werden vom
+          Konstruktor die konkrete Kernelfunktion bzw.\ die zugehörigen Daten
+          zugewiesen.
+    \item Der \texttt{operator()} bildet die Schnittstelle zur intern
+          verwendeten SYCL"=Queue. Durch den Parameter wird der Operator als
+          Einstiegspunkt in eine \texttt{command queue} gekennzeichnet, wodurch
+          die gesamte Klasse \texttt{TaskKernelSycl} ohne weitere
+          Transformationen in eine SYCL"=Queue eingereiht werden kann.
+\end{itemize}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+template <typename TDim, typename TIdx,
+          typename TKernelFnObj, typename... TArgs>
+class TaskKernelSycl final : public workdiv::workDivMembers<TDim, TIdx>
+{
+    template <typename TWorkDiv>
+    TaskKernelSycl(TWorkDiv&& workDiv,
+                   const TKernelFnObj& kernelFnObj,
+                   const TArgs&... args);
+
+    TKernelFnObj m_kernelFnObj;
+    std::tuple<TArgs...> m_args;
+
+    auto operator()(cl::sycl::handler& cgh);
+};
+    \end{minted}
+    \caption{Aufbau des SYCL"=Kernel"=Tasks}
+    \label{implementierung:task:kernel:struktur}
+\end{code}
+
+\subsubsection{Vom SYCL- zum Alpaka-Kernel}
+\label{implementierung:task:kernel:launch}
+
+In der \textit{command group} wird der eigentliche SYCL"=Kernel gestartet, der
+wiederum die vom Nutzer geschriebene Alpaka"=Kernel"=Funktion mit ihren
+Parametern aufruft. SYCL stellt drei verschiedene Möglichkeiten für den
+Kernel"=Start zur Verfügung: \texttt{single\_task}, \texttt{parallel\_for} und
+\texttt{parallel\_for\_work\_group}.
+
+\texttt{single\_task} stellt von sich aus keinerlei Parallelität zur Verfügung
+und ist in seiner Funktion mit einem einzelnen CPU"=Thread vergleichbar, der auf
+genau einem CPU"=Kern ausgeführt wird. In Kombination mit den in
+Kapitel~\ref{sycl} aufgeführten FPGA"=Erweiterungen ist dieses Verhalten für
+FPGAs durchaus sinnvoll, jedoch für CPU"= und GPU"=Beschleuniger wenig nützlich
+bis kontraproduktiv. Im Interesse eines portablen Backends scheidet diese
+Variante aus.
+
+\texttt{parallel\_for} ist für datenparallele Algorithmen gedacht. Der
+Programmierer hat die Möglichkeit, die Zahl der \textit{work"=groups} und ihrer
+\textit{work"=items} genau zu spezifizieren. Diese lassen sich einfach auf die
+Alpaka"=Äquivalente \textit{Block} und \textit{Thread} Work"=Division"=Konzept
+abbilden, weshalb \texttt{parallel\_for} eine gute Wahl für den
+SYCL"=Kernel"=Start darstellt.
+
+\texttt{parallel\_for\_work\_group} bietet dieselbe Funktionalität wie
+\texttt{parallel\_for}, exponiert diese jedoch mit einem anderen Schwerpunkt.
+Mit diesem Ansatz wird der Kernel in zwei separate Bereiche aufgeteilt: einmal
+auf Ebene der \textit{work"=groups} und einmal auf Ebene der
+\textit{work"=items}, wobei die letztere der ersteren untergeordnet ist bzw.
+aus ihr heraus aufgerufen wird. Befehle auf der \textit{work"=group}"=Ebene
+werden genau einmal für die gesamte \textit{work"=group} ausgeführt, Befehle auf
+der Ebene der \textit{work"=items} genau einmal pro \textit{work"=item}. Dadurch
+hat der Programmierer die Möglichkeit, seine Algorithmen hierarchisch zu
+gliedern. Dieses Konzept findet sich nicht in Alpakas Work"=Division"=Konzept,
+weshalb in dieser Implementierung \texttt{parallel\_for} als
+Kernel"=Start"=Funktion gewählt wurde.
+
+Für die Nutzung der \texttt{parallel\_for}"=Funktion muss die Gesamtanzahl der
+\textit{work"=items} sowie die Anzahl der \textit{work"=items} pro
+\textit{work"=group} angegeben werden. Da Alpaka diese Informationen in etwas
+anderem Format (Anzahl der \textit{Blocks} und Anzahl der \textit{Threads} pro
+\textit{Block}) sowie in eigenen Datenstrukturen enthält, ist eine Konversion
+erforderlich. Die Funktion \texttt{get\_global\_size()} berechnet aus der Zahl
+der \textit{Blocks} und der \textit{Threads} pro \textit{Block} die Gesamtanzahl
+der \textit{Threads} (was der Gesamtanzahl der SYCL"=\textit{work"=items}
+entspricht) und führt die Konversion in ein SYCL"=kompatibles Format durch. Die
+Funktion \texttt{get\_local\_size()} nimmt die Zahl der \textit{Threads} und
+konvertiert diese in eine SYCL"=Datenstruktur, die die Zahl der
+\textit{work"=items} enthält.
+
+Wichtig ist ferner der Name des SYCL"=Kernels, der allen
+Kernel"=Start"=Varianten übergeben werden muss. In SYCL ist der Kernel"=Name ein
+eigener Datentyp, der der Startfunktion als Template"=Parameter übergeben wird,
+sich von anderen SYCL"=Kerneln unterscheiden und global sichtbar sein muss.
+Daher wurde für das SYCL"=Backend die Klasse \texttt{sycl::detail::kernel}
+eingeführt, welche den Typ der Alpaka"=Kernel"=Funktion (\texttt{TKernelFnObj})
+als Template"=Parameter entgegennimmt.
+
+Im Quelltext~\ref{implementierung:task:kernel:launch} wird der Vorgang des
+Kernel"=Starts gezeigt, jedoch noch ohne \texttt{accessors} -- diese werden
+im nächsten Abschnitt behandelt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+namespace sycl
+{
+    namespace detail
+    {
+        template <typename TName>
+        struct kernel {};
+    }
+}
+
+template <typename TDim, typename TIdx,
+          typename TKernelFnObj, typename... Args>
+class TaskKernelSycl final : public workdiv::WorkDivMembers<TDim, TIdx>
+{
+    auto operator()(cl::sycl::handler& cgh)
+    {
+        /* Speicherzuweisung */
+
+        // Work Division
+        auto blocks = workdiv::WorkDivMembers<TDim, TIdx>::m_gridBlockExtent;
+        auto threads = workdiv::WorkDivMembers<TDim, TIdx>::m_blockThreadExtent;
+        auto global_size = get_global_size(blocks, threads);
+        auto local_size = get_local_size(threads);
+
+        cgh.parallel_for<sycl::detail::kernel<TKernelFnObj>>(
+            cl::sycl::nd_range<TDim::value>{global_size, local_size},
+        [=](cl::sycl::nd_item<TDim::value> work_item)
+        {
+            /* Aufruf des Alpaka-Kernels */
+        });
+    }
+}
+    \end{minted}
+    \caption{Aufruf der Alpaka-Kernel-Funktion im SYCL-Kernel}
+    \label{implementierung:task:kernel:launch}
+\end{code}
+
+\subsubsection{Zeiger und \textit{accessors}}
+
+Innerhalb der \textit{command group} ist eine Transformation der
+Datenfeld"=Parameter nötig. In Alpaka erhält die Kernel"=Funktion pro Datenfeld
+üblicherweise einen Zeiger, z.B. vom Typ \texttt{float*}, und einen ganzzahligen
+Parameter (meist vom Typ \texttt{size\_t}), der die Länge des Speicherbereichs
+angibt. Der \textit{device}"=seitige Zeiger wird während der Instanziierung des
+Kernel"=Tasks über die Funktion \texttt{getPtrNative()} aus einem Alpaka"=Puffer
+extrahiert und an den Kernel übergeben.
+
+Diese Vorgehensweise war mit allen bisher in Alpaka vorhandenen Backends
+unproblematisch, wenngleich etwas altmodisch. SYCL verlangt als Parameter für
+die Kernel"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen,
+eine Übergabe von Zeigern an den Kernel wird in der Spezifikation explizit
+verboten \cite[vgl.][192]{sycl2019}. Zwar gibt die Spezifikation an, dass sich
+die \texttt{accessor}"=Typen implizit in reine Zeiger umwandeln lassen
+\cite[vgl.][27]{sycl2019}, was jedoch von keiner der verfügbaren
+Implementierungen unterstützt wird\footnote{Im Rahmen dieser Arbeit wurde dieser
+Umstand an das SYCL"=Spezifikationskomitee gemeldet und infolgedessen als Fehler
+in der Spezifikation anerkannt, der in zukünftigen Versionen behoben sein wird
+(siehe die Diskussion in
+Anhang~\ref{anhang:diskussion:syclspec:implicitaccessor}).}.
+
+Innerhalb eines Kernels lassen sich die \texttt{accessor}"=Typen in spezielle
+SYCL"=eigene Zeigertypen (\texttt{multi\_ptr}) umwandeln, die wiederum in
+\glqq reine\grqq\ Zeiger konvertierbar sind. Dadurch lässt sich die geschilderte
+Problematik in mehreren Stufen lösen:
+
+Auf der \textit{Host}"=Seite wird beim Aufruf der Funktion
+\texttt{getPtrNative()} eine Datenstruktur angelegt, die den SYCL"=Puffer
+kapselt und sich aus Sicht des Programmierers weitestgehend wie ein normaler
+Zeiger verhält. Daneben enthält diese Struktur ein spezielles Attribut mit dem
+Namen \texttt{is\_alpaka\_sycl\_buffer\_wrapper}. (Der Quelltext dieser Struktur
+ist in Anhang~\ref{anhang:source:cpp:bufferwrapper} zu finden.)
+
+Dieses Attribut wird bei der Nutzung des Kernel"=Objekts verwendet, um die
+Puffer"=Strukturen von den restlichen Parametern abzugrenzen. Strukturen, die
+dieses Attribut besitzen, werden an eine spezielle Funktion weitergereicht, die
+den Zusammenhang zwischen SYCL"=Puffer und SYCL"=\texttt{accessor} herstellt.
+Alle anderen Datentypen werden unverändert zurückgegeben. Da Techniken der
+Template"=Meta"=Programmierung verwendet werden, finden diese Transformationen
+zur Compile"=Zeit statt. Der gesamte Vorgang ist in
+Quelltext~\ref{implementierung:task:kernel:zeiger:wrappertrans} dargestellt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+struct general {};
+struct special : general{};
+template <typename> struct acc_t { using type = int; };
+
+// spezieller Fall: Puffer-Struktur
+template <typename TDim, typename TBuf,
+    typename acc_t<typename TBuf::is_alpaka_sycl_buffer_wrapper>::type = 0>
+inline auto get_access(cl::sycl::handler& cgh, TBuf buf, special)
+{
+    return buf.buf.template get_access<
+                                cl::sycl::access::mode::read_write,
+                                cl::sycl::access::target::global_buffer>(cgh);
+}
+
+// allgemeiner Fall: kein Puffer
+template <typename TDim, typename TBuf>
+inline auto get_access(cl::sycl::handler& cgh, TBuf buf, general)
+{
+    return buf;
+}
+
+template <typename TDim, typename... TArgs, std::size_t... Is>
+constexpr auto bind_buffers(cl::sycl::handler& cgh,
+                            std::tuple<TArgs...> args,
+                            std::index_sequence<Is...>)
+{
+    return std::make_tuple(get_access<TDim>(cgh,
+                                            std::get<Is>(args),
+                                            special{})...);
+}
+    \end{minted}
+    \caption{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
+             Template"=Meta"=Programmierung}
+    \label{implementierung:task:kernel:zeiger:wrappertrans}
+\end{code}
+
+Der Quelltext~\ref{implementierung:task:kernel:zeiger:transusage} zeigt die
+Nutzung der Template"=Meta"=Funktionen innerhalb der \textit{command group}:
+die in einem \texttt{std::tuple} gespeicherten Kernel"=Parameter werden in ein
+SYCL"=kompatibles Format umgewandelt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+inline operator()(cl::sycl::handler& cgh)
+{
+    // transformiere alle Puffer-Parameter in Accessor-Parameter
+    auto accessor_args = sycl::detail::bind_buffers<TDim>(
+                cgh, m_args,
+                std::make_index_sequence<sizeof...(TArgs)>{});
+
+    /* weitere Operationen */
+}
+    \end{minted}
+    \caption{Nutzung der Template"=Meta"=Funktionen zur Umwandlung der
+             Puffer"=Wrapper in SYCL"=\texttt{accessor}"=Typen}
+    \label{implementierung:task:kernel:zeiger:transusage}
+\end{code}
+
+Innerhalb des SYCL"=Kernels werden die \texttt{accessor}"=Typen (über SYCLs
+\texttt{multi\_ptr}) nach einem ähnlichen Prinzip in reine Zeiger transformiert.
+Die Template"=Meta"=Funktionen sind in
+Quelltext~\ref{implementierung:task:kernel:zeiger:acctrans} gezeigt, deren
+Nutzung in Quelltext~\ref{implementierung:task:kernel:zeiger:acctransusage}.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+struct general {};
+struct special : general{};
+template <typename> struct acc_t { using type = int; };
+
+// spezieller Fall: Accessor
+template <typename TAccessor,
+    typename acc_t<decltype(
+        std::declval<TAccessor>().get_pointer())>::type = 0>
+inline auto get_pointer(TAccessor accessor, special)
+{
+    return static_cast<typename TAccessor::value_type*>(
+                                    accessor.get_pointer());
+}
+
+// allgemeiner Fall: kein Accessor
+template <typename TAccessor>
+inline auto get_pointer(TAccessor accessor, general)
+{
+    return accessor;
+}
+
+template <typename... TArgs, std::size_t... Is>
+constexpr auto transform(std::tuple<TArgs...> args,
+                         std::index_sequence<Is...>)
+{
+    return std::make_tuple(get_pointer(std::get<Is>(args),
+                                       special{})...);
+}
+    \end{minted}
+    \caption{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
+             Template"=Meta"=Programmierung}
+    \label{implementierung:task:kernel:zeiger:acctrans}
+\end{code}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+cgh.parallel_for<sycl::detail::kernel<TKernelFnObj>>(
+                    cl::sycl::nd_range<TDim::value> {global_size, local_size},
+[=](cl::sycl::nd_item<TDim::value> work_item)
+{
+    auto pointer_args = transform(
+                accessor_args,
+                std::make_index_sequence<sizeof...(TArgs)>{});
+
+    /* weitere Operationen und Alpaka-Kernel-Aufruf */
+}
+    \end{minted}
+    \caption{Nutzung der Template"=Meta"=Funktionen zur Umwandlung der
+             \texttt{accessor}"=Typen in Zeiger}
+    \label{implementierung:task:kernel:zeiger:acctransusage}
+\end{code}
+Die extrahierten Zeiger werden dann an den vom SYCL"=Kernel aufgerufenen
+Alpaka"=Kernel übergeben, sodass der Programmierer diese verwenden kann.
+Dadurch lässt sich das SYCL"=Backend analog zu den restlichen Implementierungen
+verwenden.
+
+\subsection{Kopier"= und \texttt{memset}"=Tasks}
+
+Im Vergleich zu Kernel"=Tasks gestaltete sich die Implementierung der
+Kopier"=Tasks in Form der Struktur \texttt{TaskCopySycl} vergleichsweise
+einfach. In ihrem Aufbau sind diese den Kernel"=Tasks recht ähnlich, wie
+Quelltext~\ref{implementierung:task:copy:struktur} zeigt.
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+template <typename TElem, typename TDim>
+struct TaskCopySycl<TElem, TDim, copy_type::host_to_device>
+{
+    const TElem * const src_ptr;
+    cl::sycl::buffer<TElem, TDim::value> dst_buf;
+    cl::sycl::range<TDim::value> range;
+
+    auto operator()(cl::sycl::handler& cgh)
+    {
+        auto dst_acc = dst_buf.template get_access<
+                                cl::sycl::access::mode::write>(cgh, range);
+        cgh.copy(src_ptr, dst_acc);
+    }
+};
+    \end{minted}
+    \caption{Aufbau eines SYCL"=Kopier"=Tasks}
+    \label{implementierung:task:copy:struktur}
+\end{code}
+
+Der Template"=Parameter \texttt{TElem} definiert den zu kopierenden Datentyp,
+während \texttt{TDim} den Typ der Dimensionalität des zu kopierenden Puffers
+angibt.  
+
+Der \texttt{operator()} wird durch seinen Parameter eine
+SYCL"=\textit{command"=group}. Der \texttt{TaskCopySycl} kann somit von einer
+SYCL"=Queue ausgeführt werden.
+
+Die Struktur enthält ansonsten nur die Operanden der Kopier"=Operation und die
+Anzahl der zu kopierenden Elemente. Aufgrund der Reihenfolge der Operanden sowie
+der Unterscheidung zwischen Zeigern auf der \textit{Host}"=Seite und
+SYCL"=Puffern auf der \textit{Device}"=Seite muss die Task"=Struktur für die
+möglichen Kopierrichtungen (\textit{Host}"=auf"=\textit{Device},
+\textit{Device}"=auf"=\textit{Host}, \textit{Device}"=auf"=\textit{Device})
+spezialisiert werden.
+
+Der \texttt{memset}"=Task ähnelt in seinem Aufbau dem Kopier"=Task. Für ihn
+entfällt die Angabe der Richtung (und damit die Notwendigkeit der
+Spezialisierung), da er immer auf dem \textit{Device} ausgeführt wird. Darüber
+hinaus findet er nur auf Puffer des Typs \texttt{uint8\_t}, da es sich hier um
+eine byte"=weise Operation handelt. Puffer anderer Typen werden deshalb
+als \texttt{uint8\_t}"=Puffer interpretiert. Mit dem Befehl \texttt{cgh.fill()}
+lässt sich der Puffer dann Byte für Byte beschreiben.
 
 \section{Besonderheiten des SYCL-Backends}
 \label{implementierung:besonderheiten}
@@ -111,234 +470,9 @@ stellenweise kreative Lösungen erforderlich, um Alpakas Funktionalität möglic
 gut abbilden zu können. Diese werden in den folgenden Abschnitten näher
 beschrieben.
 
-\subsection{Queue- und Event-Verwaltung}\label{implementierung:besonderheiten:queue}
+\subsection{Queue- und Event-Verwaltung}
+\label{implementierung:besonderheiten:queue}
 
-
-
-\subsection{Zeiger und \textit{accessors}}
-\label{implementierung:besonderheiten:zeiger}
-
-Die Übergabe von Datenfeldern an \gls{device}- und \gls{kernel}-Funktionen
-erfolgt in Alpaka über die von C oder älterem C++ bekannten Zeiger. Pro
-Datenfeld erhält die Funktion üblicherweise einen Zeiger, z.B. vom Typ
-\texttt{float*}, und einen ganzzahligen Parameter (meist vom Typ
-\texttt{size\_t}), der die Länge des Speicherbereichs angibt. Der
-device"=seitige Zeiger wird über die Funktion \texttt{getPtrNative()} aus einem
-Alpaka"=Puffer extrahiert und an den Kernel übergeben.
-
-Diese Vorgehensweise war mit allen bisher in Alpaka vorhandenen Backends
-unproblematisch, wenngleich etwas altmodisch. SYCL verlangt als Parameter für
-die Kernel"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen,
-eine Übergabe von Zeigern an den Kernel wird in der Spezifikation explizit
-verboten \cite[vgl.][192]{sycl2019}. Zwar gibt die Spezifikation an, dass sich
-die \texttt{accessor}"=Typen implizit in reine Zeiger umwandeln lassen
-\cite[vgl.][27]{sycl2019}, was jedoch von keiner der verfügbaren
-Implementierungen unterstützt wird. Im Rahmen dieser Arbeit wurde dieser Umstand
-an das SYCL"=Spezifikationskomitee gemeldet und infolgedessen als Fehler in der
-Spezifikation anerkannt, der in zukünftigen Versionen behoben sein wird (siehe
-die Diskussion in Anhang~\ref{anhang:diskussion:syclspec:implicitaccessor}).
-
-Innerhalb eines Kernels lassen sich die \texttt{accessor}"=Typen in spezielle
-Zeigertypen (\texttt{multi\_ptr}) umwandeln, die wiederum in \glqq reine\grqq\
-Zeiger konvertierbar sind. Dadurch lässt sich die geschilderte Problematik in
-mehreren Stufen lösen:
-
-Auf der Host"=Seite wird beim Aufruf der Funktion \texttt{getPtrNative()} eine
-Datenstruktur angelegt, die den SYCL"=Puffer kapselt und sich aus Sicht des
-Programmierers weitestgehend wie ein Zeiger verhält. Daneben enthält diese
-Struktur ein spezielles Attribut mit dem Namen
-\texttt{is\_alpaka\_sycl\_buffer\_wrapper}. (Der Quelltext dieser Struktur ist
-in Anhang~\ref{anhang:source:cpp:bufferwrapper} zu finden.)
-
-Dieses Attribut wird bei der Nutzung des Kernel"=Objekts verwendet, um die
-Puffer"=Strukturen von den restlichen Parametern abzugrenzen. Strukturen, die
-dieses Attribut besitzen, werden an eine spezielle Funktion weitergereicht, die
-den Zusammenhang zwischen SYCL"=Puffer und SYCL"=\texttt{accessor} herstellt.
-Alle anderen Datentypen werden unverändert zurückgegeben. Da Techniken der
-Template"=Meta"=Programmierung verwendet werden, finden diese Transformationen
-zur Compile"=Zeit statt. Der gesamte Vorgang ist in
-Quelltext~\ref{implementierung:besonderheiten:zeiger:wrappertrans} dargestellt.
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-namespace alpaka {
-    namespace kernel {
-        namespace sycl {
-            namespace detail {
-                struct general {};
-                struct special : general{};
-                template <typename> struct acc_t { using type = int; };
-
-                // spezieller Fall: Puffer-Struktur
-                template <typename TDim, typename TBuf,
-                    typename acc_t<
-                        typename TBuf::is_alpaka_sycl_buffer_wrapper>::type = 0>
-                inline auto get_access(cl::sycl::handler& cgh, TBuf buf,
-                                       special)
-                {
-                    return buf.buf.template get_access<
-                            cl::sycl::access::mode::read_write,
-                            cl::sycl::access::target::global_buffer>(cgh);
-                }
-
-                // allgemeiner Fall: kein Puffer
-                template <typename TDim, typename TBuf>
-                inline auto get_access(cl::sycl::handler& cgh, TBuf buf,
-                                       general)
-                {
-                    return buf;
-                }
-
-                template <typename TDim, typename... TArgs, std::size_t... Is>
-                constexpr auto bind_buffers(cl::sycl::handler& cgh,
-                                            std::tuple<TArgs...> args,
-                                            std::index_sequence<Is...>)
-                {
-                    return std::make_tuple(get_access<TDim>(cgh,
-                                                            std::get<Is>(args),
-                                                            special{})...);
-                }
-            }
-        }
-    }
-}
-    \end{minted}
-    \caption{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
-             Template"=Meta"=Programmierung}
-    \label{implementierung:besonderheiten:zeiger:wrappertrans}
-\end{code}
-
-Der Quelltext~\ref{implementierung:besonderheiten:zeiger:transusage} zeigt die
-Nutzung der Template"=Meta"=Funktionen innerhalb der Alpaka"=Kernel"=Struktur:
-die in einem \texttt{std::tuple} gespeicherten Kernel"=Parameter werden in ein
-SYCL"=kompatibles Format umgewandelt.
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-namespace alpaka
-{
-    namespace kernel
-    {
-        template <typename TDim, typename TIdx,
-                  typename TKernelFnObj, typename... TArgs>
-        class TaskKernelSycl
-        {
-            /* weitere Attribute, Konstruktoren, etc. */
-
-            TKernelFnObj m_kernelFnObj;
-            std::tuple<TArgs...> m_args;
-
-        public:
-            inline operator()(cl::sycl::handler& cgh)
-            {
-                // transformiere alle Puffer-Parameter in Accessor-Parameter
-                auto accessor_args = sycl::detail::bind_buffers<TDim>(
-                            cgh, m_args,
-                            std::make_index_sequence<sizeof...(TArgs)>{});
-
-                /* weitere Operationen */
-            }
-        };
-    }
-}
-    \end{minted}
-    \caption{Nutzung der Template"=Meta"=Funktionen zur Umwandlung der
-             Puffer"=Wrapper in SYCL"=\texttt{accessor}"=Typen}
-    \label{implementierung:besonderheiten:zeiger:transusage}
-\end{code}
-
-Innerhalb des Kernels werden die \texttt{accessor}"=Typen (über SYCLs
-\texttt{multi\_ptr}) nach einem ähnlichen Prinzip in reine Zeiger transformiert.
-Die Template"=Meta"=Funktionen sind in
-Quelltext~\ref{implementierung:besonderheiten:zeiger:acctrans} gezeigt, deren
-Nutzung in Quelltext~\ref{implementierung:besonderheiten:zeiger:acctransusage}.
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-namespace alpaka {
-    namespace kernel {
-        namespace sycl {
-            namespace detail {
-                struct general {};
-                struct special : general{};
-                template <typename> struct acc_t { using type = int; };
-
-                // spezieller Fall: Accessor
-                template <typename TAccessor,
-                    typename acc_t<decltype(
-                        std::declval<TAccessor>().get_pointer())>::type = 0>
-                inline auto get_pointer(TAccessor accessor, special)
-                {
-                    return static_cast<typename TAccessor::value_type*>(
-                                                    accessor.get_pointer());
-                }
-
-                // allgemeiner Fall: kein Accessor
-                template <typename TAccessor>
-                inline auto get_pointer(TAccessor accessor, general)
-                {
-                    return accessor;
-                }
-
-                template <typename... TArgs, std::size_t... Is>
-                constexpr auto transform(std::tuple<TArgs...> args,
-                                         std::index_sequence<Is...>)
-                {
-                    return std::make_tuple(get_pointer(std::get<Is>(args),
-                                                       special{})...);
-                }
-            }
-        }
-    }
-}
-    \end{minted}
-    \caption{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
-             Template"=Meta"=Programmierung}
-    \label{implementierung:besonderheiten:zeiger:acctrans}
-\end{code}
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-namespace alpaka
-{
-    namespace kernel
-    {
-        template <typename TDim, typename TIdx,
-                  typename TKernelFnObj, typename... TArgs>
-        class TaskKernelSycl
-        {
-            /* weitere Attribute, Konstruktoren, etc. */
-
-        public:
-            inline operator()(cl::sycl::handler& cgh)
-            {
-                /* vorherige Operationen */
-
-                cgh.parallel_for<sycl::detail::kernel<TKernelFnObj>>(
-                    cl::sycl::nd_range<TDim::value> {
-                        global_size, local_size
-                    },
-                [=](cl::sycl::nd_item<TDim::value> work_item)
-                {
-                    auto pointer_args = transform(
-                                accessor_args,
-                                std::make_index_sequence<sizeof...(TArgs)>{});
-
-                    /* weitere Operationen und Alpaka-Kernel-Aufruf */
-                }
-            }
-        };
-    }
-}
-    \end{minted}
-    \caption{Nutzung der Template"=Meta"=Funktionen zur Umwandlung der
-             \texttt{accessor}"=Typen in Zeiger}
-    \label{implementierung:besonderheiten:zeiger:acctransusage}
-\end{code}
-Letztere werden dann an den vom SYCL"=Kernel aufgerufenen
-Alpaka"=Kernel übergeben, sodass der Programmierer in seinem Kernel nur die
-reinen Zeiger vorfindet. Dadurch lässt sich das SYCL"=Backend analog zu den
-restlichen Implementierungen verwenden.
 
 \subsection{Dynamischer geteilter Speicher}
 \label{implementierung:besonderheiten:sharedmem}
@@ -507,3 +641,102 @@ sonderlich stark ausgeprägt. So fehlt auch Funktionalität, die auf Seiten des
 Alpaka stellt diese Funktionen jedoch zur Verfügung. Eine Lösung für dieses
 Problem konnte im Rahmen dieser Arbeit nicht gefunden werden, diese
 Funktionalität fehlt daher für das SYCL"=Backend.
+
+\section{Zusammenfassung}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \draw [rounded corners, fill = HKS33!70] (0, 0) rectangle (2.5, 9.5)
+              node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Device}};
+        \draw [rounded corners, fill = HKS33!70] (0, 9.75) rectangle (2.5, 21.05)
+              node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Host}};
+        \draw [rounded corners, fill = HKS33!100] (0, 21.3) rectangle (2.5, 23.3)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Domäne}};
+
+        \draw [rounded corners, fill = HKS65!70] (2.75, 0) rectangle (3.95, 8.4)
+              node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Alpaka}};
+        \draw [rounded corners, fill = HKS65!70] (4.05, 0) rectangle (5.25, 8.4)
+              node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Nutzer}};
+        \draw [rounded corners, fill = HKS65!70] (2.75, 8.5) rectangle (5.25, 9.5)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Nutzer}};
+        \draw [rounded corners, fill = HKS65!70] (2.75, 9.75) rectangle (3.95, 21.05)
+              node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Alpaka}};
+        \draw [rounded corners, fill = HKS65!70] (4.05, 9.75) rectangle (5.25, 21.05)
+              node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Nutzer}};
+        \draw [rounded corners, fill = HKS65!100] (2.75, 21.3) rectangle (5.25, 23.3)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Ursprung}};
+
+        \draw [rounded corners, fill = HKS07!70] (5.5, 0) rectangle (8, 8.4);
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 0.1) rectangle (7.9, 0.85)
+              node [pos = 0.5, align = center] {\color{white}\textbf{\ldots}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 1.05) rectangle (7.9, 2.05)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Math}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 2.15) rectangle (7.9, 3.15)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Rand}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 3.25) rectangle (7.9, 4.25)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Atomic}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 4.35) rectangle (7.9, 5.35)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Index}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 5.45) rectangle (7.9, 6.45)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Work}\\
+                                                \color{white}\textbf{Division}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 6.65) rectangle (7.9, 7.15)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Size}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 7.25) rectangle (7.9, 7.75)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Dim}};
+        \node [align = center] (acctext) at (6.75, 8.10) {\color{white}\textbf{Accelerator}}; 
+        \draw [rounded corners, fill = HKS07!70] (5.5, 8.5) rectangle (8, 9.5)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Kernel}};
+        \draw [rounded corners, fill = HKS07!70] (5.5, 9.75) rectangle (8, 11.45);
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 9.85) rectangle (7.9, 10.35)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Size}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 10.45) rectangle (7.9, 10.95)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Dim}};
+        \node [align = center] (tasktext) at (6.75, 11.2) {\color{white}\textbf{Task}};
+        \draw [rounded corners, fill = HKS07!70] (5.5, 11.55) rectangle (8, 15.05);
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 11.65) rectangle (7.9, 14.55);
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.7, 11.75) rectangle (7.8, 12.25)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Size}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.7, 12.35) rectangle (7.8, 12.85)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Dim}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.7, 12.95) rectangle (7.8, 13.45)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Extent}};
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.7, 13.55) rectangle (7.8, 14.05)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Offset}};
+        \node [align = center] (viewtext) at (6.75, 14.3) {\color{white}\textbf{View}};
+        \node [align = center] (buffertext) at (6.75, 14.8) {\color{white}\textbf{Buffer}};
+        \draw [rounded corners, fill = HKS07!70] (5.5, 15.15) rectangle (8, 16.25);
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 15.25) rectangle (7.9, 15.75)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Waitable}};
+        \node [align = center] (eventtext) at (6.75, 16) {\color{white}\textbf{Event}};
+        \draw [rounded corners, fill = HKS07!70] (5.5, 16.35) rectangle (8, 17.45);
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 16.45) rectangle (7.9, 16.95)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Waitable}};
+        \node [align = center] (eventtext) at (6.75, 17.2) {\color{white}\textbf{Event}};
+        \draw [rounded corners, fill = HKS07!70] (5.5, 17.55) rectangle (8, 18.65);
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 17.65) rectangle (7.9, 18.15)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Waitable}};
+        \node [align = center] (eventtext) at (6.75, 18.4) {\color{white}\textbf{Queue}};
+        \draw [rounded corners, fill = HKS07!70] (5.5, 18.75) rectangle (8, 19.85);
+        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 18.85) rectangle (7.9, 19.35)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Waitable}};
+        \node [align = center] (eventtext) at (6.75, 19.6) {\color{white}\textbf{Device}};
+        \draw [rounded corners, fill = HKS07!70] (5.5, 19.95) rectangle (8, 21.05)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Device}\\
+                                                \color{white}\textbf{Manager}};
+        \draw [rounded corners, fill = HKS07!100] (5.5, 21.3) rectangle (8, 23.3)
+              node [pos = 0.5, align = center] {\color{white}\textbf{Konzept}};
+
+
+        \draw [rounded corners, fill = HKS44!70] (8.25, 0) rectangle (11.25, 8.4);
+        \draw [rounded corners, fill = HKS44!70] (8.25, 8.5) rectangle (11.25, 9.5)
+              node [pos = 0.5, align = center] {\color{white}\textbf{\ldots}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 9.75) rectangle (11.25, 11.45)
+              node [pos = 0.5, align = center] {\color{white}\textbf{TaskKernelSycl}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 11.55) rectangle (11.25, 15.05)
+              node [pos = 0.5, align = center] {\color{white}\textbf{BufSycl}};
+    \end{tikzpicture}
+    \caption{Struktureller Aufbau des SYCL"=Alpaka"=Backends}
+    \label{implementierung:zusammenfassung:struktur}
+\end{figure}
