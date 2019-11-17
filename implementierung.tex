@@ -12,6 +12,11 @@ Alpaka"=Konzepts und der damit zusammenhängenden Datenstrukturen. Sofern es bei
 einem Konzept zu den beschriebenen Schwierigkeiten kam, sind diese dort
 ebenfalls aufgeführt.
 
+Das SYCL"=Backend wurde auf Basis des Alpaka"=Entwicklungszweigs
+\texttt{develop} entwickelt und hat dessen Neuentwicklungen im Laufe der Arbeit
+regelmäßig übernommen. Es basiert auf dem Stand vom 23.\ September 2019
+(Commit \#82d3294).
+
 \iffalse
 \begin{table}[htb]
     \centering
@@ -123,6 +128,31 @@ dann ein Objekt der Klasse \texttt{DevSycl}, welches das von der
 SYCL"=Laufzeitumgebung erzeugte SYCL"=\texttt{device} kapselt und Alpakas
 \textit{Device}"=Verwaltungsfunktionen auf die äquivalenten SYCL"=Funktionen
 abbildet.
+
+\subsection{Fehlende \textit{Device}"=Informationen}
+
+Alpaka bietet dem Nutzer die Möglichkeit, auf Laufzeit"=Informationen über das
+verwendete \textit{Device} zuzugreifen. Darunter fällt auch die Angabe, wie viel
+globaler Speicher noch unbelegt isti (\texttt{dev::getFreeMemBytes()}). Da es in
+SYCL keine Möglichkeit gibt, diese Information abzufragen, konnte diese Funktion
+nicht implementiert werden.
+
+\subsection{Fehlende \textit{Device}"=Funktionen}
+
+In CUDA und deshalb auch in Alpaka (über die Funktion \texttt{dev::reset()})
+gibt es die Möglichkeit, ein \textit{Device} komplett zurückzusetzen. Dadurch
+wird der gesamte Zustand des \textit{Devices} in seinen Ursprungszustand
+versetzt: laufende Kernel werden unterbrochen und alle Speicherbereiche
+freigegeben. 
+
+In SYCL spielt die \texttt{device}"=Struktur eine weitaus weniger wichtige
+Rolle als seine CUDA"= und Alpaka"=Äquivalente. Ein Äquivalent zu
+\texttt{dev::reset()} existiert dadurch auch nicht, und die Dokumentation zum
+Destruktor der \texttt{device}"=Klasse enthält keine Angaben darüber, wie sich
+der Aufruf auf den Zustand des tatsächlichen \textit{Devices} auswirkt.
+
+Eine befriedigende Implementierung der \texttt{dev::reset()}"=Funktion konnte
+daher nicht gefunden werden.
 
 \section{Queues und Events}
 \label{implementierung:queue}
@@ -306,18 +336,6 @@ Funktion \texttt{get\_local\_size()} nimmt die Zahl der \textit{Threads} und
 konvertiert diese in eine SYCL"=Datenstruktur, die die Zahl der
 \textit{work"=items} enthält.
 
-Wichtig ist ferner der Name des SYCL"=Kernels, der allen
-Kernel"=Start"=Varianten übergeben werden muss. In SYCL ist der Kernel"=Name ein
-eigener Datentyp, der der Startfunktion als Template"=Parameter übergeben wird,
-sich von anderen SYCL"=Kerneln unterscheiden und global sichtbar sein muss.
-Daher wurde für das SYCL"=Backend die Klasse \texttt{sycl::detail::kernel}
-eingeführt, welche den Typ der Alpaka"=Kernel"=Funktion (\texttt{TKernelFnObj})
-als Template"=Parameter entgegennimmt.
-
-Im Quelltext~\ref{implementierung:task:kernel:launch} wird der Vorgang des
-Kernel"=Starts gezeigt, jedoch noch ohne \texttt{accessors} -- diese werden
-im nächsten Abschnitt behandelt.
-
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
 namespace sycl
@@ -356,6 +374,18 @@ class TaskKernelSycl final : public workdiv::WorkDivMembers<TDim, TIdx>
     \label{implementierung:task:kernel:launch}
 \end{code}
 
+Wichtig ist ferner der Name des SYCL"=Kernels, der allen
+Kernel"=Start"=Varianten übergeben werden muss. In SYCL ist der Kernel"=Name ein
+eigener Datentyp, der der Startfunktion als Template"=Parameter übergeben wird,
+sich von anderen SYCL"=Kerneln unterscheiden und global sichtbar sein muss.
+Daher wurde für das SYCL"=Backend die Klasse \texttt{sycl::detail::kernel}
+eingeführt, welche den Typ der Alpaka"=Kernel"=Funktion (\texttt{TKernelFnObj})
+als Template"=Parameter entgegennimmt.
+
+Im Quelltext~\ref{implementierung:task:kernel:launch} wird der Vorgang des
+Kernel"=Starts gezeigt, jedoch noch ohne \texttt{accessors} -- diese werden
+im nächsten Abschnitt behandelt.
+
 \subsubsection{Zeiger und \textit{accessors}}
 
 Innerhalb der \textit{command group} ist eine Transformation der
@@ -378,27 +408,6 @@ Umstand an das SYCL"=Spezifikationskomitee gemeldet und infolgedessen als Fehler
 in der Spezifikation anerkannt, der in zukünftigen Versionen behoben sein wird
 (siehe die Diskussion in
 Anhang~\ref{anhang:diskussion:syclspec:implicitaccessor}).}.
-
-Innerhalb eines Kernels lassen sich die \texttt{accessor}"=Typen in spezielle
-SYCL"=eigene Zeigertypen (\texttt{multi\_ptr}) umwandeln, die wiederum in
-\glqq reine\grqq\ Zeiger konvertierbar sind. Dadurch lässt sich die geschilderte
-Problematik in mehreren Stufen lösen:
-
-Auf der \textit{Host}"=Seite wird beim Aufruf der Funktion
-\texttt{getPtrNative()} eine Datenstruktur angelegt, die den SYCL"=Puffer
-kapselt und sich aus Sicht des Programmierers weitestgehend wie ein normaler
-Zeiger verhält. Daneben enthält diese Struktur ein spezielles Attribut mit dem
-Namen \texttt{is\_alpaka\_sycl\_buffer\_wrapper}. (Der Quelltext dieser Struktur
-ist in Anhang~\ref{anhang:source:cpp:bufferwrapper} zu finden.)
-
-Dieses Attribut wird bei der Nutzung des Kernel"=Objekts verwendet, um die
-Puffer"=Strukturen von den restlichen Parametern abzugrenzen. Strukturen, die
-dieses Attribut besitzen, werden an eine spezielle Funktion weitergereicht, die
-den Zusammenhang zwischen SYCL"=Puffer und SYCL"=\texttt{accessor} herstellt.
-Alle anderen Datentypen werden unverändert zurückgegeben. Da Techniken der
-Template"=Meta"=Programmierung verwendet werden, finden diese Transformationen
-zur Compile"=Zeit statt. Der gesamte Vorgang ist in
-Quelltext~\ref{implementierung:task:kernel:zeiger:wrappertrans} dargestellt.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -438,10 +447,26 @@ constexpr auto bind_buffers(cl::sycl::handler& cgh,
     \label{implementierung:task:kernel:zeiger:wrappertrans}
 \end{code}
 
-Der Quelltext~\ref{implementierung:task:kernel:zeiger:transusage} zeigt die
-Nutzung der Template"=Meta"=Funktionen innerhalb der \textit{command group}:
-die in einem \texttt{std::tuple} gespeicherten Kernel"=Parameter werden in ein
-SYCL"=kompatibles Format umgewandelt.
+Innerhalb eines Kernels lassen sich die \texttt{accessor}"=Typen in spezielle
+SYCL"=eigene Zeigertypen (\texttt{multi\_ptr}) umwandeln, die wiederum in
+\glqq reine\grqq\ Zeiger konvertierbar sind. Dadurch lässt sich die geschilderte
+Problematik in mehreren Stufen lösen:
+
+Auf der \textit{Host}"=Seite wird beim Aufruf der Funktion
+\texttt{getPtrNative()} eine Datenstruktur angelegt, die den SYCL"=Puffer
+kapselt und sich aus Sicht des Programmierers weitestgehend wie ein normaler
+Zeiger verhält. Daneben enthält diese Struktur ein spezielles Attribut mit dem
+Namen \texttt{is\_alpaka\_sycl\_buffer\_wrapper}. (Der Quelltext dieser Struktur
+ist in Anhang~\ref{anhang:source:cpp:bufferwrapper} zu finden.)
+
+Dieses Attribut wird bei der Nutzung des Kernel"=Objekts verwendet, um die
+Puffer"=Strukturen von den restlichen Parametern abzugrenzen. Strukturen, die
+dieses Attribut besitzen, werden an eine spezielle Funktion weitergereicht, die
+den Zusammenhang zwischen SYCL"=Puffer und SYCL"=\texttt{accessor} herstellt.
+Alle anderen Datentypen werden unverändert zurückgegeben. Da Techniken der
+Template"=Meta"=Programmierung verwendet werden, finden diese Transformationen
+zur Compile"=Zeit statt. Der gesamte Vorgang ist in
+Quelltext~\ref{implementierung:task:kernel:zeiger:wrappertrans} dargestellt.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -460,47 +485,16 @@ inline operator()(cl::sycl::handler& cgh)
     \label{implementierung:task:kernel:zeiger:transusage}
 \end{code}
 
+Der Quelltext~\ref{implementierung:task:kernel:zeiger:transusage} zeigt die
+Nutzung der Template"=Meta"=Funktionen innerhalb der \textit{command group}:
+die in einem \texttt{std::tuple} gespeicherten Kernel"=Parameter werden in ein
+SYCL"=kompatibles Format umgewandelt.
+
 Innerhalb des SYCL"=Kernels werden die \texttt{accessor}"=Typen (über SYCLs
 \texttt{multi\_ptr}) nach einem ähnlichen Prinzip in reine Zeiger transformiert.
-Die Template"=Meta"=Funktionen sind in
-Quelltext~\ref{implementierung:task:kernel:zeiger:acctrans} gezeigt, deren
+Die Template"=Meta"=Funktionen sind dem oben gezeigten Prinzip sehr ähnlich
+und im Anhang~\ref{anhang:source:cpp:kernelzeigeracctrans} gezeigt, deren
 Nutzung in Quelltext~\ref{implementierung:task:kernel:zeiger:acctransusage}.
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-struct general {};
-struct special : general{};
-template <typename> struct acc_t { using type = int; };
-
-// spezieller Fall: Accessor
-template <typename TAccessor,
-    typename acc_t<decltype(
-        std::declval<TAccessor>().get_pointer())>::type = 0>
-inline auto get_pointer(TAccessor accessor, special)
-{
-    return static_cast<typename TAccessor::value_type*>(
-                                    accessor.get_pointer());
-}
-
-// allgemeiner Fall: kein Accessor
-template <typename TAccessor>
-inline auto get_pointer(TAccessor accessor, general)
-{
-    return accessor;
-}
-
-template <typename... TArgs, std::size_t... Is>
-constexpr auto transform(std::tuple<TArgs...> args,
-                         std::index_sequence<Is...>)
-{
-    return std::make_tuple(get_pointer(std::get<Is>(args),
-                                       special{})...);
-}
-    \end{minted}
-    \caption{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
-             Template"=Meta"=Programmierung}
-    \label{implementierung:task:kernel:zeiger:acctrans}
-\end{code}
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -519,6 +513,7 @@ cgh.parallel_for<sycl::detail::kernel<TKernelFnObj>>(
              \texttt{accessor}"=Typen in Zeiger}
     \label{implementierung:task:kernel:zeiger:acctransusage}
 \end{code}
+
 Die extrahierten Zeiger werden dann an den vom SYCL"=Kernel aufgerufenen
 Alpaka"=Kernel übergeben, sodass der Programmierer diese verwenden kann.
 Dadurch lässt sich das SYCL"=Backend analog zu den restlichen Implementierungen
@@ -576,25 +571,71 @@ eine byte"=weise Operation handelt. Puffer anderer Typen werden deshalb
 als \texttt{uint8\_t}"=Puffer interpretiert. Mit dem Befehl \texttt{cgh.fill()}
 lässt sich der Puffer dann Byte für Byte beschreiben.
 
-\section{Besonderheiten des SYCL-Backends}
-\label{implementierung:besonderheiten}
+\section{Work"=Division}
+\label{implementierung:workDiv}
 
-Durch die beschriebenen Unterschiede zwischen Alpaka und SYCL wurden
-stellenweise kreative Lösungen erforderlich, um Alpakas Funktionalität möglichst
-gut abbilden zu können. Diese werden in den folgenden Abschnitten näher
-beschrieben.
+Um auf die Positionen der einzelnen \textit{Threads} und \textit{Blocks}
+innerhalb des aufgespannten \textit{Grids} zugreifen zu können, stellt Alpaka
+in seinem Work"=Division"=Konzept entsprechende Funktionen bereit. Da die Kernel
+durch SYCLs \texttt{parallel\_for}"=Funktion gestartet werden, ist innerhalb
+des SYCL"=Backends die Datenstruktur \texttt{nd\_item} vorhanden. Diese stellt
+äquivalente Funktionalität zur Verfügung, so dass alle
+Work"=Division"=Funktionen problemlos implementiert werden konnten.
+
+\section{Geteilter Speicher}
+\label{implementierung:shared}
+
+Alpaka stellt einen auf \textit{Block}"=Ebene geteilten Speicher zur Verfügung,
+über den die \textit{Threads} des \textit{Blocks} kommunizieren können. Dieser
+bietet gegenüber dem globalen Speicher sehr viel schnellere Zugriffe, ist aber
+auch deutlich kleiner. 
+
+Es gibt zwei mögliche Arten, Speicher dieses Typs zu reservieren:
+\textit{dynamisch}, das heißt außerhalb des Kernel"=Codes und zur Laufzeit,
+sowie \textit{statisch}, das heißt innerhalb des Kernel"=Codes und mit einer zur
+Compile"=Zeit feststehenden Größe. Alpaka stellt für beide Varianten eine
+Schnittstelle bereit.
 
 \subsection{Dynamischer geteilter Speicher}
-\label{implementierung:besonderheiten:sharedmem}
 
-\section{Probleme}\label{implementierung:probleme}
+Das \textit{type trait} \texttt{kernel::traits::BlockSharedMemDynSizeBytes}
+muss für den dynamischen Fall vom Programmierer auf der Host"=Seite für seine
+Anwendung implementiert werden. Innerhalb des Kernels kann er dann über die
+Alpaka-Funktion \texttt{block::shared::dyn::getMem()} auf den Zeiger zum so
+reservierten geteilten Speicher zugreifen.
 
-Während der Implementierung traten einige Probleme auf, die sich vornehmlich
-auf gravierende konzeptionelle Unterschiede zwischen Alpaka und SYCL
-zurückführen lassen. Diese werden in den folgenden Abschnitten näher
-beschrieben.
+Dieses Verhalten ließ sich so auch für SYCL implementieren. Dafür musste
+lediglich innerhalb der \texttt{TaskKernelSycl}"=Struktur ein
+SYCL"=\textit{accessor} für den lokalen Speicher (dem SYCL"=Äquivalent zum
+geteilten Speicher) angelegt werden, auf den die genannte Funktion zugreifen und
+den zugehörigen Zeiger zurückgeben kann.
 
-\subsection{Globale Variablen}\label{implementierung:probleme:globalvar}
+\subsection{Statischer geteilter Speicher}
+
+Für den statischen Fall existiert die Funktion
+\texttt{block::shared::st::allocVar()}, die innerhalb des Kernels aufgerufen
+wird und Speicherplatz für eine Variable im geteilten Speicher reserviert. Diese
+Funktion kann für SYCL nicht implementiert werden, da die SYCL"=Spezifikation
+für den Kernel"=Start mit \texttt{parallel\_for} keine äquivalente
+Funktionalität bietet.
+
+Diese Einschränkung erklärt sich dadurch, dass SYCL mit dem Anspruch entworfen
+wurde, von jedem beliebigen modernen C++"=Compiler übersetzt werden zu können,
+auch wenn dieser keine Unterstützung für OpenCL"= und/oder SYCL"=Konzepte mit
+sich bringt. In diesem Fall generiert der Compiler wie bei jedem anderen
+C++"=Programm normalen CPU"=Maschinencode. Der Umfang des statischen geteilten
+Speichers steht zwar bereits zur Compile"=Zeit fest und kann deshalb schon vor
+dem Aufruf des Kernels reserviert werden. Der Zeiger auf diesen Speicherbereich
+kann durch einen C++"=Compiler ohne SYCL"=Unterstützung dem betreffenden Kernel
+vor dessen Ausführung jedoch gar nicht zugeordnet werden, da für diese Funktion
+noch kein \textit{stack frame} existiert. Als Reaktion auf eine im Rahmen dieser
+Arbeit gestellte Rückfrage zur Sinnhaftigkeit dieser Einschränkung wird vom
+SYCL"=Spezifikationskomitee zur Zeit untersucht, inwieweit diese Funktionalität
+trotzdem verfügbar gemacht werden kann (vgl. die GitHub"=Diskussion mit
+Mitgliedern des SYCL"=Spezifikationskomitees im
+Anhang~\ref{anhang:diskussionen:syclspec:staticshared}).
+
+\section{Globale Variablen}\label{implementierung:globalvar}
 
 Die Makros \texttt{ALPAKA\_STATIC\_ACC\_MEM\_GLOBAL} und
 \texttt{ALPAKA\_STATIC\_ACC\_MEM\_CONSTANT} werden von Alpaka zur Verfügung
@@ -605,10 +646,10 @@ Abstraktion der CUDA"=Schlüsselwörter texttt{\_\_device\_\_} und
 wurde für die restlichen Alpaka"=Backends bisher nicht benötigt. Im Zusammenhang
 mit SYCL kommt es hier jedoch zu Problemen.
 
-Zwar ist das Anlegen globaler \textit{device}"=seitiger Variablen auch in SYCL
-möglich, erfordert hier aber den Weg über Puffer und \textit{accessors}. Die
-C++"=Makro"=Mächtigkeit reicht allerdings nicht aus, um aus einer
-Variablendeklaration
+Zwar ist das Anlegen globaler \textit{device}"=seitiger Variablen prinzipiell
+auch in SYCL möglich, erfordert hier aber den Weg über Puffer und
+\textit{accessors}. Die C++"=Makro"=Mächtigkeit reicht allerdings nicht aus, um
+aus einer Variablendeklaration
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -630,94 +671,30 @@ auto acc = x_buf.get_access</* ... */>(cgh);
 Daher konnte die Implementierung der obigen Makros für das SYCL"=Backend nicht
 durchgeführt werden.
 
-\subsection{Speicherverwaltung}\label{implementierung:probleme:speicher}
+\section{Mathematik-Funktionen}
 
-\subsection{Statischer geteilter Speicher}
-\label{implementierung:probleme:shared}
+Bei der Implementierung der von Alpaka vorgegebenen mathematischen Funktionen
+kam es zu keinen Schwierigkeiten, da SYCL für alle Alpaka"=Funktionen ein
+Äquivalent zur Verfügung stellt.
 
-Einige Plattformen der parallelen Programmierung, wie etwa CUDA und OpenCL,
-kennen das Konzept eines Speichers auf Multiprozessor-Ebene, der ungefähr
-einem programmierbaren L1-Cache entspricht. Dieser Speicher nennt sich im
-CUDA-Umfeld \textit{shared memory}, während er bei OpenCL (und SYCL)
-\textit{local memory} heißt. Alpaka übernimmt für dieses Speicherkonzept die
-CUDA-Terminologie. \textit{Shared memory} steht allen \textit{threads} auf
-der \textit{block}-Ebene zur Verfügung und bietet deutlich schnellere
-Zugriffszeiten als der globale Speicher.
-
-Es gibt zwei mögliche Arten, Speicher dieses Typs zu reservieren:
-\textit{dynamisch}, das heißt außerhalb des Kernel-Codes und zur Laufzeit, sowie
-\textit{statisch}, das heißt innerhalb des Kernel-Codes und mit einer zur
-Compile-Zeit feststehenden Größe.
-
-Alpaka stellt für beide Varianten eine Schnittstelle bereit. Für den dynamischen
-Fall muss der Programmierer das \textit{type trait}
-\texttt{alpaka::kernel::traits::BlockSharedMemDynSizeBytes} auf der Host-Seite
-für seine Anwendung implementieren. Innerhalb des Kernels kann er dann über die
-Alpaka-Funktion \texttt{alpaka::block::shared::dyn::getMem()} auf den Zeiger
-zum so reservierten geteilten Speicher zugreifen. Dieser Fall lässt sich auch
-für SYCL implementieren, indem man die in
-Abschnitt~\ref{implementierung:besonderheiten:zeiger} vorgestellten
-Umwandlungen von \textit{accessor}-Typen in \textit{Zeiger} anwendet.
-
-Für den statischen Fall existiert die Funktion
-\texttt{alpaka::block::shared::st::allocVar()}, die innerhalb des Kernels
-aufgerufen wird und eine beliebige Variable im geteilten Speicher ablegt. Diese
-Funktion kann für SYCL nicht implementiert werden, da die SYCL-Spezifikation
-dies (im Gegensatz zu OpenCL) bis auf einen bestimmten Sonderfall
-\cite[siehe][Abschnitt 4.8.5.3]{sycl2019} nicht vorsieht.
-
-Diese Einschränkung erklärt sich dadurch, dass SYCL mit dem Anspruch entworfen
-wurde, von jedem beliebigen modernen C++-Compiler übersetzt werden zu können,
-auch wenn dieser keine Unterstützung für OpenCL- und/oder SYCL-Konzepte mit sich
-bringt. In diesem Fall generiert der Compiler wie bei jedem anderen C++-Programm
-normalen CPU-Maschinencode. Der Umfang des statischen geteilten Speichers steht
-zwar bereits zur Compile-Zeit fest und kann daher schon vor dem Aufruf des
-Kernels alloziert werden. Der Zeiger auf diesen Speicherbereich kann durch einen
-C++-Compiler ohne SYCL-Unterstützung dem betreffenden Kernel vor dessen
-Ausführung jedoch gar nicht zugeordnet werden, da für diese Funktion noch kein
-Stapelrahmen existiert. Vom SYCL"=Spezifikationskomitee wird jedoch zur Zeit
-untersucht, inwieweit diese Funktionalität trotzdem verfügbar gemacht werden
-kann (vgl. die GitHub"=Diskussion mit Mitgliedern des
-SYCL"=Spezifikationskomitees im
-Anhang~\ref{anhang:diskussionen:syclspec:staticshared}).
-
-\subsection{Atomare Funktionen}\label{implementierung:probleme:atomics}
-
-Durch die Nutzung von Zeigern kommt es zu gravierenden Problemen mit atomaren
-Funktionen. SYCLs vorhandene atomare Funktionen erfordern zwingend die Nutzung
-der \texttt{multi\_ptr}"=Strukturen, welche wiederum mit ihrem Adressraum
-verknüpft werden -- das heißt, sie werden eindeutig dem globalen, lokalen oder
-konstanten Adressraum zugeordnet. Da in Alpaka jedoch nur C"=Zeiger
-verwendet werden, ist diese Information innerhalb der Alpaka"=Hierarchie nicht
-mehr vorhanden. Dadurch kann in der Implementierungsschicht der
-Alpaka"=Funktionen kein lokaler \texttt{multi\_ptr} angelegt werden.
-
-Erschwerend kommt hinzu, dass auch die vorhandenen SYCL"=Compiler nicht in der
-Lage sind, den Adressraum selbst zu ermitteln. Diese Problematik wurde im Rahmen
-dem SYCL"=Spezifikationskomitee im Rahmen der Arbeit gemeldet, bisher gibt es
-jedoch noch keinen Lösungsansatz (vgl. die GitHub"=Diskussion mit Mitgliedern
-des SYCL"=Spezifikationskomitees im
-Anhang~\ref{anhang:diskussionen:syclspec:addressspac}).
-
-Zur Zeit wird in der SYCL"=Implementierung der atomaren Funktionen daher
-angenommen, dass jeder übergebene Zeiger dem globalen Adressraum angehört --
-atomare Funktionen im lokalen oder konstanten Adressraum werden deshalb nicht
-unterstützt.
-
-\subsection{FPGA-Erweiterungen}\label{implementierung:probleme:fpga}
+\section{FPGA-Erweiterungen}\label{implementierung:probleme:fpga}
 
 Wie in Abschnitt~\ref{sycl:erweiterungen} dargestellt wurde, existieren einige
 SYCL"=Erweiterungen für FPGAs, die eine bessere Nutzung dieser Hardware
 ermöglichen sollen. Diese sind naturgemäß nicht auf anderen
-Hardware"=Plattformen (oder auf FPGAs verschiedener Hersteller) nutzbar. Es
-stellt sich daher die Frage, wie diese herstellerabhängigen Erweiterungen
-innerhalb der Alpaka"=Bibliothek nutzbar gemacht werden können. Für den
-SYCL"=Backend"=Prototypen wurde auf Erweiterungen verzichtet, um die
-Hardware"=Unabhängigkeit nicht zu gefährden. Dies ist jedoch kein dauerhaft
-wünschenswerter Zustand, da die Erweiterungen ganz erhebliche Performanzgewinne
-zur Folge haben können.
+Hardware"=Plattformen nutzbar und auch nicht zwischen verschiedenen
+FPGAs unterschiedlicher Hersteller kompatibel. Es stellt sich daher die Frage,
+wie diese herstellerabhängigen Erweiterungen innerhalb der Alpaka"=Bibliothek
+nutzbar gemacht werden können. Für den SYCL"=Backend"=Prototypen wurde auf
+Erweiterungen verzichtet, um die Hardware"=Unabhängigkeit nicht zu gefährden.
+Dies ist jedoch kein dauerhaft wünschenswerter Zustand, da die Erweiterungen
+ganz erhebliche Performanzgewinne zur Folge haben können. Denkbar ist ein
+ähnliches Erweiterungs"=Konzept für Alpaka, in welchem dem Nutzer abstrahierte
+Formen der SYCL"=Erweiterungen zur Verfügung gestellt werden, die er selbst in
+seinem Kernel nutzen kann. Diese bedarf jedoch einer vorherigen Diskussion
+innerhalb der Alpaka"=Entwicklergemeinde.
 
-\subsection{Zufallszahlen und Zeit}
+\section{Zufallszahlen und Zeit}
 
 Da SYCL erst wenige Jahre alt ist, ist das zugehörige Ökosystem noch nicht
 sonderlich stark ausgeprägt. So fehlt auch Funktionalität, die auf Seiten des
@@ -728,14 +705,19 @@ Funktionalität fehlt daher für das SYCL"=Backend.
 
 \section{Zusammenfassung}
 
+Der strukturelle Aufbau des SYCL"=Backends bzw.\ die in ihm abgebildeten
+Alpaka"=Konzepte sind in der
+Abbildung~\ref{implementierung:zusammenfassung:struktur} zusammengefasst.
+Insgesamt umfasst das Backend \num{6936} Zeilen C++"=Quelltext.
+
 \begin{figure}
     \centering
     \begin{tikzpicture}
         \draw [rounded corners, fill = HKS33!70] (0, 0) rectangle (2.5, 9.5)
               node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Device}};
-        \draw [rounded corners, fill = HKS33!70] (0, 9.75) rectangle (2.5, 21.05)
+        \draw [rounded corners, fill = HKS33!70] (0, 9.75) rectangle (2.5, 19.85)
               node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Host}};
-        \draw [rounded corners, fill = HKS33!100] (0, 21.3) rectangle (2.5, 23.3)
+        \draw [rounded corners, fill = HKS33!100] (0, 20.1) rectangle (2.5, 22.1)
               node [pos = 0.5, align = center] {\color{white}\textbf{Domäne}};
 
         \draw [rounded corners, fill = HKS65!70] (2.75, 0) rectangle (3.95, 8.4)
@@ -744,11 +726,11 @@ Funktionalität fehlt daher für das SYCL"=Backend.
               node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Nutzer}};
         \draw [rounded corners, fill = HKS65!70] (2.75, 8.5) rectangle (5.25, 9.5)
               node [pos = 0.5, align = center] {\color{white}\textbf{Nutzer}};
-        \draw [rounded corners, fill = HKS65!70] (2.75, 9.75) rectangle (3.95, 21.05)
+        \draw [rounded corners, fill = HKS65!70] (2.75, 9.75) rectangle (3.95, 19.85)
               node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Alpaka}};
-        \draw [rounded corners, fill = HKS65!70] (4.05, 9.75) rectangle (5.25, 21.05)
+        \draw [rounded corners, fill = HKS65!70] (4.05, 9.75) rectangle (5.25, 19.85)
               node [pos = 0.5, align = center, rotate = 90] {\color{white}\textbf{Nutzer}};
-        \draw [rounded corners, fill = HKS65!100] (2.75, 21.3) rectangle (5.25, 23.3)
+        \draw [rounded corners, fill = HKS65!100] (2.75, 20.1) rectangle (5.25, 22.1)
               node [pos = 0.5, align = center] {\color{white}\textbf{Ursprung}};
 
         \draw [rounded corners, fill = HKS07!70] (5.5, 0) rectangle (8, 8.4);
@@ -797,29 +779,50 @@ Funktionalität fehlt daher für das SYCL"=Backend.
         \draw [rounded corners, fill = HKS07!70] (5.5, 16.35) rectangle (8, 17.45);
         \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 16.45) rectangle (7.9, 16.95)
               node [pos = 0.5, align = center] {\color{white}\textbf{Waitable}};
-        \node [align = center] (eventtext) at (6.75, 17.2) {\color{white}\textbf{Event}};
+        \node [align = center] (eventtext) at (6.75, 17.2) {\color{white}\textbf{Queue}};
         \draw [rounded corners, fill = HKS07!70] (5.5, 17.55) rectangle (8, 18.65);
         \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 17.65) rectangle (7.9, 18.15)
               node [pos = 0.5, align = center] {\color{white}\textbf{Waitable}};
-        \node [align = center] (eventtext) at (6.75, 18.4) {\color{white}\textbf{Queue}};
-        \draw [rounded corners, fill = HKS07!70] (5.5, 18.75) rectangle (8, 19.85);
-        \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 18.85) rectangle (7.9, 19.35)
-              node [pos = 0.5, align = center] {\color{white}\textbf{Waitable}};
-        \node [align = center] (eventtext) at (6.75, 19.6) {\color{white}\textbf{Device}};
-        \draw [rounded corners, fill = HKS07!70] (5.5, 19.95) rectangle (8, 21.05)
+        \node [align = center] (eventtext) at (6.75, 18.4) {\color{white}\textbf{Device}};
+        \draw [rounded corners, fill = HKS07!70] (5.5, 18.75) rectangle (8, 19.85)
               node [pos = 0.5, align = center] {\color{white}\textbf{Device}\\
                                                 \color{white}\textbf{Manager}};
-        \draw [rounded corners, fill = HKS07!100] (5.5, 21.3) rectangle (8, 23.3)
+        \draw [rounded corners, fill = HKS07!100] (5.5, 20.1) rectangle (8, 22.1)
               node [pos = 0.5, align = center] {\color{white}\textbf{Konzept}};
 
 
-        \draw [rounded corners, fill = HKS44!70] (8.25, 0) rectangle (11.25, 8.4);
-        \draw [rounded corners, fill = HKS44!70] (8.25, 8.5) rectangle (11.25, 9.5)
+        \draw [rounded corners, fill = HKS44!70] (8.25, 0) rectangle (12.75, 8.4);
+        \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 1.05) rectangle (12.65, 2.05)
+              node [pos = 0.5, align = center] {\color{white}\texttt{MathSycl}};
+        \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 2.15) rectangle (12.65, 3.15)
+              node [pos = 0.5, align = center] {\color{white}\textbf{nicht implementiert}};
+        \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 3.25) rectangle (12.65, 4.25)
+              node [pos = 0.5, align = center] {\color{white}\texttt{AtomicSycl}};
+        \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 4.35) rectangle (12.65, 5.35)
+              node [pos = 0.5, align = center] {\color{white}\texttt{IdxBtSycl}};
+        \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 5.45) rectangle (12.65, 6.45)
+              node [pos = 0.5, align = center] {\color{white}\texttt{WorkDivSycl}};
+
+        \node [align = center] (accsycltext) at (10.5, 8.10) {\color{white}\texttt{AccSycl}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 8.5) rectangle (12.75, 9.5)
               node [pos = 0.5, align = center] {\color{white}\textbf{\ldots}};
-        \draw [rounded corners, fill = HKS44!70] (8.25, 9.75) rectangle (11.25, 11.45)
-              node [pos = 0.5, align = center] {\color{white}\textbf{TaskKernelSycl}};
-        \draw [rounded corners, fill = HKS44!70] (8.25, 11.55) rectangle (11.25, 15.05)
-              node [pos = 0.5, align = center] {\color{white}\textbf{BufSycl}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 9.75) rectangle (12.75, 11.45)
+              node [pos = 0.5, align = center] {\color{white}\texttt{TaskKernelSycl}\\
+                                                \color{white}\texttt{TaskCopySycl}\\
+                                                \color{white}\texttt{TaskSetSycl}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 11.55) rectangle (12.75, 15.05)
+              node [pos = 0.5, align = center] {\color{white}\texttt{BufSycl}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 15.15) rectangle (12.75, 16.25)
+              node [pos = 0.5, align = center] {\color{white}\texttt{EventSycl}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 16.35) rectangle (12.75, 17.45)
+              node [pos = 0.5, align = center] {\color{white}\texttt{QueueSyclNonBlocking}\\
+                                                \color{white}\texttt{QueueSyclBlocking}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 17.55) rectangle (12.75, 18.65)
+              node [pos = 0.5, align = center] {\color{white}\texttt{DevSycl}};
+        \draw [rounded corners, fill = HKS44!70] (8.25, 18.75) rectangle (12.75, 19.85)
+              node [pos = 0.5, align = center] {\color{white}\texttt{PltfSycl}};
+        \draw [rounded corners, fill = HKS44!100] (8.25, 20.1) rectangle (12.75, 22.1)
+              node [pos = 0.5, align = center] {\color{white}\texttt{Implementierung}};
     \end{tikzpicture}
     \caption{Struktureller Aufbau des SYCL"=Alpaka"=Backends}
     \label{implementierung:zusammenfassung:struktur}

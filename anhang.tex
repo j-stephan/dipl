@@ -153,6 +153,45 @@ namespace alpaka
     \caption{Implementierung des SYCL-Puffer-Wrappers}
 \end{code}
 
+\subsection{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
+Template"=Meta"=Programmierung}
+\label{anhang:source:cpp:kernelzeigeracctrans}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+struct general {};
+struct special : general{};
+template <typename> struct acc_t { using type = int; };
+
+// spezieller Fall: Accessor
+template <typename TAccessor,
+    typename acc_t<decltype(
+        std::declval<TAccessor>().get_pointer())>::type = 0>
+inline auto get_pointer(TAccessor accessor, special)
+{
+    return static_cast<typename TAccessor::value_type*>(
+                                    accessor.get_pointer());
+}
+
+// allgemeiner Fall: kein Accessor
+template <typename TAccessor>
+inline auto get_pointer(TAccessor accessor, general)
+{
+    return accessor;
+}
+
+template <typename... TArgs, std::size_t... Is>
+constexpr auto transform(std::tuple<TArgs...> args,
+                         std::index_sequence<Is...>)
+{
+    return std::make_tuple(get_pointer(std::get<Is>(args),
+                                       special{})...);
+}
+    \end{minted}
+    \caption{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
+             Template"=Meta"=Programmierung}
+\end{code}
+
 \chapter{Fehlerberichte und Korrekturen}
 \label{anhang:fehler}
 
