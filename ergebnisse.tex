@@ -1,0 +1,182 @@
+\chapter{Ergebnisse}\label{ergebnisse}
+
+\section{Nutzbarkeit der SYCL-Implementierungen}
+\label{ergebnisse:nutzbarkeit}
+
+Im Folgenden wird die Nutzbarkeit von drei öffentlich verfügbaren
+SYCL"=Implementierungen dargelegt. Dabei handelt es sich um ComputeCpp sowie
+die Implementierungen der Firmen Intel und Xilinx. Die im Kapitel~\ref{sycl}
+erwähnten Implementierungen hipSYCL und sycl-gtx wurden während dieser Arbeit
+nicht in Betracht gezogen, da ihnen zu viele kritische Features fehlen und sie
+daher nicht für eine Nutzung von Alpaka geeignet sind.
+
+\subsection{ComputeCpp}
+
+Die folgenden Ausführungen zu ComputeCpp beziehen sich auf die frei verfügbare
+\textit{Community Edition} und alle Versionen bis einschließlich Version 1.1.5.
+
+Von den derzeit der Öffentlichkeit zugänglichen SYCL"=Implementierungen ist
+ComputeCpp die einzige, die nicht quelloffen ist. Sie wird vom schottischen
+Unternehmen Codeplay entwickelt, welches ebenfalls federführend an der
+Entwicklung des SYCL"=Standards beteiligt ist. ComputeCpp unterstützt mehr
+Hardware"=Plattformen als die anderen SYCL"=Implementierungen
+
+Im Laufe der Implementierung des SYCL"=Backends stellte sich schnell heraus,
+dass ComputeCpp nicht in der Lage sein würde, das SYCL"=Alpaka"=Backend zu
+verwenden. Dafür gibt es zwei Gründe, die nachstehend weiter ausgeführt werden.
+
+\subsubsection{Zeiger}
+
+Zusätzlich zu der in Kapitel~\ref{implementierung} beschriebenen Problematik
+mit Zeigern kommt es zu weiteren Schwierigkeiten, wenn Zeiger in Verbindung mit
+ComputeCpp genutzt werden sollen.
+
+ComputeCpp versucht die Information, zu welchem Adressraum ein Zeiger gehört,
+durch spezielle Zeiger"=Attribute nachzuliefern. Ein Zeiger des Typs
+\texttt{int*}, der auf den globalen Adressraum zeigt, wird vom
+ComputeCpp"=Compiler zu \texttt{\_\_global int*} transformiert. Das Ergebnis der
+Transformation wird vom selben Compiler jedoch als ein eigener Typ betrachtet,
+der nichts mehr \texttt{int*} zu tun hat. Dadurch kommt es zu Problemen mit den
+\textit{type traits} der C++"=Standardbibliothek, die einen Zeiger vom Typ
+\texttt{\_\_global int*} nicht mehr als \texttt{int}"=Zeiger erkennen.
+
+Da es dem Programmierer ebenfalls verboten ist, diese Attribute selbst zu
+verwenden (ComputeCpp generiert einen Syntax"=Fehler), kann eine manuelle
+Auswahl entsprechender Code"=Pfade auch nicht vorgenommen werden.
+
+Darüber hinaus sind diese Zeigertypen nicht mit den SYCL"=Klassen kompatibel.
+So führt die Umwandlung eines entsprechenden Zeigers in einen
+SYCL"=\texttt{multi\_ptr} dazu, dass letzterer nicht mehr mit den atomaren
+Funktionen des SYCL"=Standards verwendet werden kann. In diesem Fall meldet
+ComputeCpp den Fehler, dass die Verwendung von Adressraum"=Attributen in
+Verbindung mit atomaren Funktionen verboten ist.
+
+\subsubsection{Fehlerhafte Instruktionen}
+
+Auf NVIDIA"=GPUs generiert ComputeCpp mitunter Instruktionen, die von NVIDIAs
+OpenCL"= oder CUDA"=Umgebung nicht verstanden werden. Dies fällt erst bei der
+Ausführung des Kompilats auf, das entsprechende Fehlermeldungen der
+NVIDIA"=Laufzeitumgebung meldet. Darüber hinaus fehlen ComputeCpp noch einige
+wichtige Instruktionen, die für ein Funktionieren mit Alpaka nötig sind,
+darunter viele mathematische Funktionen.
+
+\subsection{Intel}
+
+Eine weitere wichtige Implementierung des SYCL"=Standards wird seit Anfang des
+Jahres 2019 von der Firma Intel herausgegeben. Diese quelloffene Variante ist
+auf die Nutzung der Intel"=OpenCL"=Umgebungen für CPUs und GPUs ausgelegt. Es
+ist aufgrund der parallel zu dieser Arbeit verlaufenen Weiterentwicklung
+absehbar, dass kurz"= bis mittelfristig auch die FPGAs dieses Herstellers
+unterstützt werden sollen.
+
+Intels Compiler ist die einzige SYCL"=Implementierung, die Alpaka"=Quelltexte
+mit aktiviertem SYCL"=Backend kompilieren konnte und kommt deshalb zur
+Verfizierung desselben zum Einsatz.
+
+\subsection{Xilinx}
+
+Die SYCL"=Implementierung der Firma Xilinx hängt eng mit der Entwicklung des
+Intel"=SYCL"=Compilers zusammen. Dabei wird in unregelmäßigen Abständen die
+Code"=Basis des Intel"=Compilers übernommen und die Xilinx"=eigenen Codepfade
+darin integriert. Das hat zur Folge, dass Fehlerkorrekturen des Intel"=Compilers
+erst mit einiger Verzögerung in die Xilinx"=Implementierung Eingang finden.
+
+Darüber hinaus erwies sich die Schnittstelle des SYCL"=Compilers zu Xilinx'
+SDAccel"=Plattform, welche die eigentliche Synthese durchführt, sowie zu Xilinx'
+OpenCL"=Treibern im Laufe dieser Arbeit als fehleranfällig oder unvollständig.
+Aufgrund dieser Probleme war eine Nutzung des Alpaka"=SYCL"=Backends für
+Xilinx"=FPGAs nicht möglich.
+
+\subsubsection{Mathematische Funktionen}
+
+Der Compiler generiert aus einigen mathematischen SYCL"=Funktionen
+Instruktionen, die in Xilinx' OpenCL"=Treiber nicht vorhanden sind. Dies ist
+zwar auf ein falsches Benennungsschema innerhalb der OpenCL"=Implementierung
+zurückzuführen, steht einer Nutzbarkeit im Zusammenhang mit Alpaka aber trotzdem
+im Wege. Andere mathematische Funktionen führen unter ungünstigen Umständen
+durch ihre Nutzung dazu, dass der Compiler selbst abstürzt.  
+
+\subsubsection{Strukturen}
+
+Zu einem gravierenden Problem kommt es bei der Nutzung von benutzerdefinierten
+Strukturen. Sofern diese außerhalb eines Kernels definiert und dann innerhalb
+eines Kernels verwendet werden, kommt es zu einem Absturz des Compilers. Der
+Grund dafür liegt in einem Fehler des im Hintergrund verwendeten
+Xilinx"=OpenCL"=Compilers \texttt{xocc}, welcher die Synthese steuert. Nach
+Aussage der an der SYCL"=Implementierung beteiligten Xilinx"=Mitarbeiter genießt
+die Behebung dieses Fehlers niedrige Priorität, weshalb in nächster Zeit nicht
+mit Besserung zu rechnen ist. Dieser Fehler ist der hauptsächliche Grund, warum
+das aus vielen Strukturen bestehende Alpaka nicht mit Xilinx'
+SYCL"=Implementierung verwendet werden kann.
+
+\subsubsection{OpenCL-Treiber}
+
+Xilinx' OpenCL"=Treiber, auf dem die SYCL"=Implementierung aufsetzt, erwies sich
+im Zusammenspiel mit SYCL ebenfalls als äußerst instabil. Aufgrund seiner
+internen Struktur ist er nicht in der Lage, einmal reservierten Speicher wieder
+freizugeben, wenn das reservierende Programm abstürzt. Der Speicher bleibt so
+lange unzugänglich, bis er neugestartet wird. Da dies nur mit
+Administrationsrechten funktioniert, ist dies de facto ein Ausschlusskriterium
+für den Einsatz in Rechenzentren oder Hochleistungs"=Clustern.
+
+Sofern der Treiber nicht das oben beschriebene Verhalten zeigt, kann ein
+fehlerhaftes Programm auch zum Komplettabsturz des Gesamtsystems führen. In
+diesem Fall ist das System per Fernzugriff nicht mehr erreichbar und muss
+vom Administrator (oder physisch per Reset"=Taste) neugestartet werden. Für den
+Einsatz in Rechenzentren und vergleichbaren Einrichtungen ist dieses
+Fehlerverhalten denkbar ungeeignet.
+
+\subsection{Zusammenfassung}
+ 
+Von den beschriebenen SYCL"=Implementierungen konnte nur der Intel"=Compiler im
+Zusammenhang mit Alpaka genutzt werden, was als Ziel"=Hardware nur Intel"=CPUs
+und -GPUs zulässt. Insbesondere FPGAs können zum aktuellen Zeitpunkt nicht vom
+Alpaka"=SYCL"=Backend verwendet werden.
+
+\section{Vergleich zwischen Alpaka und SYCL}
+
+Im direkten Vergleich erwies sich SYCL gegenüber Alpaka als die modernere,
+intuitivere und angenehmer zu benutzende Schnittstelle.
+
+Dazu tragen SYCLs Orientierung an modernen C++"=Standards (alle untersuchten
+Implementierungen unterstützen den C++17"=Standard, Intel und Xilinx den in
+Entwicklung befindlichen C++20"=Standard) sowie die stilistische Nähe zur
+C++"=Standardbibliothek bei. Dem gegenüber stehen Alpakas Stil"=Konventionen,
+die vom in der C++"=Standardbibliothek verwendeten \textit{snake case}
+(\texttt{eine\_kleine\_funktion()}) zugunsten des
+\textit{lower camel case} (\texttt{eineKleineFunktion()}) abweichen. Darüber
+hinaus finden sich in Alpaka stilistische Eigentümlichkeiten, die in den meisten
+C++"=Projekten unüblich sind, z.B. die Schreibweise als \texttt{char const *}
+anstelle des weiter verbreiteten \texttt{const char *}. Damit steht das
+C++"=Projekt Alpaka auch im Gegensatz zu den vom C++"=Standardisierungskomitee
+veröffentlichen Stilrichtlinien, den \textit{C++ Core Guidelines}.
+
+Die Modellierung von Aufgabengraphen bzw.\ der Abhängigkeiten zwischen Kerneln
+ist in SYCL deutlich einfacher als in Alpaka. Während dies in SYCL automatisch
+von der Laufzeitumgebung übernommen wird, muss der Programmierer in Alpaka
+selbst tätig werden -- der Aufwand ist in Alpaka also höher.
+
+Die meisten Konzepte sind in SYCL und Alpaka jedoch recht ähnlich, sodass
+hinsichtlich der Mächtigkeit keine großen Unterschiede bestehen. Darüber hinaus
+hat Alpaka gegenüber SYCL den faktischen Vorteil der Hardware"=Unterstützung.
+Während SYCL zur Zeit nur mit Intel"=CPUs und -GPUs zufriedenstellend
+funktioniert (und möglicherweise nicht getesteter Automotive"= und
+Embedded"=Hardware), ist Alpaka auf NVIDIA"= und AMD"=GPUs sowie über OpenMP auf
+allen CPUs lauffähig. Daher ist Alpaka bereits in einigen produktiven
+Anwendungen im Einsatz, während sich SYCLs Ökosystem bislang auf die diversen
+Implementierungen sowie einige von der Firma Codeplay entwickelte Bibliotheken
+für Mathematik und neuronale Netzwerke beschränkt. 
+
+\section{Messergebnisse}
+\label{ergebnisse:messergebnisse}
+
+\subsection{Methoden}
+\label{ergebnisse:messergebnisse:methoden}
+
+\subsubsection{Verwendete Hard- und Software}
+\label{ergebnisse:messergebnisse:methoden:stack}
+
+\subsubsection{Beispielalgorithmus}
+\label{ergebnisse:messergebnisse:methoden:algorithmus}
+
+\cite{benner2018}
