@@ -1,14 +1,17 @@
 \chapter{Implementierung des SYCL-Backends der Alpaka-Bibliothek}
 \label{implementierung}
 
-Mit Ausnahme der in den folgenden Abschnitten aufgeführten Besonderheiten
-(Abschnitt~\ref{implementierung:besonderheiten}) bzw.\ Probleme
-(Abschnitt~\ref{implementierung:probleme}) konnte die Implementierung des
-SYCL"=Backends für Alpaka recht einfach durchgeführt werden. Als Vorlage für
-dessen Aufbau dienten die bereits vorhandenen Backends, wobei hier besonders
-das CUDA"=Backend hervorzuheben ist. %Die Abbildung der in Alpaka vorhandenen
-%Datenstrukturen bzw.\ Funktionen auf SYCL"=Funktionalität ist in
-%Tabelle~\ref{implementierung:abbildung} dargestellt.
+Die Implementierung des Alpaka"=SYCL"=Backends gestaltete sich in weiten Teilen
+recht einfach. Stellenweise erforderte sie umfangreiche \textit{Workarounds},
+wenn Alpakas Konzepte nicht direkt auf SYCL"=Funktionalität abzubilden waren.
+An anderen Punkten konnte dagegen keine SYCL"=Implementierung durchgeführt
+werden, da Alpaka und SYCL zu widersprüchlich waren.
+
+Die folgenden Abschnitte widmen sich jeweils der Implementierung eines
+Alpaka"=Konzepts und der damit zusammenhängenden Datenstrukturen. Sofern es bei
+einem Konzept zu den beschriebenen Schwierigkeiten kam, sind diese dort
+ebenfalls aufgeführt.
+
 \iffalse
 \begin{table}[htb]
     \centering
@@ -70,9 +73,120 @@ das CUDA"=Backend hervorzuheben ist. %Die Abbildung der in Alpaka vorhandenen
 \end{table}
 \fi
 
-\section{Implementierung des Queue"=Konzepts}
+\section{\textit{Device}-Verwaltung}
+\label{implementierung:device}
 
-\section{Implementierung des Task"=Konzepts}
+Am Anfang jedes Alpaka"=Programms steht die Auswahl des Beschleunigers. In
+Alpaka findet diese zur Compile"=Zeit statt. Da der Beschleunigertyp bislang
+durch die Auswahl des Backends impliziert wurde (CUDA \textrightarrow{} GPU,
+HIP \textrightarrow{} GPU, OpenMP \textrightarrow{} CPU, \ldots).
+
+In SYCL wird diese Wahl erst zur Laufzeit durchgeführt. Der Programmierer gibt
+zwar einen \texttt{device\_selector} zur Compile"=Zeit an (oder wählt den
+in Kapitel~\ref{sycl} beschriebenen umfangreicheren Weg zur
+\textit{Device}"=Wahl), dieser wird jedoch erst von der SYCL"=Laufzeitumgebung
+verwendet. Der SYCL"=Compiler kennt also noch nicht das zukünftig verwendete
+\textit{Device}.
+
+Dies führt zu Schwierigkeiten mit Alpaka. Die Annahme, dass das konkrete
+\textit{Device} erst zur Laufzeit bekannt sein könnte, findet sich nicht in
+Alpaka. Das auf \textit{type traits} der Template"=Meta"=Programmierung
+basierende System zur Auswahl des Beschleunigers stößt hier an seine Grenzen.
+Wie im Kapitel~\ref{alpaka} beschrieben wurde, fungiert eine vom Benutzer
+gewählte \texttt{Acc}"=Datenstruktur als Template"=Parameter für viele
+abstrakte Alpaka"=Klassen, die dadurch einen konkreten Code"=Pfad wählen können.
+Die \texttt{Acc}"=Datenstrukur selbst wird jedoch nicht auf der
+\textit{Host}"=, sondern auf der \textit{Device}"=Seite instanziiert und kann
+deshalb keinen SYCL"=\texttt{device\_selector} kapseln.
+
+Nun ließe sich einwenden, dass mehrere spezialisierte
+\texttt{Acc}"=Datenstrukturen implementiert werden könnten, die jedes denkbare
+SYCL"=\textit{Device} abbilden. Sieht man von der daraus resultierenden
+Code"=Duplizierung an vielen Stellen im Backend ab, ist damit jedoch noch nicht
+die Frage der wechselseitigen Beziehungen zwischen \texttt{Acc} und anderen
+Backend"=Klassen gelöst. Ist z.B. nur ein Alpaka"=Task gegeben, lässt sich der
+zugehörige \texttt{Acc} über Alpakas \textit{type traits} ermitteln. Welche der
+spezialisierten \texttt{Acc}"=Klassen soll aber gewählt werden, wenn nur ein
+Task ohne weitere Informationen gegeben ist?
+
+Die Frage der \textit{Device}"=Wahl ließ sich im Rahmen der Arbeit nicht
+befriedigend lösen. Darüber hinaus ist dies kein SYCL"=spezifisches Problem,
+da neuere OpenMP"=Standards ebenfalls mehrere Beschleunigertypen kennen. Hier
+ist eine Alpaka"=weite Lösung erforderlich. Der SYCL"=Backend"=Prototyp
+erfordert deshalb eine manuelle Auswahl des gewünschten
+\textit{device\_selectors} innerhalb der \texttt{Pltf}"=Schicht.
+
+Wünscht der Nutzer das SYCL"=Backend, steht ihm die Klasse \texttt{AccSycl} zur
+Verfügung. Diese dient als Parameter für die Klasse \texttt{PltfSycl}, welche
+zur Laufzeit die \textit{Device}"=Auswahl trifft. \texttt{PltfSycl} erzeugt
+dann ein Objekt der Klasse \texttt{DevSycl}, welches das von der
+SYCL"=Laufzeitumgebung erzeugte SYCL"=\texttt{device} kapselt und Alpakas
+\textit{Device}"=Verwaltungsfunktionen auf die äquivalenten SYCL"=Funktionen
+abbildet.
+
+\section{Queues und Events}
+\label{implementierung:queue}
+
+Alpaka"=Queues bilden die Schnittstelle zwischen \textit{Host} und
+\textit{Device}. Sie nehmen vom \textit{Host} Tasks entgegen und bringen diese
+in der Reihenfolge ihres Eingehens zur Ausführung.
+
+Alpaka unterscheidet den \textit{Host} blockierende und nicht-blockierende
+Queues. Blockierende Queues unterbrechen die Ausführung auf dem \textit{Host} so
+lange, bis alle eingereihten Tasks abgearbeitet sind. Die nicht-blockierenden
+Queues führen diese Tasks asynchron zum \textit{Host} aus.
+
+SYCL kennt ausschließlich nicht-blockierende Queues. Da auf diese aber manuell
+gewartet werden kann, gestaltete sich die Implementierung der Alpaka"=Queues
+sehr einfach. Die Klassen \texttt{QueueSyclBlocking} und
+\texttt{QueueSyclNonBlocking} stellen Alpakas Queue"=Funktionalität zur
+Verfügung. Lediglich die Implementierung des Event"=Systems bereitete größere
+Schwierigkeiten.
+
+\subsection{Event"=Inkompatibilitäten}
+
+Alpaka übernimmt viele CUDA"=Konzepte, darunter auch das Event"=System.
+Alpaka"=Events werden wie Tasks in eine Queue eingereiht. Beendet die Queue
+einen Task, wird das dahinterliegende Event markiert. Dadurch kann der Nutzer
+das Ende eines Kernels abwarten und z.B. einen Task in einer weiteren Queue
+starten, was der Organisation der Abhängigkeiten zwischen Kerneln sehr dienlich
+ist.
+
+Dieses Prinzip ist in SYCL so nicht vorhanden. Eine SYCL"=Queue führt
+grundsätzlich alle Tasks asynchron zueinander aus. Sofern Abhängigkeiten
+bestehen, werden diese von der Queue erkannt und entsprechend sortiert. Es ist
+also in SYCL nicht notwendig, die Abhängigkeiten zwischen Kerneln selbst zu
+verwalten.
+
+Dadurch existiert in SYCL auch kein vergleichbares Event"=System. Zwar erhält
+der Programmierer beim Einreihen einer \textit{command group} ein SYCL"=Event
+zurück, auf das der Host (und nur der Host) warten kann. Dieses dient aber
+vorrangig dem Profiling der Anwendung. Es ist insbesondere für die manuelle
+Abhängigkeitsverwaltung ungeeignet, da es zwar das Ende eines Kernels anzeigen
+kann, jedoch nicht die Verfügbarkeit der von diesem Kernel verwendeten Puffer.
+Über die Puffer"=Verfügbarkeit wird in SYCL die Abhängigkeitsverwaltung
+durchgeführt.
+
+Für die Implementierung der Alpaka"=Events stellt dies ein nicht zu lösendes
+Problem dar. So ist es beispielsweise in SYCL völlig unmöglich (und unnötig),
+eine Queue über Events auf eine weitere Queue warten zu lassen -- genau dieser
+Mechanismus ist in Alpakas Interface aber vorgesehen. Analog verhält es sich bei
+Alpaka"=\textit{Devices}, die auf Events warten können, während
+SYCL"=\textit{Devices} dazu nicht in der Lage sind.
+
+Im Backend"=Prototypen führt der Aufruf der entsprechenden Funktionen dazu, dass
+nicht nur die jeweilige Queue auf das Event wartet, sondern zusätzlich auch der
+Host. Dadurch wird die eigentliche Intention der Funktionen -- also das in Bezug
+auf den \textit{Host} asynchrone Warten -- zwar nicht erfüllt, aber es findet
+immerhin eine Synchronisation mit anderen Queues statt. Es besteht dabei aber
+weiterhin das Problem, dass es sich dabei nicht um eine echte
+Abhängigkeitsverwaltung im Sinne der SYCL"=Spezifikation handelt und deswegen zu
+Problemen führen kann.
+
+In der Klasse \texttt{EventSycl} wurde Alpakas Event"=System soweit wie möglich
+implementiert.
+
+\section{Tasks}
 \label{implementierung:task}
 
 Wie im vorherigen Kapitel dargestellt wurde, werden \textit{device}"=seitige
@@ -470,10 +584,6 @@ stellenweise kreative Lösungen erforderlich, um Alpakas Funktionalität möglic
 gut abbilden zu können. Diese werden in den folgenden Abschnitten näher
 beschrieben.
 
-\subsection{Queue- und Event-Verwaltung}
-\label{implementierung:besonderheiten:queue}
-
-
 \subsection{Dynamischer geteilter Speicher}
 \label{implementierung:besonderheiten:sharedmem}
 
@@ -520,33 +630,7 @@ auto acc = x_buf.get_access</* ... */>(cgh);
 Daher konnte die Implementierung der obigen Makros für das SYCL"=Backend nicht
 durchgeführt werden.
 
-\subsection{Device-Verwaltung}\label{implementierung:probleme:device}
-
 \subsection{Speicherverwaltung}\label{implementierung:probleme:speicher}
-
-\subsection{Event-System}\label{implementierung:probleme:events}
-
-Alpaka übernimmt viele Konzepte des CUDA-API, darunter auch das Event-System.
-Durch CUDA-\textit{events} wird dem Programmierer eine weitere
-Synchronisationsmöglichkeit eröffnet. Diese können in einem \textit{stream} vor
-oder nach asynchronen Operationen -- wie etwa Kopiervorgängen oder dem Starten
-eines Kernels -- einsortiert werden. Der Programmierer kann dann später oder
-parallel in einem anderen \textit{stream} abfragen, ob das jeweilige
-\textit{event} bereits erreicht wurde und gegebenenfalls darauf warten. Darüber
-hinaus ermöglichen \textit{events} ein simples Profiling, da z.B. die Zeitspanne
-zwischen verschiedenen \textit{events} gemessen werden kann.
-
-SYCL kennt ebenfalls ein \textit{event}-Konzept, das sich jedoch von CUDAs bzw.
-Alpakas System unterscheidet. Auch SYCL-\textit{events} lassen sich für
-einfaches Profiling nutzen, ermöglichen dem Programmierer jedoch nicht, eine
-weitere SYCL-\textit{queue} (dem Gegenstück zu CUDA-\textit{streams}) auf ein
-bestimmtes \textit{event} zu warten.
-
-Dies ist für die Implementierung der Alpaka-\textit{events} ein Problem, da hier
-CUDAs Verhalten simuliert wird. Zur Zeit ist der Befehl
-\texttt{alpaka::wait::waiterWaitFor()} für die \textit{event}-basierte
-Synchronisation in Alpaka nicht implementiert, wenn der \textit{waiter} eine
-Alpaka-\textit{queue} ist.
 
 \subsection{Statischer geteilter Speicher}
 \label{implementierung:probleme:shared}
