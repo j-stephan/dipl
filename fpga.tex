@@ -637,16 +637,17 @@ Beschreibung jeder \textit{Komponente} erfolgt dann auf der
 Register"=Transfer"=Ebene, das heißt, dass zwischen speichernden (Register) und
 kombinatorischen (Transferfunktionen) Aspekten unterschieden wird. Aus der
 Digitaltechnik stammt eine Darstellungsweise als \glqq endlicher Automat\grqq\
-(siehe Abbildung~\ref{fpga:hdl:moore}): die Eingabe-Transferfunktion berechnet
+(siehe Abbildung~\ref{fpga:hdl:moore}): die Eingabe-Transferfunktion $f$ berechnet
 aus der Eingangsvariablen $X$ und der Zustandsvariablen $Z$ des Registers den
 neuen, im nächsten Takt zu übernehmenden Registerwert $Z+$. Sie ist damit eine
-boolesche Funktion:
+Boolesche Funktion:
+% Boolesche Funktion definieren
 %
 \[
     Z+ = f(X, Z)
 \]
 %
-Die Ausgabe-Transferfunktion berechnet die Ausgabevariable $Y$ aus $Z$ und lässt
+Die Ausgabe-Transferfunktion $g$ berechnet die Ausgabevariable $Y$ aus $Z$ und lässt
 sich ebenfalls als boolesche Funktion darstellen:
 %
 \[
@@ -915,7 +916,7 @@ sich so auch auf die reale Hardware abbilden lässt. \cite[vgl.][25]{kesel2013}
 Aus den im vorherigen Abschnitt gezeigten Beispielen wird schnell ersichtlich,
 dass der Entwurf komplexerer Schaltungen mit einem hohen Konzeptions- und
 Arbeitsaufwand verbunden ist und nicht nur gute Kenntnisse des  abzubildenden
-Algorithmus erfordert, sondern darüber hinaus auch Wissen über di Digitaltechnik
+Algorithmus erfordert, sondern darüber hinaus auch Wissen über die Digitaltechnik
 erfordert. Mit der High"=Level"=Synthese (HLS) gibt es einen Ansatz, die
 konkrete Schaltung durch Abstraktion zu verbergen und sich dem Programmiermodell
 anderer Hardware"=Typen (\gls{cpu}s, \gls{gpu}s) anzunähern. Bei der HLS findet
@@ -983,8 +984,9 @@ alle Operationen dieselbe \gls{alu} teilen.
 Bei der HLS kann diese Operation auf Hardware abgebildet werden, die
 ausschließlich für diese Operation verwendet wird. Wenn \texttt{a}, \texttt{b}
 und \texttt{z} \SI{32}{\bit} groß sind, wird dieser Datentyp durch 32 \gls{lut}
-implementiert\footnote{Ein LUT entspricht der Berechnung eines Bits.}. Im
-Gegensatz zu Prozessoren werden bei einer \gls{fpga}"=Implementierung für jede
+implementiert\footnote{Ein LUT entspricht der Berechnung eines Bits.}.
+% unsauber, LUT = look-up table, Boolesche Eingabe-Ausgabe-Abbildungsmatrix (oder Wahrheitstabelle)
+Im Gegensatz zu Prozessoren werden bei einer \gls{fpga}"=Implementierung für jede
 Operation innerhalb des Algorithmus voneinander unabhängige \gls{lut}"=Mengen
 instanziiert.
 \cite[vgl.][19]{hlsintro2019}
@@ -995,7 +997,7 @@ parallel ausführen. Die während der HLS vorgenommene Analyse der Daten- und
 Kontrollflussabhängigkeiten wird im \gls{fpga}"=Kontext als Scheduling
 bezeichnet. \cite[vgl.][19]{hlsintro2019}
 
-\subsubsection{Pipelining}
+\subsubsection{Pipelining-Prinzip}
 
 Das von Prozessoren bekannte Prinzip des \textit{Pipelinings} findet bei
 \gls{fpga}s ebenfalls Anwendung. Dabei werden Datenabhängigkeiten so aufgeteilt,
@@ -1108,7 +1110,9 @@ Schaltung mit Pipelining.
 \end{figure}
 \noindent
 Die grauen Kästen der unteren Schaltung entsprechen Registern, die in realer
-Hardware durch Flipflops realisiert werden. Jeder Kasten kann dabei als ein
+Hardware durch Flip-flops realisiert werden.
+% Def Flip-flop?
+Jeder Kasten kann dabei als ein
 zusätzlicher Taktzyklus aufgefasst werden. Die Berechnung eines einzelnen
 Ergebnisses benötigt dadurch drei zusätzliche Taktzyklen. Durch die zusätzlichen
 Register lassen sich die einzelnen Schritte der Berechnung jedoch in unabhängige
@@ -1195,7 +1199,7 @@ des Verfahrens, wenn kein Pipelining gewünscht wird. Bei Xilinx' OpenCL"=Umgebu
 verhält es sich dagegen genau umgekehrt, da hier Pipelining explizit
 angeschaltet werden muss.
 
-\subsubsection{Producer-Consumer}
+\subsubsection{Producer-Consumer-Prinzip}
 
 Neben dem Pipelining gibt es auf \gls{fpga}s eine weitere Möglichkeit,
 Parallelität auszudrücken. Diese ähnelt dem Pipelining-Prinzip, arbeitet jedoch
