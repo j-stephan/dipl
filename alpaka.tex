@@ -14,6 +14,7 @@ ursprünglich von Benjamin Worpitz im Rahmen seiner Masterarbeit entwickelt
 die Gruppe \textit{Computergestützte Strahlenphysik} des
 \textit{Instituts für Strahlenphysik} am
 \textit{Helmholtz"=Zentrum Dresden"=Rossendorf} fortgeführt.
+% die Gruppe hat auch die Masterarbeit betreut
 
 Die Alpaka"=Bibliothek definiert eine abstrakte C++"=Schnittstelle, mit deren
 Hilfe parallele Programme geschrieben werden können. Im Hintergrund wird Alpaka
@@ -25,6 +26,7 @@ konkrete Implementierung vereinigt. Damit unterscheidet sich die Bibliothek von
 ähnlichen Ansätzen wie OpenCL oder SYCL, die ebenfalls eine abstrakte
 Schnittstelle definieren, die Implementierung jedoch den Hardware- und
 Software"=Herstellern überlassen.
+% Alpaka-Interface einordnen, also inwieweit an CUDA angelehnt
 
 \begin{figure}
     \centering
@@ -75,6 +77,7 @@ sich prinzipiell mit jedem modernen C++"=Compiler kompilieren lässt. Dieses
 wird in der Alpaka"=Terminologie \texttt{CpuSerial} genannt und führt jeden
 Befehl sequentiell aus. Während der Kernel"=Ausführung existiert also keinerlei
 Parallelität.
+% konkretisieren, denn Compiler kann dennoch (Kernel-Ausführung) vektorisieren, und dann ist da auch noch die Bit-Level-Parallelität, Instruktions-Level-Parallelität und Pipeline-Parallelität
 
 \subsection{AXPY und Alpaka}\label{alpaka:ueberblick:axpy}
 
@@ -280,6 +283,11 @@ Um die parallelen Eigenschaften der Ziel"=Hardware nutzen zu können, erfordert
 Alpaka eine Information, wie das zu bearbeitende Problem auf die
 Hardware"=Ressourcen aufgeteilt werden soll. Dazu kann der Programmierer eine
 in Alpaka vorhandene Funktion nutzen, die eine gute Aufteilung schätzen kann,
+% statt "gut" würde ich eher "valide" schreiben, denn bis auf das Zurechtbiegen ist die Aufteilung ist immer gleich, d.h. geschätzt wird da nicht wirklich:
+%% // from WorkDivHelpers.hpp
+%% // Initialize the block thread extent with the maximum possible.
+%% auto blockThreadExtent(accDevProps.m_blockThreadExtentMax);
+% Rest ist wie bei monolithischen Kernel (Gridlänge hängt von Datenlänge und Daten-pro-Thread ab)
 oder selbst Definitionen für die Größe des \textit{Grids}, die Zahl der
 \textit{Threads} sowie der \textit{Elements} pro \textit{Thread} angeben. Die
 Aufteilung in \textit{Grid}, \textit{Threads} und \textit{Elements} ist ein
@@ -304,6 +312,7 @@ einem überladenen \texttt{()}"=Operator -- definiert. Der \texttt{()}"=Operator
 wird mit einem speziellen Funktionsattribut versehen (\texttt{ALPAKA\_FN\_ACC}),
 der im Hintergrund dafür sorgt, dass diese Funktion für das \textit{Device} und
 nicht den \textit{Host} kompiliert wird.
+% device auf jeden Fall, aber Host ist auch dabei, wenn accelerator nicht CUDA-ONLY|HIP-ONLY ist
 
 Als Parameter nimmt der Kernel zunächst die oben definierte
 \texttt{devAcc}"=Instanz entgegen. Dies ist nötig, um von dieser Struktur
@@ -495,6 +504,7 @@ verwendete AXPY"=Methode: sie führt dieselbe Operation für alle Elemente der
 Vektoren $\vec{x}$ und $\vec{y}$ durch. Die im Folgenden erläuterten Konzepte
 wurden stark durch die in CUDA und OpenCL vorhandenen Abstraktionen beeinflusst
 \cite[vgl.][17]{worpitz2015}.
+% Bezug Alpaka und Redundant Hierarchical Parallelism immer noch unklar, siehe Level der Speicher- und Parallelisierungshierarchien in Alpaka (Arbeit von Worpitz Abschnitt 2.2.5 + Abstract)
 
 \subsubsection{Grid und Threads}
 
@@ -507,7 +517,7 @@ lediglich eine Befehlssequenz, die den gewünschten Algorithmus auf ein einzelne
 Datenelement anwendet \cite[vgl.][17]{worpitz2015}. Konzeptionell entspricht
 ein \textit{Thread} also einem \textit{work"=item} aus SYCL und OpenCL. Die
 Menge aller \textit{Threads} bildet ein $n$"=dimensionales Gitter
-(engl. \textit{Grid}). Dieses ist damit mit der aus SYCL und OpenCL bekannten
+(engl. \textit{Grid}). Dieses ist mit der aus SYCL und OpenCL bekannten
 \textit{NDRange} vergleichbar.
 
 Da manche Algorithmen die Kommunikation zwischen \textit{Threads} erfordern,
@@ -648,12 +658,13 @@ dargestellte Hardware mit tausenden untereinander verbundenen Kernen kommt
 in der Realität selten vor. Es ist daher sinnvoll, eine Einschränkung der
 Kommunikations"= und Synchronisationsfähigkeiten der \textit{Threads} auf ein
 von handelsüblicher Hardware beherrschbares Niveau vorzunehmen.
+% + transparent scalability
 
 Zu diesem Zweck verwendet Alpaka eine weitere Ebene innerhalb der
 Abstraktionshierarchie, die \textit{Blocks}. Diese sind zwischen der
 \textit{Thread}"= und \textit{Grid}"=Ebene angesiedelt, wobei ein \textit{Block}
 eine Teilmenge der \textit{Threads} vereinigt. Das \textit{Grid} wird dabei
-gleichmäßig auf die \textit{Blocks} aufgeteilt, sodass alle \textit{Block}
+gleichmäßig auf die \textit{Blocks} aufgeteilt, sodass alle \textit{Block}s
 gleich groß sind. Konzeptionell entspricht ein \textit{Block} damit einer
 SYCL"=\textit{work"=group}. Die schnelle Kommunikation und Synchronisation der
 \textit{Threads} sind ausschließlich über einen \textit{block}"=internen kleinen
@@ -849,6 +860,7 @@ Chipfläche verkleinert. Die
 Abbildung~\ref{alpaka:konzepte:abstraktion:warps:warphw} zeigt einen
 theoretischen Prozessor, der in der Lage ist, das Abstraktionskonzept aus
 \textit{Grid}, \textit{Blocks}, \textit{Warps} und \textit{Threads} auszuführen.
+% +SIMD Paradigma
 
 Die konkrete \textit{Warp}"=Größe unterscheidet sich zwischen verschiedenen
 Plattformen und Herstellern. Aufgrund ihrer Hardware"=Nähe steht diese
@@ -1085,6 +1097,7 @@ beispielsweise sinnvoll sein, auf CPU"=Beschleunigern mehrere Daten pro
 \textit{Thread} innerhalb kurzer Schleifen zu verarbeiten. Dadurch können gute
 Compiler selbstständig von Vektorregistern der CPU Gebrauch machen, alternativ
 kann der Programmierer dies auch explizit selbst tun.
+% Aber nicht mit Alpaka, und nicht portabel
 
 Die \textit{Element}"=Ebene ist die unterste Ebene der
 Alpaka"=Abstraktionshierarchie. Dadurch ergibt sich die Gesamthierarchie, wie
@@ -1120,7 +1133,7 @@ dargestellt ist.
 
 Im Gegensatz zu SYCL verfügt Alpaka nicht über ein System, um automatisch
 Abhängigkeiten zwischen Kerneln zu verwalten. Stattdessen ist es Aufgabe des
-Programmierers, Alpaka"=\textit{Events}zur Synchronisierung zwischen Kerneln zu
+Programmierers, Alpaka"=\textit{Events} zur Synchronisierung zwischen Kerneln zu
 verwenden. Dies ist nötig, da Operationen (Kopien, Kernel, \ldots) in derselben
 \textit{Queue} zwar sequentiell in der Reihenfolge ihrer Einreihung
 abgearbeitet werden, in verschiedenen \textit{Queues} dagegen zueinander
@@ -1155,6 +1168,7 @@ alpaka::queue::enqueue(queue1, /* D */);
     \caption{Einfacher Alpaka"=Aufgabengraph}
     \label{alpaka:konzepte:abhaengigkeiten:src}
 \end{code}
+% Verweis auf A - B|C - D Graph-Abbildung
 
 \textit{Events} können zwischen \textit{Queue}"=Operationen eingefügt werden.
 Wurde eine Operation vollständig durchgeführt, so wird das nachfolgende
@@ -1183,6 +1197,9 @@ Verfügung. So lässt sich beispielsweise der CUDA"=Profiler \texttt{nvprof} fü
 das Profiling eines mit Alpaka auf NVIDIA"=Hardware portierten Programms
 verwenden, was mit den für NVIDIA"=GPUs existierenden SYCL"=Implementierungen
 nicht möglich ist.
+% Warum? (wegen OpenCL?)
+% Ggf. Hinweis, dass auch code-seitige Annotationen für Profiler (noch) nicht abstrahiert sind
+% Derzeit müssen User ifdefs schreiben, um nvtx etc anzusprechen
 
 \subsection{Zusammenfassung}
 
@@ -1273,3 +1290,10 @@ wie die einzelnen Bestandteile mit SYCL implementiert wurden.
     \caption{Struktureller Aufbau der Alpaka"=Bibliothek\cite[nach][40]{worpitz2015}}
     \label{alpaka:konzepte:zusammenfassung:struktur}
 \end{figure}
+
+
+% Da ein Backend für Alpaka implementiert wird, wäre noch zusätzliches Material nötig,
+% welches das Implementierungskapitel vorbereitet.
+% Dann wird auch deutlicher, was Alpaka an Interfaces vorgibt, gegen die implementiert werden muss,
+% zB. TaskKernel*** Interface
+% (nur die für Kapitel 5 relevanten, nicht das komplette Set)

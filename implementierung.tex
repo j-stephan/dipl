@@ -85,6 +85,7 @@ Am Anfang jedes Alpaka"=Programms steht die Auswahl des Beschleunigers. In
 Alpaka findet diese zur Compile"=Zeit statt. Da der Beschleunigertyp bislang
 durch die Auswahl des Backends impliziert wurde (CUDA \textrightarrow{} GPU,
 HIP \textrightarrow{} GPU, OpenMP \textrightarrow{} CPU, \ldots).
+% Letzter Satz unvollständig
 
 In SYCL wird diese Wahl erst zur Laufzeit durchgeführt. Der Programmierer gibt
 zwar einen \texttt{device\_selector} zur Compile"=Zeit an (oder wählt den
@@ -128,6 +129,9 @@ dann ein Objekt der Klasse \texttt{DevSycl}, welches das von der
 SYCL"=Laufzeitumgebung erzeugte SYCL"=\texttt{device} kapselt und Alpakas
 \textit{Device}"=Verwaltungsfunktionen auf die äquivalenten SYCL"=Funktionen
 abbildet.
+% Was wären denn grob für Designänderungen in Alpaka nötig, um die Frage der runtime-Plattform- und Device-Auswahl zu lösen?
+% Es gibt ja endlich viele generische Devices (CPU, GPU, FPGA, Accelerator)
+% Würde das denn für compile-Zeit ausreichen? Die Herstellerspezialisierung kann ja dann zur Runtime/treiberseitig erfolgen.
 
 \subsection{Fehlende \textit{Device}"=Informationen}
 
@@ -150,9 +154,12 @@ Rolle als seine CUDA"= und Alpaka"=Äquivalente. Ein Äquivalent zu
 \texttt{dev::reset()} existiert dadurch auch nicht, und die Dokumentation zum
 Destruktor der \texttt{device}"=Klasse enthält keine Angaben darüber, wie sich
 der Aufruf auf den Zustand des tatsächlichen \textit{Devices} auswirkt.
+% Quellenangabe
 
 Eine befriedigende Implementierung der \texttt{dev::reset()}"=Funktion konnte
 daher nicht gefunden werden.
+% Was für Konsequenzen hat das?
+% Stichwort flushing und profiling
 
 \section{Queues und Events}
 \label{implementierung:queue}
@@ -215,6 +222,8 @@ Problemen führen kann.
 
 In der Klasse \texttt{EventSycl} wurde Alpakas Event"=System soweit wie möglich
 implementiert.
+% letzter Satz etwas verwirrend, was fehlt denn noch, was oben noch nicht beschrieben ist?
+% Ansonsten weglassen
 
 \section{Tasks}
 \label{implementierung:task}
@@ -232,6 +241,7 @@ Implementierung dieses fundamentalen Alpaka"=Konzepts beschrieben.
 Ein Alpaka"=Kernel"=Task verknüpft die eigentliche Kernel"=Funktion mit
 konkreten Daten. Damit ähnelt ein Kernel"=Task stark SYCLs
 \textit{command groups}, was die Umsetzung dieses Konzepts stark vereinfacht.
+% ist mit Kernel-Task von nun an immer Alpaka-Kernel-Task gemeint?
 
 Die Struktur \texttt{TaskKernelSycl} enthält die SYCL"=Implementierung der
 Kernel"=Tasks. Diese ist aus mehreren Teilen aufgebaut (siehe
@@ -295,6 +305,10 @@ Parametern aufruft. SYCL stellt drei verschiedene Möglichkeiten für den
 Kernel"=Start zur Verfügung: \texttt{single\_task}, \texttt{parallel\_for} und
 \texttt{parallel\_for\_work\_group}.
 
+% nützlich wäre ein Abschnitt in Grundlagen zu den Parallelitätsebenen, auf diese
+% sich später bezogen werden können. "Keinerlei Parallelität" ist dann entsprechend zu konkretisieren.
+% (u.a. gibt es bit-/word-/instruction-/thread-/program-level parallelisms)
+% (ggf. auch für [Alpaka] memory level (global, static|dynamic shared, etc))
 \texttt{single\_task} stellt von sich aus keinerlei Parallelität zur Verfügung
 und ist in seiner Funktion mit einem einzelnen CPU"=Thread vergleichbar, der auf
 genau einem CPU"=Kern ausgeführt wird. In Kombination mit den in
@@ -325,13 +339,14 @@ Kernel"=Start"=Funktion gewählt wurde.
 
 Für die Nutzung der \texttt{parallel\_for}"=Funktion muss die Gesamtanzahl der
 \textit{work"=items} sowie die Anzahl der \textit{work"=items} pro
-\textit{work"=group} angegeben werden. Da Alpaka diese Informationen in etwas
-anderem Format (Anzahl der \textit{Blocks} und Anzahl der \textit{Threads} pro
-\textit{Block}) sowie in eigenen Datenstrukturen enthält, ist eine Konversion
+\textit{work"=group} angegeben werden.
+Da Alpaka diese Informationen in eigenen Datenstrukturen mit einem
+anderen Format abbildet (Anzahl der \textit{Blocks} und Anzahl der \textit{Threads} pro
+\textit{Block}), ist eine Konvertierung
 erforderlich. Die Funktion \texttt{get\_global\_size()} berechnet aus der Zahl
 der \textit{Blocks} und der \textit{Threads} pro \textit{Block} die Gesamtanzahl
 der \textit{Threads} (was der Gesamtanzahl der SYCL"=\textit{work"=items}
-entspricht) und führt die Konversion in ein SYCL"=kompatibles Format durch. Die
+entspricht) und führt die Konvertierung in ein SYCL"=kompatibles Format durch. Die
 Funktion \texttt{get\_local\_size()} nimmt die Zahl der \textit{Threads} und
 konvertiert diese in eine SYCL"=Datenstruktur, die die Zahl der
 \textit{work"=items} enthält.
@@ -398,8 +413,8 @@ extrahiert und an den Kernel übergeben.
 
 Diese Vorgehensweise war mit allen bisher in Alpaka vorhandenen Backends
 unproblematisch, wenngleich etwas altmodisch. SYCL verlangt als Parameter für
-die Kernel"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen,
-eine Übergabe von Zeigern an den Kernel wird in der Spezifikation explizit
+die Kernel"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen.
+Eine Übergabe von Zeigern an den Kernel wird in der Spezifikation explizit
 verboten \cite[vgl.][192]{sycl2019}. Zwar gibt die Spezifikation an, dass sich
 die \texttt{accessor}"=Typen implizit in reine Zeiger umwandeln lassen
 \cite[vgl.][27]{sycl2019}, was jedoch von keiner der verfügbaren
@@ -408,6 +423,8 @@ Umstand an das SYCL"=Spezifikationskomitee gemeldet und infolgedessen als Fehler
 in der Spezifikation anerkannt, der in zukünftigen Versionen behoben sein wird
 (siehe die Diskussion in
 Anhang~\ref{anhang:diskussion:syclspec:implicitaccessor}).}.
+% was ist der Fehler in der Spezifikation, wenn
+% doch nur die Implementierungen für die Zeiger fehlten
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -446,6 +463,8 @@ constexpr auto bind_buffers(cl::sycl::handler& cgh,
              Template"=Meta"=Programmierung}
     \label{implementierung:task:kernel:zeiger:wrappertrans}
 \end{code}
+% ist C++14 (return type deduction), für Prototyp und SYCL Compiler (C++17) ok (sonst ist C++11 erforderlich)
+% daher: Code nur für SYCL Compiler sichtbar?
 
 Innerhalb eines Kernels lassen sich die \texttt{accessor}"=Typen in spezielle
 SYCL"=eigene Zeigertypen (\texttt{multi\_ptr}) umwandeln, die wiederum in
@@ -596,7 +615,7 @@ sowie \textit{statisch}, das heißt innerhalb des Kernel"=Codes und mit einer zu
 Compile"=Zeit feststehenden Größe. Alpaka stellt für beide Varianten eine
 Schnittstelle bereit.
 
-\subsection{Dynamischer geteilter Speicher}
+\subsection{Dynamischer, geteilter Speicher}
 
 Das \textit{type trait} \texttt{kernel::traits::BlockSharedMemDynSizeBytes}
 muss für den dynamischen Fall vom Programmierer auf der Host"=Seite für seine
@@ -610,7 +629,7 @@ SYCL"=\textit{accessor} für den lokalen Speicher (dem SYCL"=Äquivalent zum
 geteilten Speicher) angelegt werden, auf den die genannte Funktion zugreifen und
 den zugehörigen Zeiger zurückgeben kann.
 
-\subsection{Statischer geteilter Speicher}
+\subsection{Statischer, geteilter Speicher}
 
 Für den statischen Fall existiert die Funktion
 \texttt{block::shared::st::allocVar()}, die innerhalb des Kernels aufgerufen
@@ -641,7 +660,7 @@ Die Makros \texttt{ALPAKA\_STATIC\_ACC\_MEM\_GLOBAL} und
 \texttt{ALPAKA\_STATIC\_ACC\_MEM\_CONSTANT} werden von Alpaka zur Verfügung
 gestellt, um globale Variablen direkt im globalen bzw. konstanten
 \textit{Device}"=Speicher anlegen zu können. Diese dienen vornehmlich der
-Abstraktion der CUDA"=Schlüsselwörter texttt{\_\_device\_\_} und
+Abstraktion der CUDA"=Schlüsselwörter \texttt{\_\_device\_\_} und
 \texttt{\_\_constant\_\_}, die dieselbe Funktion erfüllen. Diese Funktionalität
 wurde für die restlichen Alpaka"=Backends bisher nicht benötigt. Im Zusammenhang
 mit SYCL kommt es hier jedoch zu Problemen.
@@ -671,11 +690,12 @@ auto acc = x_buf.get_access</* ... */>(cgh);
 Daher konnte die Implementierung der obigen Makros für das SYCL"=Backend nicht
 durchgeführt werden.
 
-\section{Mathematik-Funktionen}
+\section{Mathematikfunktionen}
 
 Bei der Implementierung der von Alpaka vorgegebenen mathematischen Funktionen
 kam es zu keinen Schwierigkeiten, da SYCL für alle Alpaka"=Funktionen ein
 Äquivalent zur Verfügung stellt.
+% auch rsqrt und sincos? Wie sieht es mit float/double precision-spezifischen Überladungen aus?
 
 \section{FPGA-Erweiterungen}\label{implementierung:probleme:fpga}
 
@@ -689,13 +709,14 @@ nutzbar gemacht werden können. Für den SYCL"=Backend"=Prototypen wurde auf
 Erweiterungen verzichtet, um die Hardware"=Unabhängigkeit nicht zu gefährden.
 Dies ist jedoch kein dauerhaft wünschenswerter Zustand, da die Erweiterungen
 ganz erhebliche Performanzgewinne zur Folge haben können. Denkbar ist ein
-ähnliches Erweiterungs"=Konzept für Alpaka, in welchem dem Nutzer abstrahierte
+ähnliches Erweiterungskonzept für Alpaka, in welchem dem Nutzer abstrahierte
 Formen der SYCL"=Erweiterungen zur Verfügung gestellt werden, die er selbst in
 seinem Kernel nutzen kann. Diese bedarf jedoch einer vorherigen Diskussion
 innerhalb der Alpaka"=Entwicklergemeinde.
 
 \section{Zufallszahlen und Zeit}
 
+%ist, ist
 Da SYCL erst wenige Jahre alt ist, ist das zugehörige Ökosystem noch nicht
 sonderlich stark ausgeprägt. So fehlt auch Funktionalität, die auf Seiten des
 \textit{Devices} die Generierung von Zufallszahlen oder Zeitmessung erlauben.
@@ -709,6 +730,7 @@ Der strukturelle Aufbau des SYCL"=Backends bzw.\ die in ihm abgebildeten
 Alpaka"=Konzepte sind in der
 Abbildung~\ref{implementierung:zusammenfassung:struktur} zusammengefasst.
 Insgesamt umfasst das Backend \num{6936} Zeilen C++"=Quelltext.
+% inklusive Kommentare? :P
 
 \begin{figure}
     \centering
@@ -827,3 +849,9 @@ Insgesamt umfasst das Backend \num{6936} Zeilen C++"=Quelltext.
     \caption{Struktureller Aufbau des SYCL"=Alpaka"=Backends}
     \label{implementierung:zusammenfassung:struktur}
 \end{figure}
+% Grafik ggf. geeignet, um Status der Implementierungen hervorzuheben
+% was beinhaltet überwiegend workarounds,
+% was beinhaltet plattformspezifische Inkompatibilitäten,
+% welche Implementierung bricht das Alpaka-Interface (bspw. EventSycl),
+% was ist nicht implementiert (zB random numbers; Zeit; statische global|constant Variablen),
+% Ansonsten eigene Übersicht dazu wünschenswert

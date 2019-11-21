@@ -10,9 +10,11 @@ integrierter Chips, die beide Funktionalitäten performant abdecken können
 jeher im Einsatz, seien es CPUs mit besonders vielen Kernen, von den GPUs
 abstammende Beschleuniger ohne grafische Ausgabe wie NVIDIAs Tesla"=Reihe, oder
 Hybride wie Intels kurzlebige Xeon"=Phi"=Produkte.
+% Begriff des Beschleunigers verdient Erklärung
+% Kapitel 2. heißt FPGAs als Beschleuniger, daher spätestens dort erörtern, ggf. in Hinblick auf Einsatzfelder und Beschleunigerhierarchien
 
 Allen gemeinsam ist die Idee der Beschleunigung eines Algorithmus durch dessen
-Parallelisierung, also die parallele Ausführung einzelner Schleifeniterationen
+Parallelisierung, also in der Regel die parallele Ausführung einzelner Schleifeniterationen
 auf den in den Beschleunigern vorhandenen Kernen, Multiprozessoren usw. Wie eine
 CPU sind die Beschleuniger allerdings darauf ausgelegt, von verschiedenen
 Algorithmen genutzt werden zu können, und entsprechend allgemein aufgebaut. Der
@@ -27,6 +29,7 @@ später geänderte Anforderungen -- nicht mehr zu genügen, was wiederum eine
 aufwendige Neuentwicklung und -produktion nötig macht. Im schlimmsten Fall ist
 der zu tauschende Chip für einen Menschen physisch nicht mehr zu erreichen, wie
 etwa in der Raumfahrt.
+% ASICs?
 
 Durch dynamisch rekonfigurierbare bzw. programmierbare Hardware lassen sich die
 beschriebenen Herausforderungen besser meistern -- wenn auch mit dem Nachteil,
@@ -45,9 +48,15 @@ aber deutlich vereinfacht.
 Dadurch sind FPGAs auch für Anwendungen abseits des klassischen
 Schaltungsentwurfs interessant. Insbesondere latenzkritische Anwendungen können
 von FPGAs profitieren, da der Zeitpunkt der Ergebnisausgabe taktgenau
-vorhersagbar ist. Die Inferenz neuronaler Netzwerke oder die Verarbeitung großer
+vorhersagbar ist.
+% Mit der Vorhersage allein ist es nicht getan. Die FPGAs sind viel flexibler, was die Hardware-Schnittstellen angeht, was wiederum Kommunikationsstrecken zur Peripherie verkürzt.
+% Das Hardware-Kompilat des Algorithmus hat idealerweise auch deutlich weniger Overhead auf FPGAs als bei den GPGPU Karten.
+% FPGAs sind ggf. auch weniger störanfällig, was sie auch für Teilchenphysikexperimente interessant macht. Sie lassen sich auch besser in Experimentierhardware integrieren als GPUs.
+% (Ggf. einen eigenen Absatz für GPUs vs FPGAs aus Anwendersicht)
+Die Inferenz neuronaler Netzwerke oder die Verarbeitung großer
 Datenströme im \gls{hpc}"=Bereich sind Beispiele für \textit{stream}"=artige
 Probleme, die vom Einsatz eines FPGAs profitieren können.
+% 2x profitieren
 
 Da die Synthese einer Schaltung je nach Komplexität des Algorithmus einige
 Stunden bis Tage benötigen kann, ist für das \textit{Prototyping} ratsam,
@@ -62,16 +71,20 @@ NVIDIA"=eigenen CUDA"=Schnittstelle. Diese war (und ist) jedoch nicht mit
 Konkurrenzprodukten kompatibel. Für CPUs etablierte sich schnell die
 OpenMP"=Schnittstelle als Mittel der Wahl für die Nutzung mehrerer Kerne.
 Die Vektorisierung erfordert dagegen entweder befehlssatzspezifische
-Erweiterungen (die auch innerhalb derselben Befehlssatzfamilie mitunter
-inkompatibel sind) oder sehr gut optimierende Compiler. Die Synthese"=Werkzeuge
+Erweiterungen, die auch innerhalb derselben Befehlssatzfamilie mitunter
+inkompatibel sind, oder sehr gut optimierende Compiler. Die Synthese"=Werkzeuge
 der FPGA"=Hersteller ermöglichen zwar die Nutzung der Hochsprachen, reichern
 diese aber mit zahlreichen Erweiterungen an, was die Übertragung zwischen den
 Plattformen erschwert.
+% anfangs ggf. GPGPU Begriff einbringen
+% Jahreszahlen?
 
 Um die Entwicklung portabler Programme zu ermöglichen, wurden früh verschiedene
 Ansätze entwickelt. Das Khronos"=Industriekonsortium gab wenige Jahre nach der
 ersten CUDA"=Veröffentlichung die Spezifikation der OpenCL"=Schnittstelle
-heraus. Dahinter verbarg sich die Idee, eine einheitliche Schnittstelle für den
+heraus.
+% Jahresangaben
+Dahinter verbarg sich die Idee, eine einheitliche Schnittstelle für den
 Programmierer zu schaffen, die im Hintergrund von jedem Hardware"=Hersteller für
 die eigenen Produkte implementiert und optimiert wird. Die OpenCL"=Entwicklung
 wurde anfangs von zahlreichen namhaften Hard- und Software"=Herstellern
@@ -124,10 +137,11 @@ OpenCL"=Programmen für die im Vorjahr veröffentlichte
 Xilinx"=OpenCL"=Implementierung. \cite[vgl.][]{fifield2016}
 
 Duarte \textit{et al.} stellten 2018 das \textit{hls4ml}"=Projekt vor. Dabei
-handelt es sich um Implementierungen neuraler Netzwerke, die durch automatische
+handelt es sich um Implementierungen neuronaler Netzwerke, die durch automatische
 Synthese in Schaltungen für Xilinx"=FPGAs umgewandelt werden. In diesem Projekt
 kommt allerdings nicht OpenCL zum Einsatz, sondern die Xilinx"=Erweiterungen für
 die Programmiersprache C++. \cite[vgl.][]{duarte2018}
+% überall: neural => neuronal
 
 Die SYCL"=Spezifikation wurde in der Literatur in den ersten Jahren ihres
 Bestehens vornehmlich als einfacher Überbau für OpenCL betrachtet. Erst in
@@ -182,7 +196,7 @@ um eine Implementierung eines Kokkos"=Backends.
 \section{Ziel der Arbeit}\label{einleitung:ziel}
 
 In dieser Arbeit wird der SYCL"=Standard hinsichtlich der verfügbaren
-Implementierungen und deren Nutzbarkeit untersucht. Dies geschieht vor im
+Implementierungen und deren Nutzbarkeit untersucht. Dies geschieht vor allem im
 Hinblick auf FPGAs, die durch ihre frei veränderbare Hardware"=Konfiguration in
 Verbindung mit einer modernen C++"=Programmierschnittstelle eine
 vielversprechende Hardware"=Plattform darstellen. Dabei wird ein

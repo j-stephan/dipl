@@ -11,7 +11,7 @@ das Thema dieses Kapitels.
 Mit dem SYCL"=Standard\footnote{Entgegen des optischen Anscheins ist
 \glqq SYCL\grqq\ kein Akronym, sondern ein Eigenname.}\cite[vgl.][]{sycl2019}
 verfolgt die herausgebende Khronos"=Gruppe das Ziel eines abstrakten
-C++"=Programmiermodells für \gls{opencl}, das die Modernität, Flexibilität und
+C++"=Programmiermodells für \gls{opencl}, das die Flexibilität und
 Einfachheit moderner C++"=Standards bieten soll, während gleichzeitig
 Konzeption und Portabilität des \gls{opencl}"=1.2"=Standards
 \cite[vgl.][]{opencl2012} beibehalten werden.
@@ -118,8 +118,9 @@ Von \gls{opencl} erbt SYCL die Plattformunabhängigkeit. Es wird das
 Vorhandensein mindestens einer \gls{opencl}"=Plattform auf dem System
 angenommen\footnote{Aber nicht vorausgesetzt! Jede SYCL"=Implementierung muss
 auch ohne eine OpenCL"=Plattform auf dem Host lauffähig sein.}, was im
-Umkehrschluss bedeutet, dass unter Umständen zwischen mehreren verschiedenen
-Plattformen konkurrierender Hersteller gewählt werden muss. 
+Umkehrschluss bedeutet, dass unter Umständen zwischen mehreren, verschiedenen
+Plattformen konkurrierender Hersteller gewählt werden muss.
+% Bitte vollständigen Satz in Fußnote
 
 Die SYCL"=Spezifikation bietet dem Programmierer mehrere Möglichkeiten, die
 gewünschte Plattform für sein Programm auszuwählen. Der einfachste Ansatz
@@ -329,14 +330,15 @@ Kernel dieses Typs lassen sich dann parallel auf den vorhandenen Kernen
 ausführen.
 
 Für das AXPY"=Beispiel bietet sich der datenparallele Fall an, weshalb die
-Kernel"=Funktion wie in Quelltext~\ref{sycl:ueberblick:saxpy:kernel:call}
-gezeigt aufgerufen wird. Die \num{1024} Elemente der Vektoren werden dabei als
+Kernel"=Funktion aufgerufen wird (siehe Quelltext~\ref{sycl:ueberblick:saxpy:kernel:call}).
+Die \num{1024} Elemente der Vektoren werden dabei als
 Arbeitsgröße mit übergeben. Die SYCL"=Laufzeitumgebung generiert daraus einen
 Ausführungsraum mit \num{1024} \textit{work-items}, einer Abstraktion der
 zugrundeliegenden Hardware"=Features (SIMD"=Register, Threads, usw.). Der Index
 des jeweiligen \textit{work-items} wird als Parameter an die Kernel"=Funktion
 übergeben und kapselt einen Index, der für den Zugriff auf ein Element im
-Speicher verwendet werden kann. 
+Speicher verwendet werden kann.
+% Verweis auf Abschnitt zur Erklärung work-items, blöcke, threads, ...? Transparent Scalability?
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -593,6 +595,7 @@ zugeteilt. \textit{Work"=items} werden zueinander asynchron ausgeführt, lassen
 sich jedoch über Funktionen der gemeinsamen \textit{work"=group}
 synchronisieren. Es ist jedoch nicht möglich, \textit{work"=items} verschiedener
 \textit{work"=groups} zu synchronisieren.
+% es ist möglich, aber nicht explizit mittels API
 
 Durch diese Hardware"=Abstraktion wird aus Sicht der Programmierers ein
 Indexraum aufgespannt -- in OpenCL und SYCL \textit{NDRange} genannt --, in dem
@@ -775,6 +778,7 @@ es Aufgabe der SYCL"=Implementierung, die Zahl der nötigen \textit{work"=groups
 zu bestimmen sowie die Zuordnung der \textit{work"=items} durchzuführen. Dadurch
 verliert der Programmierer jedoch die Möglichkeit, gruppenweite Operationen
 durchzuführen, wie z.B. die Synchronisierung innerhalb der \textit{work"=group}.
+% also generell kein syncthreads in SYCL oder nur wenn work-groups Angabe entfällt?
 
 \subsection{Abhängigkeiten zwischen Kerneln}
 \label{sycl:konzepte:abhaengigkeiten}
@@ -793,7 +797,7 @@ Puffer"=Verfügbarkeit ermittelt werden -- und nicht über das Ende der Kernel
 
 Graphisch lässt sich dies in Form eines gerichteten Graphen veranschaulichen,
 wie für einen einfachen Fall in
-Abbildung~\ref{sycl:konzepte:abhaengigkeiten:graph}gezeigt. Im Beispiel hängen
+Abbildung~\ref{sycl:konzepte:abhaengigkeiten:graph} gezeigt. Im Beispiel hängen
 die \textit{command groups} B und C von der \textit{command group} A ab, sind
 jedoch voneinander unabhängig. Dadurch müssen sie beide auf das Ende von A
 warten, können danach jedoch parallel ausgeführt werden. Die
