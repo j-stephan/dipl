@@ -16,17 +16,16 @@ also gut dafür geeignet, auf GPUs ausgelagert und von diesen berechnet zu
 werden. Anders ausgedrückt lassen sich GPUs als \textit{Beschleuniger} für
 datenparallele Algorithmen verwenden. Im Bereich des \gls{hpc} sind verschiedene
 Beschleunigertypen seit jeher im Einsatz, seien es CPUs mit besonders vielen
-Kernen, von den GPUs abstammende Beschleuniger ohne grafische Ausgabe wie
-NVIDIAs Tesla"=Reihe, oder Hybride wie Intels kurzlebige Xeon"=Phi"=Produkte.
+Rechenkernen, von den GPUs abstammende Beschleuniger ohne grafische Ausgabe wie
+NVIDIAs Tesla"=Reihe, oder Hybride wie Intels Xeon"=Phi"=Produkte.
 
 Allen gemeinsam ist die Idee der Beschleunigung eines Algorithmus durch dessen
 Parallelisierung, also die in der Regel parallele Ausführung einzelner
-Schleifeniterationen auf den in den Beschleunigern vorhandenen Kernen,
-Multiprozessoren usw. Wie eine CPU sind die Beschleuniger allerdings darauf
-ausgelegt, von verschiedenen Algorithmen genutzt werden zu können, und
-entsprechend allgemein aufgebaut. Der Programmierer findet also möglicherweise
-eine Hardware"=Plattform vor, die für seinen Algorithmus nicht ideal geeignet
-ist.
+Schleifeniterationen auf den in den Beschleunigern vorhandenen Rechenkernen.
+Wie eine CPU sind die Beschleuniger allerdings darauf ausgelegt, von
+verschiedenen Algorithmen genutzt werden zu können, und entsprechend allgemein
+aufgebaut. Der Programmierer findet also möglicherweise eine Hardware"=Plattform
+vor, die für seinen Algorithmus nicht ideal geeignet ist.
 
 Einen Chip, der für einen speziellen Algorithmus entworfen wurde, bezeichnet man
 als \gls{asic}. ASICs erfordern durch ihre Produktionskosten einen hohen
@@ -36,7 +35,8 @@ beim Schaltungsentwurf nicht bedachte Aspekte oder später geänderte
 Anforderungen -- nicht mehr zu genügen, was wiederum eine aufwendige
 Neuentwicklung und -produktion nötig macht. Im schlimmsten Fall ist der zu
 tauschende ASIC für einen Menschen physisch nicht mehr zu erreichen, wie etwa in
-der Raumfahrt.
+der Raumfahrt oder bei Detektoren innerhalb eines in Betrieb befindlichen
+Teilchenbeschleunigers.
 
 Durch dynamisch rekonfigurierbare bzw. programmierbare Hardware lassen sich die
 beschriebenen Herausforderungen besser meistern -- wenn auch mit dem Nachteil,
@@ -83,8 +83,8 @@ Grafikschnittstellen programmierbar, erforderten dafür aber die Nutzung des
 erstmals 2006 erschienenen NVIDIA"=eigenen CUDA"=API. Dieses war (und ist)
 jedoch nicht mit Konkurrenzprodukten kompatibel. Für CPUs etablierte sich
 schnell die seit 1997 entwickelte Schnittstelle \gls{openmp} als Mittel der Wahl
-für die Nutzung mehrerer Kerne. Die Vektorisierung erfordert dagegen entweder
-befehlssatzspezifische Erweiterungen -- die auch innerhalb derselben
+für die Nutzung mehrerer Rechenkerne. Die Vektorisierung erfordert dagegen
+entweder befehlssatzspezifische Erweiterungen -- die auch innerhalb derselben
 Befehlssatzfamilie mitunter inkompatibel sind -- oder sehr gut optimierende
 Compiler. Die seit 2011 verfügbaren HLS"=Werkzeuge des FPGA"=Herstellers Xilinx
 ermöglichten zwar die Nutzung der Hochsprachen, reicherten diese aber mit
