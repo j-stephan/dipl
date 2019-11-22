@@ -1,8 +1,10 @@
 \chapter{FPGAs als Beschleuniger}\label{fpga}
 
 Konzeption und Aufbau der \gls{fpga}s sowie der zugehörige Entwicklungsprozess
-werden in diesem Kapitel geschildert. Abschließend werden die auf \gls{fpga}s
-und \gls{gpu}s zu findenden Parallelitätskonzepte miteinander verglichen.
+werden in diesem Kapitel geschildert. Dabei wird auf die Vorteile der
+High"=Level"=Synthese gegenüber dem hardwarenahen Schaltungsentwurf auf der
+Register"=Transfer"=Ebene ebenso eingegangen wie auf die auf FPGAs möglichen
+Parallelisierungskonzepte.
 
 \section{Überblick}\label{fpga:ueberblick}
 
@@ -27,33 +29,37 @@ kundenspezifischen Schaltung versehen werden. Innerhalb dieser Kategorie gehöre
 technischen Grundgerüst produziert und erst in einem späteren
 Herstellungsschritt in kleineren Mengen mit kundenspezifischen Schaltungen
 versehen. Im Gegensatz zu ASICs, die von Anfang an nach Kundenwunsch hergestellt
-wurden (engl. \textit{full-custom ASIC}), lässt sich so eine Reduktion der
-Produktionskosten erreichen. \cite[vgl.][123]{kesel2013}
+wurden (engl. \textit{full-custom ASIC}), lässt sich so -- unter Inkaufnahme
+geringerer erreichbarer Taktraten und schlechterer Energieeffizienz -- eine
+Reduktion der Produktionskosten erreichen. \cite[vgl.][123]{kesel2013}
 
 Allerdings haben \textit{gate arrays} den Nachteil, dass sie nur vom Hersteller
-programmiert werden können. Eine Anpassung der Schaltung im Feld (engl.
-\textit{field-programmable}) ist damit nicht möglich. Mit \gls{fpga}s wurde
-dieses Problem in den 1980er Jahren gelöst, indem man aus Gattern
-(engl. \textit{gates}) bestehende Logikzellen von geringer Komplexität in einer
-regelmäßigen Feldstruktur (engl. \textit{array}) anordnete und über
-programmierbare Verdrahtungen miteinander verband.
+programmiert werden können. Eine Anpassung der Schaltung \glqq im Feld\grqq\
+(engl. \textit{field-programmable}) ist damit nicht möglich. Mit
+\gls{fpga}s wurde dieses Problem in den 1980er Jahren gelöst, indem man aus
+Gattern (engl. \textit{gates}) bestehende Logikzellen von geringer Komplexität
+in einer regelmäßigen Feldstruktur (engl. \textit{array}) anordnete und über
+programmierbare Verdrahtungen miteinander verband. FPGAs wurden traditionell
+vornehmlich im Schaltungsentwurf eingesetzt, finden mittlerweile jedoch auch in
+anderen Gebieten zunehmend Verwendung (siehe
+Abschnitt~\ref{fpga:ueberblick:anwendungen}).
 \cite[vgl.][208]{kesel2013} 
 
 Mittlerweile gibt es viele verschiedene \gls{fpga}-Varianten, die jedoch einige
 Gemeinsamkeiten aufweisen. \gls{fpga}s bestehen stets aus einem Feld aus
 Blockzellen, die so konfiguriert werden, dass sie eine bestimmte Funktion
-ausführen. Diese Blockzellen integrieren durch ein dichtes Verbindungsnetz
-Logikgatter und Speicher über ein dichtes Verbindungsnetz. Dabei lassen sich
-vier zentrale Strukturen unterscheiden:
+ausführen. Diese Blockzellen integrieren durch ein dediziertes Verbindungsnetz
+Logikgatter und Speicher. Dabei lassen sich vier zentrale Strukturen
+unterscheiden:
 \begin{itemize}
     \item konfigurierbare Logikblöcke,
     \item programmierbare Verbindungen,
-    \item Puffer für die Ein- und Ausgabe (E/A) und
+    \item Puffer für die Ein- und Ausgabe (engl. \textit{input/output}, I/O) und
     \item weitere Elemente (Speicher, arithmetische Einheiten, Taktnetzwerke,
           usw.).
 \end{itemize}
 In Abbildung~\ref{fpga:definition:aufbau} ist eine abstrakte \gls{fpga}-Struktur
-dargestellt, die aus Logikblöcken, Verbindungen, E/A-Puffern und speziellen
+dargestellt, die aus Logikblöcken, Verbindungen, I/O-Puffern und speziellen
 Speicher- und Multiplizierer-Blöcken aufgebaut ist.
 \cite[vgl.][10-13--10-14]{hawkins2010}
 
@@ -65,21 +71,21 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
         % untere E/A-Reihe
         \draw [fill = HKS41!60]
                 (0.0, -1.875) rectangle (1.5, -1.125)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!60]
                 (2.625, -1.875) rectangle (4.125, -1.125)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!60]
                 (5.25, -1.875) rectangle (6.75, -1.125)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!60]
                 (7.875, -1.875) rectangle (9.375, -1.125)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
 
         % Reihe 1
         \draw [fill = HKS41!60]
                 (-1.875, 0.0) rectangle (-1.125, 1.5)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!80]
                 (0.0, 0.0) rectangle (1.5, 1.5)
                 node[pos = 0.5, text = white, align = center] {\small Logik};
@@ -94,12 +100,12 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
                 node[pos = 0.5, text = white, align = center] {\small Multipli- \\ zierer};
         \draw [fill = HKS41!60]
                 (10.5, 0.0) rectangle (11.25, 1.5)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
 
         % Reihe 2
         \draw [fill = HKS41!60]
                 (-1.875, 2.625) rectangle (-1.125, 4.125)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!80]
                 (0.0, 2.625) rectangle (1.5, 4.125)
                 node[pos = 0.5, text = white, align = center] {\small Logik};
@@ -114,12 +120,12 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
                 node[pos = 0.5, text = white, align = center] {\small Multipli- \\ zierer};
         \draw [fill = HKS41!60]
                 (10.5, 2.625) rectangle (11.25, 4.125)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
 
         % Reihe 3
         \draw [fill = HKS41!60]
                 (-1.875, 5.25) rectangle (-1.125, 6.75)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!80]
                 (0.0, 5.25) rectangle (1.5, 6.75)
                 node[pos = 0.5, text = white, align = center] {\small Logik};
@@ -134,12 +140,12 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
                 node[pos = 0.5, text = white, align = center] {\small Multipli- \\ zierer};
         \draw [fill = HKS41!60]
                 (10.5, 5.25) rectangle (11.25, 6.75)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
 
         % Reihe 3
         \draw [fill = HKS41!60]
                 (-1.875, 7.875) rectangle (-1.125, 9.375)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!80]
                 (0.0, 7.875) rectangle (1.5, 9.375)
                 node[pos = 0.5, text = white, align = center] {\small Logik};
@@ -154,21 +160,21 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
                 node[pos = 0.5, text = white, align = center] {\small Multipli- \\ zierer};
         \draw [fill = HKS41!60]
                 (10.5, 7.875) rectangle (11.25, 9.375)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
 
         % obere E/A-Reihe
         \draw [fill = HKS41!60]
                 (0.0, 10.5) rectangle (1.5, 11.25)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!60]
                 (2.625, 10.5) rectangle (4.125, 11.25)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!60]
                 (5.25, 10.5) rectangle (6.75, 11.25)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
         \draw [fill = HKS41!60]
                 (7.875, 10.5) rectangle (9.375, 11.25)
-                node[pos = 0.5, text = white, align = center] {\small E/A};
+                node[pos = 0.5, text = white, align = center] {\small I/O};
 
         % Verbindungen - Spalte 1
         \draw [color = HKS92!90, line width = 5mm]
@@ -303,7 +309,7 @@ Architektur bestehen aus sechs fundamentalen programmierbaren Elementen:
     \item Konfigurierbare Logikblöcke (engl. \gls{clb}) bestehen aus acht
           Logikeinheiten, die man als \gls{lut} bezeichnet und zur
           Generierung von Logikfunktionen verwendet werden können. Daneben sind
-          in einem \gls{clb} Speicherelemente enthalten, die als Flipflop oder
+          in einem \gls{clb} Speicherelemente enthalten, die als Flip"=Flop oder
           Latch verwendet werden können, sowie weitere Elemente wie Multiplexer
           oder Einheiten für den arithmetischen Übertrag.
           \cite[vgl.][6]{ultrascaleclb2017}
@@ -330,32 +336,37 @@ Architektur bestehen aus sechs fundamentalen programmierbaren Elementen:
           Ausführung fundamentaler mathematischer oder bitweiser Operationen der
           Signal-, Bild- und Videoverarbeitung besonders gut geeignet sind. Aus
           mehreren \gls{dsp}s lassen sich durch Verbindungen komplexere
-          Funktionen generieren. \cite[vgl.][7--8]{ultrascaledsp2019}
+          arithmetische Funktionen generieren.
+          \cite[vgl.][7--8]{ultrascaledsp2019}
     \item Blöcke für die Taktverwaltung (engl. \gls{cmt}) generieren den Takt
           für die restlichen Komponenten des \gls{fpga}. Sie sind ebenso dazu
           geeignet, Operationen auf einem von außen kommenden Takt
           durchzuführen, z.B. eine Phasenverschiebung oder eine Filterung.
           \cite[vgl.][35--40]{ultrascaleclock2018}
 \end{itemize}
-Daneben können auf Beschleunigern, die mit einem \gls{fpga} ausgerüstet sind,
-noch weitere Komponenten hinzukommen. Ein Beispiel dafür ist der als DRAM
-bezeichnete Speicher, der mehrere \si{\gibi\byte} umfassen kann. Im Vergleich
-zu Block RAM und UltraRAM weist dieser Speichertyp aber deutlich geringere
-Speicherbandbreiten auf. Auf dem Beschleuniger \textit{Alveo U200}, der mit
-einem UltraScale+-\gls{fpga} mit der Modellbezeichnung \textit{XCU200}
-ausgestattet ist, finden sich beispielsweise vier DDR4-RAM-Module mit einer
-Bandbreite von \SI{77}{\gibi\byte\per\second}.
-\cites[vgl.][3]{alveo2019}[2]{alveobrief2018}
 
-Ein XCU200-\gls{fpga} verteilt die oben genannten Elemente auf drei Abschnitte,
-die als \gls{slr} bezeichnet werden. Gemeinsam bilden die \gls{slr}s drei
-dynamische Regionen sowie eine statische Region, die alle mit dem DRAM des
-Beschleunigers verbunden sind (siehe Abbildung~\ref{fpga:aufbau:alveoslr}). Die
-dynamischen Regionen lassen sich vom Benutzer konfigurieren, während die
-statische Region der Laufzeitumgebung des \gls{fpga}-Host-Systems vorbehalten
-ist \cite[vgl.][4]{alveo2019}. Die Ressourcen verteilen sich in
-unterschiedlicher Anzahl auf die \gls{slr}s, wie 
-Tabelle~\ref{fpga:aufbau:ressourcen} zeigt.
+Sollen FPGAs als Beschleuniger zum Einsatz kommen, ist die Verwendung weiterer
+Hardware"=Komponenten sinnvoll. Diese befinden sich zwar auf derselben Platine
+wie der eigentliche FPGA, aber nicht auf demselben Chip. Dies trifft z.B. auf
+den als DRAM bezeichneten Off"=Chip"=Speicher zu, der mehrere \si{\gibi\byte}
+umfassen kann. Im Vergleich zu Block RAM und UltraRAM weist dieser Speichertyp
+aber deutlich geringere Speicherbandbreiten auf. Auf dem Beschleuniger
+\textit{Alveo U200}, der mit einem UltraScale+-\gls{fpga} mit der
+Modellbezeichnung \textit{XCU200} ausgestattet ist, finden sich beispielsweise
+vier DDR4-RAM-Module mit einer Bandbreite von \SI{77}{\gibi\byte\per\second}
+\cites[vgl.][3]{alveo2019}[2]{alveobrief2018}. Weitere typische Bestandteile
+eines Beschleunigers sind z.B. eine Schnittstelle zur CPU und dem Hauptspeicher
+des Gesamtsystems (etwa über PCI Express) oder Komponenten für die Energieverwaltung.
+
+Ein XCU200-\gls{fpga} verteilt die oben genannten programmierbaren
+On"=Chip"=Elemente auf drei Abschnitte, die als \gls{slr} bezeichnet werden.
+Gemeinsam bilden die \gls{slr}s drei dynamische Regionen sowie eine statische
+Region, die alle mit dem DRAM des Beschleunigers verbunden sind
+(siehe Abbildung~\ref{fpga:aufbau:alveoslr}). Die dynamischen Regionen lassen
+sich vom Benutzer konfigurieren, während die statische Region der
+Laufzeitumgebung des \gls{fpga}-Host-Systems vorbehalten ist
+\cite[vgl.][4]{alveo2019}. Die Ressourcen verteilen sich in unterschiedlicher
+Anzahl auf die \gls{slr}s, wie Tabelle~\ref{fpga:aufbau:ressourcen} zeigt.
 
 \begin{figure}[htb]
     \centering
@@ -473,16 +484,20 @@ einfacher beheben, als dies bei ASICs der Fall wäre.
 \cite[vgl.][10-1]{hawkins2010}
 
 Dadurch eignen sich \gls{fpga}s sehr gut für den Einsatz als Schaltkreise, die
-in kleiner bis mittlerer Menge produziert werden sollen, weil die finanzielle
-Einstiegshürde deutlich geringer als bei ASICs ist. Umgekehrt sind ASICs bei
-hohen Produktionsvolumen überlegen, da die Kosten pro Chip geringer sind.
+in kleiner bis mittlerer Stückzahl produziert werden sollen, weil die
+finanzielle Einstiegshürde deutlich geringer als bei ASICs ist. Umgekehrt sind
+ASICs bei hohen Produktionsvolumen überlegen, da die Kosten pro Chip geringer
+sind.
 \cite[vgl.][10-2]{hawkins2010}
 
 In jüngerer Zeit wurden \gls{fpga}s auch außerhalb des klassischen
 Schaltkreisentwurfs eingesetzt. So setzt die Firma Microsoft beispielsweise
 \gls{fpga}s des Herstellers Intel für die Inferenz tiefer neuraler Netzwerke
 \cite[vgl.][]{fowers2018, chung2018} sowie als besonders schnelle
-Netzwerkkarten ein \cite[vgl.][]{firestone2018}.
+Netzwerkkarten ein \cite[vgl.][]{firestone2018}. Der Cloud"=Anbieter Amazon
+bietet spezielle FPGA"=Instanzen an, in denen Xilinx"=FPGAs als Beschleuniger
+genutzt werden können \cite[vgl.][]{amazonec2f1}, wovon in der Literatur bereits
+Gebrauch gemacht wurde \cite[vgl.][]{ditucci2017}.
 
 \section{Entwicklungsprozess}\label{fpga:entwicklung}
 
@@ -494,8 +509,8 @@ implementierten Algorithmen basiert. Die Ansätze unterscheiden sich durch ihre
 Abstraktion der zugrunde liegenden Hardware (die verschiedenen
 Abstraktionsebenen wurden von Gajski in seinem Y"=Diagramm zusammengefasst, siehe
 Abbildung~\ref{fpga:entwicklung:ydiagramm}). Die Hardware"=Beschreibungssprachen
-befinden sich auf einem mittleren Niveau und Detaillierungsgrad, der
-Register"=Transfer"=Ebene, während die Hochsprachene auf der algorithmischen
+befinden sich mit der Register"=Transfer"=Ebene auf einem hardware"=nahen Level
+und Detaillierungsgrad, während die Hochsprachene auf der algorithmischen
 oder der Systemebene anzusiedeln sind. \cite[vgl.][10--11]{kesel2013}
 
 \begin{figure}[htb]
@@ -559,7 +574,7 @@ oder der Systemebene anzusiedeln sind. \cite[vgl.][10--11]{kesel2013}
                    {\fontsize{6.5}{7.8}\selectfont Transistor};
         \draw [fill = HKS92!90] (30:2cm) circle [radius = 0.15]
               node [below right, xshift = 2mm, fill = white, inner sep = 1pt, rotate = -30]
-                   {\fontsize{6.5}{7.8}\selectfont Gatter, Flipflop};
+                   {\fontsize{6.5}{7.8}\selectfont Gatter, Flip"=Flop};
         \draw [fill = HKS92!90] (30:3cm) circle [radius = 0.15]
               node [below right, xshift = 2mm, fill = white, inner sep = 1pt, rotate = -30]
                    {\fontsize{6.5}{7.8}\selectfont ALU, Register};
@@ -637,17 +652,19 @@ Beschreibung jeder \textit{Komponente} erfolgt dann auf der
 Register"=Transfer"=Ebene, das heißt, dass zwischen speichernden (Register) und
 kombinatorischen (Transferfunktionen) Aspekten unterschieden wird. Aus der
 Digitaltechnik stammt eine Darstellungsweise als \glqq endlicher Automat\grqq\
-(siehe Abbildung~\ref{fpga:hdl:moore}): die Eingabe-Transferfunktion berechnet
+(siehe Abbildung~\ref{fpga:hdl:moore}): die Eingabe-Transferfunktion $f$
+berechnet durch die Kombination logischer Operatoren (UND, ODER, NICHT, \ldots)
 aus der Eingangsvariablen $X$ und der Zustandsvariablen $Z$ des Registers den
-neuen, im nächsten Takt zu übernehmenden Registerwert $Z+$. Sie ist damit eine
-boolesche Funktion:
+neuen, im nächsten Takt zu übernehmenden Registerwert $Z+$. Durch die
+Kombination logischer Operatoren ist $f$ eine Boolesche Funktion\footnote{auch
+logische Funktion genannt}:
 %
 \[
     Z+ = f(X, Z)
 \]
 %
-Die Ausgabe-Transferfunktion berechnet die Ausgabevariable $Y$ aus $Z$ und lässt
-sich ebenfalls als boolesche Funktion darstellen:
+Die Ausgabe"=Transferfunktion $g$ berechnet die Ausgabevariable $Y$ aus $Z$ und
+lässt sich ebenfalls als Boolesche Funktion darstellen:
 %
 \[
     Y = g(Z)
@@ -747,12 +764,67 @@ untereinander mit den internen Signalen \texttt{q0\_s}, \texttt{q0\_ns},
 Quelltext~\ref{fpga:hdl:regentity} deklarierten) Ports verbunden.
 \cite[vgl.][29]{kesel2013}
 
+Der Prozess \texttt{res} reagiert auf die Ports \texttt{clk} und \texttt{res}:
+ist \texttt{res} logisch \glqq 1\grqq\, so werden die internen Signale
+\texttt{q0\_s} und \texttt{q1\_s} auf \glqq 0\grqq\ zurückgesetzt. Ist
+\texttt{res} logisch \glqq 0\grqq\ und existiert eine steigende Taktflanke
+(\texttt{clk'event AND clk = '1'}), werden die Werte von \texttt{q0\_ns} und
+\texttt{q1\_ns} übernommen. Das Verhalten des Registers ist anhand einiger
+konkreter Werte für die einzelnen Signale in Abbildung~\ref{fpga:hdl:waveform}
+veranschaulicht. \texttt{res} entspricht damit dem \textit{Register} des in
+Abbildung~\ref{fpga:hdl:moore} dargestellten Moore"=Schaltwerks.
+\cite[vgl.][30--31]{kesel2013}
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=\textwidth]{reg2_waveform.png}
+    \caption[Verhalten des 2-Bit-Registers]{Zu Beginn wird das Register über
+             das \texttt{res}"=Signal zurückgesetzt. Dadurch werden zunächst die
+             internen Signale\texttt{q0\_s} und \texttt{q1\_s} sowie
+             \SI{2}{\nano\second} später die Ausgangssignale \texttt{q0} und
+             \texttt{q1} von ihrem undefinierten Zustand auf den Wert
+             \glqq 0\grqq\ gesetzt. Dann wird \texttt{res} auf \glqq 0\grqq\
+             gesetzt, während \texttt{load} sowie die Eingänge \texttt{d0} und
+             \texttt{d1} mit \glqq 1\grqq\ belegt werden. Dadurch werden nach
+             weiteren \SI{3}{\nano\second} die internen Signale \texttt{q0\_ns}
+             und \texttt{q1\_ns} ebenfalls auf \glqq 1\grqq\ gesetzt. Durch das
+             Anlegen der Taktflanke (\texttt{clk} = \glqq 1\grqq) nach insgesamt
+             \SI{5}{\nano\second} übernehmen \texttt{q0\_s} und \texttt{q1\_s}
+             die Werte von \texttt{q0\_ns} und \texttt{q1\_s}, was sich
+             \SI{2}{\nano\second} später an den Ausgangssignalen zeigt.}
+    \label{fpga:hdl:waveform}
+\end{figure}
+
+Der Prozess \texttt{mux} beschreibt eine kombinatorische Funktion. Er
+nimmt die Signale \texttt{load}, \texttt{q0\_s}, \texttt{q1\_s},
+\texttt{d0} sowie \texttt{d1} entgegen und gibt die Signale \texttt{q0\_ns} und
+\texttt{q1\_ns} aus. Ist \texttt{load} logisch \glqq 1\grqq\, werden \texttt{d0}
+und \texttt{d1} ausgegeben, ansonsten die gespeicherten Signale \texttt{q0\_s}
+und \texttt{q1\_s}. In Moore"=Schaltwerk aus Abbildung~\ref{fpga:hdl:moore}
+entspricht \texttt{mux} somit der Eingabe"=Transferfunktion.
+\cite[vgl.][31]{kesel2013}
+
+Die Ausgabe"=Transferfunktion ist in diesem Beispiel als impliziter Prozess
+dargestellt: \texttt{q0} und \texttt{q1} sind die Ausgabe $Y$ des
+Moore"=Schaltwerks und wurden einfach mit den internen Signalen \texttt{q0\_s}
+und \texttt{q1\_s} verbunden.
+\cite[vgl.][31]{kesel2013}
+
+Prozesse sind in VHDL als Modellierungen realer Hardware zu verstehen. So lässt
+sich für das oben entworfene 2"=Bit"=Register eine äquivalente
+Hardware"=Schaltung aus zwei Multiplexern und zwei taktflankengesteuerten
+D"=Flip"=Flops mit asynchronen Set- und Reset-Eingängen aufbauen, wie Kesel und
+Bartholomä zeigen \cite[siehe][32]{kesel2013}. Die im Prozess \texttt{reg}
+verwendeten Signale \texttt{q0\_s} und \texttt{q1\_s} entsprechen dabei den
+Flip"=Flops, während die Multiplexer den \texttt{mux}"=Prozess implementieren.
+\cite[vgl.][31]{kesel2013}
+
+
 \begin{code}
     \begin{minted}[fontsize=\small]{vhdl}
 ARCHITECTURE beh OF reg2 IS
     SIGNAL q0_s, q0_ns, q1_s, q1_ns : std_logic;
 BEGIN
-
     reg: PROCESS (clk, res)
     BEGIN
         IF res = '1' THEN
@@ -777,45 +849,11 @@ BEGIN
             q1_ns <= q1_s AFTER 4 ns;
         END IF;
     END PROCESS mux;
-
 END beh;
     \end{minted}
     \caption{Verhaltensbeschreibung eines 2-Bit-Registers \cite[siehe][28]{kesel2013}}
     \label{fpga:hdl:regbeh}
 \end{code}
-
-Der Prozess \texttt{res} reagiert auf die Ports \texttt{clk} und \texttt{res}:
-ist \texttt{res} logisch \glqq 1\grqq\, so werden die internen Signale
-\texttt{q0\_s} und \texttt{q1\_s} auf \glqq 0\grqq\ zurückgesetzt. Ist
-\texttt{res} logisch \glqq 0\grqq\ und existiert eine steigende Taktflanke
-(\texttt{clk'event AND clk = '1'}), werden die Werte von \texttt{q0\_ns} und
-\texttt{q1\_ns} übernommen. \texttt{res} entspricht damit dem \textit{Register}
-des in Abbildung~\ref{fpga:hdl:moore} dargestellten Moore"=Schaltwerks.
-\cite[vgl.][30--31]{kesel2013}
-
-Der Prozess \texttt{mux} beschreibt eine kombinatorische Funktion. Er
-nimmt die Signale \texttt{load}, \texttt{q0\_s}, \texttt{q1\_s},
-\texttt{d0} sowie \texttt{d1} entgegen und gibt die Signale \texttt{q0\_ns} und
-\texttt{q1\_ns} aus. Ist \texttt{load} logisch \glqq 1\grqq\, werden \texttt{d0}
-und \texttt{d1} ausgegeben, ansonsten die gespeicherten Signale \texttt{q0\_s}
-und \texttt{q1\_s}. In Moore"=Schaltwerk aus Abbildung~\ref{fpga:hdl:moore}
-entspricht \texttt{mux} somit der Eingabe"=Transferfunktion.
-\cite[vgl.][31]{kesel2013}
-
-Die Ausgabe"=Transferfunktion ist in diesem Beispiel als impliziter Prozess
-dargestellt: \texttt{q0} und \texttt{q1} sind die Ausgabe $Y$ des
-Moore"=Schaltwerks und wurden einfach mit den internen Signalen \texttt{q0\_s}
-und \texttt{q1\_s} verbunden.
-\cite[vgl.][31]{kesel2013}
-
-Prozesse sind in VHDL als Modellierungen realer Hardware zu verstehen. So lässt
-sich für das oben entworfene 2"=Bit"=Register eine äquivalente
-Hardware"=Schaltung aus zwei Multiplexern und zwei taktflankengesteuerten
-D"=Flipflops mit asynchronen Set- und Reset-Eingängen aufbauen, wie Kesel und
-Bartholomä zeigen \cite[siehe][32]{kesel2013}. Die im Prozess \texttt{reg}
-verwendeten Signale \texttt{q0\_s} und \texttt{q1\_s} entsprechen dabei den
-Flipflops, während die Multiplexer den \texttt{mux}"=Prozess implementieren.
-\cite[vgl.][31]{kesel2013}
 
 \subsubsection{Strukturbeschreibungen}
 
@@ -823,10 +861,20 @@ Eine Strukturbeschreibung (auch Netzliste genannt) besteht aus mehreren
 Teil-Komponenten, die zu einer größeren, komplexeren Komponente 
 zusammengeschaltet werden. So lässt sich für die aus den vorherigen Abschnitten
 bekannte \texttt{reg2}"=\textit{Entity} aus einem Modell eines Multiplexers
-sowie einem Modell eines Flipflops zusammensetzen (siehe
+sowie einem Modell eines Flip"=Flops zusammensetzen (siehe
 Quelltext~\ref{fpga:hdl:regstruct}\footnote{Die Verhaltensbeschreibungen der
 Komponenten \texttt{mux2} und \texttt{ff2} sind in
 Anhang~\ref{anhang:source:vhdl} zu finden.}).
+
+Wie bei der Verhaltensbeschreibung gibt es auch bei der Strukturbeschreibung
+Ports, das heißt von außen ein- bzw.\ nach außen ausgehende Signale, sowie
+interne Signale für die Kommunikation der Teil-Komponenten untereinander. Die
+einzelnen Komponenten werden zunächst mit ihren lokalen Ports deklariert
+(\texttt{COMPONENT}"=Abschnitte) und danach instanziiert; \texttt{I1} und
+\texttt{I0} sind dabei Bezeichnungen für eine \textit{Instanz} der jeweiligen
+\texttt{Entity}. In der \texttt{PORT MAP} werden die Ports und Signale der
+Komponente den lokalen Ports der Teil-Komponenten zugeordnet.
+\cite[vgl.][37]{kesel2013}
 
 \begin{code}
     \begin{minted}[fontsize=\small]{vhdl}
@@ -880,22 +928,13 @@ END struct;
     \label{fpga:hdl:regstruct}
 \end{code}
 \noindent
-Wie bei der Verhaltensbeschreibung gibt es auch bei der Strukturbeschreibung
-Ports, das heißt von außen ein- bzw.\ nach außen ausgehende Signale, sowie
-interne Signale für die Kommunikation der Teil-Komponenten untereinander. Die
-einzelnen Komponenten werden zunächst mit ihren lokalen Ports deklariert
-(\texttt{COMPONENT}"=Abschnitte) und danach instanziiert; \texttt{I1} und
-\texttt{I0} sind dabei Bezeichnungen für eine \textit{Instanz} der jeweiligen
-\texttt{Entity}. In der \texttt{PORT MAP} werden die Ports und Signale der
-Komponente den lokalen Ports der Teil-Komponenten zugeordnet.
-\cite[vgl.][37]{kesel2013}
 
 \subsubsection{Weitere Konzepte}
 
 Die hier vorgestellten Konzepte einer Hardware"=Beschreibungssprache bilden nur
 einen sehr geringen Teil der zur Verfügung stehenden Möglichkeiten ab. Neben den
 gezeigten Grundbausteinen verfügen VHDL und Verilog noch über weitergehende
-Fähigkeiten, wie etwa Verzweigungen, Schleifen, Operatoren udn deren Überladung
+Fähigkeiten, wie etwa Verzweigungen, Schleifen, Operatoren und deren Überladung
 oder rudimentäre Objektorientierung. Aufgrund der Zielsetzung dieser Arbeit kann
 hier nicht weiter darauf eingegangen werden. Eine sehr gute Einführung in die
 Programmierung mit VHDL ist aber bei Kesel und Bartholomä zu finden
@@ -915,23 +954,25 @@ sich so auch auf die reale Hardware abbilden lässt. \cite[vgl.][25]{kesel2013}
 Aus den im vorherigen Abschnitt gezeigten Beispielen wird schnell ersichtlich,
 dass der Entwurf komplexerer Schaltungen mit einem hohen Konzeptions- und
 Arbeitsaufwand verbunden ist und nicht nur gute Kenntnisse des  abzubildenden
-Algorithmus erfordert, sondern darüber hinaus auch Wissen über di Digitaltechnik
-erfordert. Mit der High"=Level"=Synthese (HLS) gibt es einen Ansatz, die
-konkrete Schaltung durch Abstraktion zu verbergen und sich dem Programmiermodell
-anderer Hardware"=Typen (\gls{cpu}s, \gls{gpu}s) anzunähern. Bei der HLS findet
-der Entwurf vollständig auf der algorithmischen oder Systemebene statt.
-Anschließend wird aus dem erzeugten Modell durch HLS-Werkzeuge ein Modell auf
-der Register"=Transfer"=Ebene erzeugt, aus dem im nächsten Schritt die konkrete
-Schaltung synthetisiert werden kann. Auf herkömmliche Programmiersprachen
-übertragen entspricht der Entwurf mit einer Hardware"=Beschreibungssprache also
-der Programmierung einer \gls{cpu} mit einer Assemblersprache.
+Algorithmus erfordert, sondern darüber hinaus auch Wissen über die
+Digitaltechnik verlangt. Mit der High"=Level"=Synthese (HLS) gibt es einen
+Ansatz, die konkrete Schaltung durch Abstraktion zu verbergen und sich dem
+Programmiermodell anderer Hardware"=Typen (\gls{cpu}s, \gls{gpu}s) anzunähern.
+Bei der HLS findet der Entwurf vollständig auf der algorithmischen oder
+Systemebene statt. Anschließend wird aus dem erzeugten Modell durch
+HLS"=Werkzeuge ein Modell auf der Register"=Transfer"=Ebene erzeugt, aus dem im
+nächsten Schritt die konkrete Schaltung synthetisiert werden kann. Auf
+herkömmliche Programmiersprachen übertragen entspricht der Entwurf mit einer
+Hardware"=Beschreibungssprache also der Programmierung einer \gls{cpu} mit einer
+Assemblersprache.
 \cite[vgl.][7]{hlsintro2019}
 
 Während des algorithmischen Entwurfs kann der Nutzer zudem Randbedingungen
-einstellen, die die HLS steuern, wie z.B. den angestrebten Ressourcenbedarf oder
-den gewünschten Datendurchsatz. Bei der Erzeugung des
-Register"=Transfer"=Modells werden diese Randbedingungen dann von den
-HLS"=Werkzeugen berücksichtigt. \cite[vgl.][482]{kesel2013}
+festlegen, die die HLS steuern, wie z.B. den angestrebten Ressourcenbedarf,
+den gewünschten Datendurchsatz, \textit{Pipelining} oder die
+Konfiguration des BlockRAMs. Bei der Erzeugung des Register"=Transfer"=Modells
+werden diese Randbedingungen dann von den HLS"=Werkzeugen berücksichtigt.
+\cite[vgl.][482]{kesel2013}
 
 Die HLS wird zur Zeit von einigen Herstellern für mehrere Programmiersprachen
 bzw. Erweiterungen bestehender Programmiersprachen unterstützt. Der Hersteller
@@ -958,7 +999,6 @@ prozessorspezifische Assemblersprache übersetzt:
     \begin{minted}[fontsize=\small]{c++}
 z = a + b;
     \end{minted}
-    \caption{Addition in C++}
 \end{code}
 wird wie folgt transformiert:
 \begin{code}
@@ -968,7 +1008,6 @@ movl    -4(%rbp), %edx
 addl    %edx, %eax
 movl    %eax, -12(%rbp)
     \end{minted}
-    \caption{Addition in AMD64"=Assembler}
 \end{code}
 Selbst eine relativ simple Operation wie die Addition zweier Zahlen resultiert
 in vier sequentiell auszuführenden Maschineninstruktionen. Je nachdem, wo die
@@ -983,10 +1022,10 @@ alle Operationen dieselbe \gls{alu} teilen.
 Bei der HLS kann diese Operation auf Hardware abgebildet werden, die
 ausschließlich für diese Operation verwendet wird. Wenn \texttt{a}, \texttt{b}
 und \texttt{z} \SI{32}{\bit} groß sind, wird dieser Datentyp durch 32 \gls{lut}
-implementiert\footnote{Ein LUT entspricht der Berechnung eines Bits.}. Im
-Gegensatz zu Prozessoren werden bei einer \gls{fpga}"=Implementierung für jede
-Operation innerhalb des Algorithmus voneinander unabhängige \gls{lut}"=Mengen
-instanziiert.
+implementiert\footnote{Eine LUT entspricht einer Wahrheitstabelle für ein Bit.}.
+Im Gegensatz zu Prozessoren werden bei einer \gls{fpga}"=Implementierung für
+jede Operation innerhalb des Algorithmus voneinander unabhängige
+\gls{lut}"=Mengen instanziiert.
 \cite[vgl.][19]{hlsintro2019}
 
 Eine Schleife ließe sich auf \gls{fpga}s also ganz oder teilweise ausrollen und,
@@ -995,7 +1034,7 @@ parallel ausführen. Die während der HLS vorgenommene Analyse der Daten- und
 Kontrollflussabhängigkeiten wird im \gls{fpga}"=Kontext als Scheduling
 bezeichnet. \cite[vgl.][19]{hlsintro2019}
 
-\subsubsection{Pipelining}
+\subsubsection{Pipelining-Prinzip}
 
 Das von Prozessoren bekannte Prinzip des \textit{Pipelinings} findet bei
 \gls{fpga}s ebenfalls Anwendung. Dabei werden Datenabhängigkeiten so aufgeteilt,
@@ -1108,7 +1147,7 @@ Schaltung mit Pipelining.
 \end{figure}
 \noindent
 Die grauen Kästen der unteren Schaltung entsprechen Registern, die in realer
-Hardware durch Flipflops realisiert werden. Jeder Kasten kann dabei als ein
+Hardware durch Flip"=Flops realisiert werden. Jeder Kasten kann dabei als ein
 zusätzlicher Taktzyklus aufgefasst werden. Die Berechnung eines einzelnen
 Ergebnisses benötigt dadurch drei zusätzliche Taktzyklen. Durch die zusätzlichen
 Register lassen sich die einzelnen Schritte der Berechnung jedoch in unabhängige
@@ -1118,7 +1157,14 @@ nebenläufig arbeiten. Die Ergebnisse $y$ und $y'$ lassen sich auf diese Weise
 aus: nach einem Overhead von 3 Taktzyklen zu Beginn der Berechnung (engl.
 \textit{pipeline fill time}) berechnet die Schaltung in jedem weiteren
 Taktzyklus einen neuen Wert für $y$. Dieser Vorgang wird in
-Abbildung~\ref{fpga:pipelining:pipeline} illustriert.
+Abbildung~\ref{fpga:pipelining:pipeline} illustriert. Je nach verwendetem
+Algorithmus ist es möglich, dass die Pipeline nicht in jedem Taktzyklus eine
+neue Schleifeniteration verarbeiten kann (z.B. aufgrund bestehender
+Abhängigkeiten zwischen einzelnen Iterationen). Die Anzahl der Zyklen, die
+zwischen dem Beginn zweier aufeinanderfolgender Iterationen liegen, werden als
+\gls{ii} bezeichnet. Wenn $\text{II} = 1$ gilt, beginnt die Pipeline mit
+jedem Takt eine neue Schleifeniteration. Bei $\text{II} = 2$ kann sie dies nur
+alle zwei Takte tun, bei $\text{II} = 4$ mit jedem vierten Takt, usw.
 \cite[vgl.][20--21]{hlsintro2019}
 
 \begin{figure}[htb]
@@ -1191,11 +1237,11 @@ Abbildung~\ref{fpga:pipelining:pipeline} illustriert.
 Die Anwendung des Pipelining während der HLS unterscheidet sich zwischen den
 Herstellern: so versucht Intels OpenCL"=Umgebung grundsätzlich, Pipelining auf
 jede vorhandene Schleife anzuwenden und erfordert ein explizites Deaktivieren
-des Verfahrens, wenn kein Pipelining gewünscht wird. Bei Xilinx' OpenCL"=Umgebung
-verhält es sich dagegen genau umgekehrt, da hier Pipelining explizit
-angeschaltet werden muss.
+des Verfahrens, wenn kein Pipelining gewünscht wird. Bei Xilinx'
+OpenCL"=Umgebung verhält es sich dagegen genau umgekehrt, da hier Pipelining
+explizit angeschaltet werden muss.
 
-\subsubsection{Producer-Consumer}
+\subsubsection{Producer-Consumer-Prinzip}
 
 Neben dem Pipelining gibt es auf \gls{fpga}s eine weitere Möglichkeit,
 Parallelität auszudrücken. Diese ähnelt dem Pipelining-Prinzip, arbeitet jedoch
@@ -1211,9 +1257,10 @@ Nebenläufigkeit der FPGA"=Hardware parallelisiert werden. Durch den Einsatz von
 Block RAM als FIFO"=Puffer zwischen den Hardware"=Abschnitten, die aus der
 jeweiligen Funktion synthetisiert wurden, kann die produzierende Funktion
 während ihrer Ausführung Teilergebnisse speichern. Die konsumierende Funktion
-kann diese Teilergebnisse nach der initialen Wartezeit (engl. \gls{ii}) direkt
-weiter verarbeiten, ohne auf das Ende der produzierenden Funktion bzw.\ das
-resultierende Gesamtergebnis warten zu müssen. \cite[vgl.][22--23]{hlsintro2019}
+kann diese Teilergebnisse nach der initialen Wartezeit, die ebenfalls als
+\gls{ii} bezeichnet wird, direkt weiter verarbeiten, ohne auf das Ende der
+produzierenden Funktion bzw.\ das resultierende Gesamtergebnis warten zu müssen.
+\cite[vgl.][22--23]{hlsintro2019}
 
 Das Producer"=Consumer"=Prinzip wird je nach Hersteller unterschiedlich benannt.
 So nennt sich dieses Verfahren bei Xilinx \textit{Dataflow}, während es bei
