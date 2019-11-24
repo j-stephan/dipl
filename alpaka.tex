@@ -13,18 +13,26 @@ ursprünglich von Benjamin Worpitz im Rahmen seiner Masterarbeit entwickelt
 \cite[vgl.][]{worpitz2015}. Mittlerweile wird die Entwicklung durch
 die Gruppe \textit{Computergestützte Strahlenphysik} des
 \textit{Instituts für Strahlenphysik} am
-\textit{Helmholtz"=Zentrum Dresden"=Rossendorf} fortgeführt.
+\textit{Helmholtz"=Zentrum Dresden"=Rossendorf} fortgeführt, die bereits die
+Masterarbeit betreut hatte.
 
 Die Alpaka"=Bibliothek definiert eine abstrakte C++"=Schnittstelle, mit deren
-Hilfe parallele Programme geschrieben werden können. Im Hintergrund wird Alpaka
-auf hersteller- oder hardware"=spezifische Schnittstellen, wie CUDA oder OpenMP,
--- im Folgenden als \textit{Backend} bezeichnet -- abgebildet. Schematisch ist
-dies in Abbildung~\ref{alpaka:ueberblick:schema} dargestellt. Alpaka ist somit
-ein einheitliches Paket, das die abstrakte Schnittstelle nach außen und die
-konkrete Implementierung vereinigt. Damit unterscheidet sich die Bibliothek von
-ähnlichen Ansätzen wie OpenCL oder SYCL, die ebenfalls eine abstrakte
-Schnittstelle definieren, die Implementierung jedoch den Hardware- und
-Software"=Herstellern überlassen.
+Hilfe parallele Programme geschrieben werden können. Die in Alpaka enthaltenen
+Abstraktionen ähneln dabei konzeptionell stark dem Aufbau der
+CUDA"=Schnittstelle. Wie im Folgenden gezeigt wird, erstreckt sich diese
+Ähnlichkeit nicht nur auf das Verhalten der Bibliothek (z.B. bei der Definition
+von Task"=Graphen, siehe Abschnitt~\ref{alpaka:konzepte:abhaengigkeiten}),
+Alpaka übernimmt auch direkt CUDA"=Begriffe (z.B. \textit{Grid}, \textit{Block}
+oder \textit{Thread}, siehe  Abschnitt~\ref{alpaka:konzepte:abstraktion}). Im
+Hintergrund wird Alpaka auf hersteller- oder hardware"=spezifische
+Schnittstellen, wie CUDA oder OpenMP, -- im Folgenden als \textit{Backend}
+bezeichnet -- abgebildet. Schematisch ist dies in
+Abbildung~\ref{alpaka:ueberblick:schema} dargestellt. Alpaka ist somit ein
+einheitliches Paket, das die abstrakte Schnittstelle nach außen und die konkrete
+Implementierung vereinigt. Damit unterscheidet sich die Bibliothek von ähnlichen
+Ansätzen wie OpenCL oder SYCL, die ebenfalls eine abstrakte Schnittstelle
+definieren, die Implementierung jedoch den Hardware- und Software"=Herstellern
+überlassen.
 
 \begin{figure}
     \centering
@@ -74,13 +82,19 @@ Abstraktions"=Overhead zur Laufzeit vermieden wird.
 sich prinzipiell mit jedem modernen C++"=Compiler kompilieren lässt. Dieses
 wird in der Alpaka"=Terminologie \texttt{CpuSerial} genannt und führt jeden
 Befehl sequentiell aus. Während der Kernel"=Ausführung existiert also keinerlei
-Parallelität.
+Parallelität durch CPU"=Threads\footnote{Der Compiler kann den verwendeten
+Algorithmus natürlich trotzdem vektorisieren, zudem existieren noch weitere
+Möglichkeiten der Parallelisierung durch Instruktions"=Level"=Parallelität oder
+Pipelining.}.
 
-\subsection{AXPY und Alpaka}\label{alpaka:ueberblick:axpy}
+\subsection{Alpaka am Beispiel des AXPY-Algorithmus}
+\label{alpaka:ueberblick:axpy}
 
 Zum Zwecke der einfachen Vergleichbarkeit der von SYCL und Alpaka gebotenen
 Programmiermodelle wird das im vorigen Kapitel verwendete AXPY"=Beispiel der
-BLAS"=Bibliothek hier erneut aufgegriffen. Strukturell ähneln sich SYCL und
+BLAS"=Bibliothek hier erneut aufgegriffen (siehe
+Abschnitt~\ref{sycl:ueberblick:axpy} und
+Formel~\ref{sycl:ueberblick:axpy:formel}). Strukturell ähneln sich SYCL und
 Alpaka recht stark, wie der
 Platzhalter"=Quelltext~\ref{alpaka:ueberblick:axpy:struktur} zeigt. Wie im
 vorigen Kapitel wird auch dieser Quelltext nach und nach mit Inhalt gefüllt.
@@ -279,8 +293,9 @@ alpaka::mem::view::copy(queue, devBufY, hostBufY, extent);
 Um die parallelen Eigenschaften der Ziel"=Hardware nutzen zu können, erfordert
 Alpaka eine Information, wie das zu bearbeitende Problem auf die
 Hardware"=Ressourcen aufgeteilt werden soll. Dazu kann der Programmierer eine
-in Alpaka vorhandene Funktion nutzen, die eine gute Aufteilung schätzen kann,
-oder selbst Definitionen für die Größe des \textit{Grids}, die Zahl der
+in Alpaka vorhandene Funktion nutzen, die eine valide Aufteilung vornehmen kann,
+indem sie die maximal mögliche \textit{Block}"=Größe bestimmt. Der Programmierer
+kann auch selbst Definitionen für die Größe des \textit{Grids}, die Zahl der
 \textit{Threads} sowie der \textit{Elements} pro \textit{Thread} angeben. Die
 Aufteilung in \textit{Grid}, \textit{Threads} und \textit{Elements} ist ein
 Konzept der in Alpaka verwendeten Hardware"=Abstraktion und wird detailliert in
@@ -302,8 +317,8 @@ auto workDiv = alpaka::workdiv::getValidWorkDiv<Acc>(
 Alpaka"=Kernel werden in Form von C++"=Funktoren -- das heißt Strukturen mit
 einem überladenen \texttt{()}"=Operator -- definiert. Der \texttt{()}"=Operator
 wird mit einem speziellen Funktionsattribut versehen (\texttt{ALPAKA\_FN\_ACC}),
-der im Hintergrund dafür sorgt, dass diese Funktion für das \textit{Device} und
-nicht den \textit{Host} kompiliert wird.
+der im Hintergrund dafür sorgt, dass diese Funktion für das \textit{Device}
+kompiliert wird.
 
 Als Parameter nimmt der Kernel zunächst die oben definierte
 \texttt{devAcc}"=Instanz entgegen. Dies ist nötig, um von dieser Struktur
@@ -486,15 +501,22 @@ außerdem die Methoden für die Fehlerbehandlung und das Profiling relevant.
 \subsection{Hardware"=Abstraktion}
 \label{alpaka:konzepte:abstraktion}
 
-Alpakas Hardware"=Abstraktion trägt den Namen \textit{Redundant Hierarchical
-Parallelism}\cite[vgl.][22]{worpitz2015}. Sie basiert auf dem Prinzip der
-Datenparallelität, das heißt der Idee, dass dieselbe Operation parallel auf
-verschiedene, gleichartige Daten angewendet werden kann. Ein triviales Beispiel
-für einen datenparallelen Algorithmus ist die in diesem Kapitel als Einführung
-verwendete AXPY"=Methode: sie führt dieselbe Operation für alle Elemente der
-Vektoren $\vec{x}$ und $\vec{y}$ durch. Die im Folgenden erläuterten Konzepte
-wurden stark durch die in CUDA und OpenCL vorhandenen Abstraktionen beeinflusst
-\cite[vgl.][17]{worpitz2015}.
+Alpakas Hardware"=Abstraktion basiert auf dem Prinzip der Datenparallelität, das
+heißt der Idee, dass dieselbe Operation parallel auf verschiedene, gleichartige
+Daten angewendet werden kann. Ein triviales Beispiel für einen datenparallelen
+Algorithmus ist die in diesem Kapitel als Einführung verwendete AXPY"=Methode:
+sie führt dieselbe Operation für alle Elemente der Vektoren $\vec{x}$ und
+$\vec{y}$ der Formel~\ref{sycl:ueberblick:axpy:formel} durch. Die im Folgenden
+erläuterten Konzepte wurden stark durch die in CUDA und OpenCL vorhandenen
+Abstraktionen beeinflusst \cite[vgl.][17]{worpitz2015}.
+
+Die Konzepte sind hierarchisch und redundant aufgebaut: sofern eine Ebene der
+Abstraktionshierarchie von der konkreten Hardware bzw. dem zugehörigen
+Programmier"=Interface nicht unterstützt wird, lässt sich die betreffende Ebene
+emulieren oder sogar ganz ignorieren. Dadurch ist es möglich, einen
+Alpaka"=Kernel optimal auf die von Alpaka unterstützten Beschleuniger
+abzubilden. Daher wird Alpakas Hardware"=Abstraktion als \textit{Redundant
+Hierarchical Parallelism} bezeichnet. \cite[vgl.][22]{worpitz2015}
 
 \subsubsection{Grid und Threads}
 
@@ -507,7 +529,7 @@ lediglich eine Befehlssequenz, die den gewünschten Algorithmus auf ein einzelne
 Datenelement anwendet \cite[vgl.][17]{worpitz2015}. Konzeptionell entspricht
 ein \textit{Thread} also einem \textit{work"=item} aus SYCL und OpenCL. Die
 Menge aller \textit{Threads} bildet ein $n$"=dimensionales Gitter
-(engl. \textit{Grid}). Dieses ist damit mit der aus SYCL und OpenCL bekannten
+(engl. \textit{Grid}). Dieses ist mit der aus SYCL und OpenCL bekannten
 \textit{NDRange} vergleichbar.
 
 Da manche Algorithmen die Kommunikation zwischen \textit{Threads} erfordern,
@@ -653,7 +675,7 @@ Zu diesem Zweck verwendet Alpaka eine weitere Ebene innerhalb der
 Abstraktionshierarchie, die \textit{Blocks}. Diese sind zwischen der
 \textit{Thread}"= und \textit{Grid}"=Ebene angesiedelt, wobei ein \textit{Block}
 eine Teilmenge der \textit{Threads} vereinigt. Das \textit{Grid} wird dabei
-gleichmäßig auf die \textit{Blocks} aufgeteilt, sodass alle \textit{Block}
+gleichmäßig auf die \textit{Blocks} aufgeteilt, sodass alle \textit{Blocks}
 gleich groß sind. Konzeptionell entspricht ein \textit{Block} damit einer
 SYCL"=\textit{work"=group}. Die schnelle Kommunikation und Synchronisation der
 \textit{Threads} sind ausschließlich über einen \textit{block}"=internen kleinen
@@ -664,6 +686,13 @@ Abbildung~\ref{alpaka:konzepte:abstraktion:blocks:gridblockhw} dargestellt.
 Diese erlaubt die \textit{block}"=interne Kommunikation, muss jedoch keine
 Fähigkeiten für die Kommunikation bzw. Synchronisation zwischen \textit{Blocks}
 besitzen.
+
+Über die \textit{Blocks} lässt sich das CUDA"=Prinzip der \textit{transparent
+scalability} umsetzen. Damit lässt sich dasselbe \textit{Grid}, das aus einer
+festen Menge von \textit{Blocks} besteht, z.B. auf einer GPU mit zwei
+Multiprozessoren oder auf einer GPU mit acht Multiprozessoren zur Ausführung
+bringen: der Scheduler der GPU verteilt die Blocks auf die freien
+Multiprozessoren, wodurch der Kernel selbst skalierbar wird.
 
 \begin{figure}
     \centering
@@ -841,11 +870,16 @@ besitzen.
 
 Auf einigen Hardware"=Plattformen können \textit{Thread}"=Gruppen innerhalb
 eines \textit{Blocks} taktgenau gemeinsam ausgeführt werden. Diese Gruppen
-werden in der Alpaka"=Hierarchie mit dem CUDA"=Begriff \textit{Warp} bezeichnet.
-Das \textit{Warp}"=Konzept findet sich beispielsweise auf GPUs, deren
-Multiprozessoren \textit{Threads} in \textit{Warp}"=Form ausführen. Dadurch
-können sich \textit{Threads} Hardware"=Ressourcen teilen, was die benötigte
-Chipfläche verkleinert. Die
+werden in der Alpaka"=Hierarchie mit dem \mbox{CUDA}"=Begriff \textit{Warp}
+bezeichnet. Das \textit{Warp}"=Konzept findet sich beispielsweise auf GPUs,
+deren Multiprozessoren \textit{Threads} in \textit{Warp}"=Form ausführen.
+Dadurch können sich \textit{Threads} Hardware"=Ressourcen teilen, was die
+benötigte Chipfläche verkleinert.
+
+Das \textit{Warp}"=Konzept ähnelt prinzipiell dem SIMD"=Konzept, unterscheidet
+sich jedoch stellenweise davon. So können die \textit{Threads} innerhalb eines
+\textit{Warps} auch verschiedene Pfade einer Verzweigung durchlaufen, was bei
+einem SIMD"=Register einer CPU nicht so einfach möglich ist. Die
 Abbildung~\ref{alpaka:konzepte:abstraktion:warps:warphw} zeigt einen
 theoretischen Prozessor, der in der Lage ist, das Abstraktionskonzept aus
 \textit{Grid}, \textit{Blocks}, \textit{Warps} und \textit{Threads} auszuführen.
@@ -1083,8 +1117,10 @@ genauere Anpassung auf die Ziel"=Hardware. Die Idee, jeden \textit{Thread} genau
 ein Datum bearbeiten zu lassen, ist nicht immer der optimale Weg. So kann es
 beispielsweise sinnvoll sein, auf CPU"=Beschleunigern mehrere Daten pro
 \textit{Thread} innerhalb kurzer Schleifen zu verarbeiten. Dadurch können gute
-Compiler selbstständig von Vektorregistern der CPU Gebrauch machen, alternativ
-kann der Programmierer dies auch explizit selbst tun.
+Compiler selbstständig von Vektorregistern der CPU Gebrauch machen. Alternativ
+kann der Programmierer dies auch über alpaka"=fremde befehlssatzspezifische
+Compiler"=Intrinsiken explizit selbst tun, gibt dadurch aber die Portabilität
+auf.
 
 Die \textit{Element}"=Ebene ist die unterste Ebene der
 Alpaka"=Abstraktionshierarchie. Dadurch ergibt sich die Gesamthierarchie, wie
@@ -1120,7 +1156,7 @@ dargestellt ist.
 
 Im Gegensatz zu SYCL verfügt Alpaka nicht über ein System, um automatisch
 Abhängigkeiten zwischen Kerneln zu verwalten. Stattdessen ist es Aufgabe des
-Programmierers, Alpaka"=\textit{Events}zur Synchronisierung zwischen Kerneln zu
+Programmierers, Alpaka"=\textit{Events} zur Synchronisierung zwischen Kerneln zu
 verwenden. Dies ist nötig, da Operationen (Kopien, Kernel, \ldots) in derselben
 \textit{Queue} zwar sequentiell in der Reihenfolge ihrer Einreihung
 abgearbeitet werden, in verschiedenen \textit{Queues} dagegen zueinander
@@ -1162,9 +1198,11 @@ Wurde eine Operation vollständig durchgeführt, so wird das nachfolgende
 \textit{Host} können dadurch auf dieses \textit{Event} warten, bevor sie ihre
 eigenen Aufgaben fortsetzen.
 
-Der im vorigen Abschnitt (Abschnitt~\ref{sycl:konzepte:abhaengigkeiten})
-Beispiel"=Aufgabengraph erfordert demnach mehr Aufwand als das SYCL"=Äquivalent,
-wie der Quelltext~\ref{alpaka:konzepte:abhaengigkeiten:src} zeigt.
+Der in Abschnitt~\ref{sycl:konzepte:abhaengigkeiten} eingeführte
+Beispiel"=Aufgabengraph (siehe
+Abbildung~\ref{sycl:konzepte:abhaengigkeiten:graph}) erfordert demnach mehr
+Aufwand als das SYCL"=Äquivalent, wie der
+Quelltext~\ref{alpaka:konzepte:abhaengigkeiten:src} zeigt.
 
 \subsection{Fehlerbehandlung}
 
@@ -1181,14 +1219,53 @@ abgebildet wird, ist dies auch nicht nötig -- dem Programmierer stehen so die
 vom jeweiligen Hardware"=Hersteller mitgelieferten Profiling"=Werkzeuge zur
 Verfügung. So lässt sich beispielsweise der CUDA"=Profiler \texttt{nvprof} für
 das Profiling eines mit Alpaka auf NVIDIA"=Hardware portierten Programms
-verwenden, was mit den für NVIDIA"=GPUs existierenden SYCL"=Implementierungen
-nicht möglich ist.
+verwenden. Das ist mit den für NVIDIA"=GPUs existierenden
+SYCL"=Implementierungen nicht möglich, da NVIDIA seit der CUDA"=Version 8.0 die
+Unterstützung für das Profiling OpenCL"=basierter Anwendungen eingestellt hat.
+
+Es ist in Alpaka dagegen noch nicht möglich, quelltextseitige Annotationen für
+Profiler zu verwenden. Diese sind profilerspezifisch und werden von Alpaka noch
+nicht abstrahiert.
 
 \subsection{Zusammenfassung}
 
 Die Abbildung~\ref{alpaka:konzepte:zusammenfassung:struktur} zeigt den
-konzeptionellen Aufbau der Alpaka"=Bibliothek. Das nächste Kapitel wird zeigen,
-wie die einzelnen Bestandteile mit SYCL implementiert wurden.
+konzeptionellen Aufbau der Alpaka"=Bibliothek. Die in der Kategorie
+\textit{Konzept} aufgeführten Bestandteile bilden Schnittstellen nach außen, die
+von den Backends implementiert werden müssen. In den helleren Farbtönen sind
+Teilkonzepte dargestellt, die ebenfalls backend"=spezifisch sind.
+
+Die Konzepte \textit{Device Manager} und \textit{Device} bilden die
+\textit{Device}"=Verwaltung der Alpaka"=Bibliothek. Dabei übernimmt der
+\textit{Device Manager} die Verwaltung der im System vorhandenen
+\textit{Devices}, während das \textit{Device} einen konkreten Beschleuniger
+abstrahiert.
+
+Das \textit{Queue}"=Konzept bildet die Verbindung zwischen \textit{Host} und
+\textit{Device}. In Kombination mit dem \textit{Event}"=Konzept wird es auch
+zur Verwaltung der \textit{Kernel}"=Abhängigkeiten verwendet.
+
+\textit{Device}, \textit{Queue} und \textit{Event} müssen darüber hinaus alle
+das Teilkonzept \textit{Waitable} erfüllen. Das heißt, dass sie zur
+\textit{host}"=seitigen Synchronisierung geeignet sind.
+
+Das \textit{Buffer}"=Konzept abstrahiert den verwendeten Speicher. Über das
+Teilkonzept \textit{View} und dessen Teilkonzepte lässt sich direkt auf den
+gekapselten Zeiger zugreifen.
+
+Das \textit{Task}"=Konzept ist ein Oberbegriff für \textit{device}"=seitige
+Operationen, die vom \textit{Host} an die \textit{Queue} übergeben werden. Bei
+einem \textit{Task} handelt es sich um die Verbindung einer Anweisung oder eines
+Algorithmus (z.B. Kopieren, \texttt{memset}, \textit{Kernel}) mit konkreten
+Daten, auf denen die Anweisung ausgeführt werden soll.
+
+Das Konzept \textit{Accelerator} stellt dem Nutzer eine Reihe
+\textit{device}"=seitiger Funktionen zur Verfügung. Dazu zählen unter anderem
+Funktionen zur Orientierung innerhalb des \textit{Grid}, mathematische und
+atomare Funktionen oder Funktionalität für die Generierung von Zufallszahlen.
+
+Das nächste Kapitel wird zeigen, wie diese Konzepte mit SYCL implementiert
+wurden.
 
 \begin{figure}
     \centering
