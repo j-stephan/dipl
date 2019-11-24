@@ -82,6 +82,100 @@ END beh;
 \section{C++"=Quelltexte}
 \label{anhang:source:cpp}
 
+\subsection{Verwendung von SYCL-Ausnahmefehlern}
+\label{anhang:source:cpp:syclexceptions}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+#include <cstdlib>
+#include <CL/sycl.hpp>
+
+class XOCLDeviceSelector : public cl::sycl::device_selector {
+    /* ... */
+};
+
+auto main() -> int
+{
+    try
+    {
+        auto exception_handler = [] (cl::sycl::exception_list exceptions)
+        {
+            for(std::exception_ptr e : exceptions)
+            {
+                try
+                {
+                    std::rethrow_exception(e);
+                }
+                catch(const cl::sycl::exception& err)
+                {
+                    /* Fehlerbehandlung Device */
+                }
+            }
+        };
+
+        // Beschleunigerwahl und Befehlswarteschlange
+        auto queue = cl::sycl::queue{XOCLDeviceSelector{},
+                                     exception_handler};
+
+        /* ... */
+
+        // Synchronisierung und Ausnahmefehler
+        queue.wait_and_throw();
+    }
+    catch(const cl::sycl::exception& err)
+    {
+        /* Fehlerbehandlung Host */
+    }
+
+    return EXIT_SUCCESS;
+}
+    \end{minted}
+    \caption{Verwendung von SYCL"=Ausnahmefehlern}
+\end{code}
+
+\subsection{Verwendung des SYCL"=Profilings}
+\label{anhang:source:cpp:syclprofiling}
+
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+#include <cstdlib>
+#include <CL/sycl.hpp>
+
+class XOCLDeviceSelector : public cl::sycl::device_selector {
+    /* ... */
+};
+
+auto main() -> int
+{
+    // Beschleunigerwahl und Befehlswarteschlange
+    auto queue = cl::sycl::queue{XOCLDeviceSelector{},
+                                 cl::sycl::property::queue::enable_profiling{}};
+
+    // Kernel-Event generieren
+    auto event = queue.submit(/* ... */);
+
+    // Ausführungsstatus abfragen - Rückgabe: submitted, running oder complete
+    auto status =
+        event.get_info<cl::sycl::info::event::command_execution_status>();
+
+    // Synchronisierung
+    queue.wait();
+
+    // Profilinginformationen abfragen - Rückgabe: Zeitpunkt in ns
+    auto start =
+        event.get_profiling_info<
+                            cl::sycl::info::event_profiling::command_start>();
+    auto stop =
+        event.get_profiling_info<cl::sycl::info::event_profiling::command_end>();
+
+    auto duration = stop - start;
+
+    return EXIT_SUCCESS;
+}
+    \end{minted}
+    \caption{Verwendung des SYCL"=Profilings}
+\end{code}
+
 \subsection{Implementierung des TaskKernelSycl-Konstruktors}
 \label{anhang:source:cpp:taskkernelsyclkonst}
 

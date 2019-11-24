@@ -1,20 +1,21 @@
 \chapter{Der SYCL-Standard}\label{sycl}
 
-Die vor einigen Jahren veröffentlichte SYCL"=Spezifikation bietet eine neue
-Möglichkeit, um ein Problem auf algorithmischer Ebene zu formulieren und dann
-über die HLS in eine \gls{fpga}"=Schaltung zu synthetisieren. Eine einfache
-SYCL"=Einführung sowie die für \gls{fpga}s wichtigen Besonderheiten sind daher
-das Thema dieses Kapitels.
+Durch die Xilinx"=Implementierung der vor einigen Jahren veröffentlichten
+SYCL"=Spezifikation gibt es eine weitere Möglichkeit, ein Problem auf
+algorithmischer Ebene zu beschreiben und über die HLS in eine
+\gls{fpga}"=Schaltung zu synthetisieren. Eine einfache SYCL"=Einführung sowie
+die für \gls{fpga}s wichtigen Besonderheiten sind daher das Thema dieses
+Kapitels.
 
 \section{Überblick}\label{sycl:ueberblick}
 
 Mit dem SYCL"=Standard\footnote{Entgegen des optischen Anscheins ist
 \glqq SYCL\grqq\ kein Akronym, sondern ein Eigenname.}\cite[vgl.][]{sycl2019}
 verfolgt die herausgebende Khronos"=Gruppe das Ziel eines abstrakten
-C++"=Programmiermodells für \gls{opencl}, das die Modernität, Flexibilität und
-Einfachheit moderner C++"=Standards bieten soll, während gleichzeitig
-Konzeption und Portabilität des \gls{opencl}"=1.2"=Standards
-\cite[vgl.][]{opencl2012} beibehalten werden.
+C++"=Programmiermodells für \gls{opencl}, das die Flexibilität und Einfachheit
+moderner C++"=Standards bieten soll, während gleichzeitig Konzeption und
+Portabilität des \gls{opencl}"=1.2"=Standards \cite[vgl.][]{opencl2012}
+beibehalten werden.
 
 Von \gls{opencl} erbt SYCL damit den Anspruch, ein einheitliche
 Programmierschnittstelle für verschiedene Beschleunigertypen unterschiedlicher
@@ -42,10 +43,10 @@ geschieht aufgrund der langen Kompilierungszeiten bei \gls{fpga}s), büßen
 dadurch aber ihre Plattformunabhängigkeit ein.
 
 Ein SYCL-Quelltext kennt dagegen keine strikte Trennung zwischen \textit{Host}-
-und \textit{Device}"=Anweisungen. Neben der besseren Analyse des den
-\textit{Kernel} umgebenden Kontexts hat dies den weiteren Vorteil, dass
-\textit{Host} und \textit{Device} Quelltext teilen können, wie etwa den
-beidseitig verwendeter Hilfsfunktionen. Der \textit{Kernel} wird dabei vom
+und \textit{Device}"=Anweisungen, was zu einer besseren Analyse des den
+\textit{Kernel} umgebenden Kontexts führt. Außerdem ergibt sich der weitere
+Vorteil, dass \textit{Host} und \textit{Device} Quelltext teilen können, wie
+z.B.\ beidseitig verwendete Hilfsfunktionen. Der \textit{Kernel} wird dabei vom
 \textit{Device}"=Compiler extrahiert und in eine Form umgewandelt, die von der
 Ziel"=Hardware zur Laufzeit kompiliert oder ausgeführt werden kann.
 \cite[vgl][35]{sycl2019}
@@ -71,20 +72,25 @@ mittelfristig plant; für Intel"=\gls{cpu}s und "=\gls{gpu}s ist bereits eine
 SYCL"=Implementierung verfügbar (der Abschnitt~\ref{sycl:implementierungen}
 befasst sich mit allen verfügbaren Implementierungen).
 
-\subsection{AXPY und SYCL}\label{sycl:ueberblick:saxpy}
+\subsection{SYCL am Beispiel des AXPY-Algorithmus}
+\label{sycl:ueberblick:axpy}
 
 Ein im Bereich der Programmierung häufig verwendetes einführendes Beispiel
 ist der sogenannte AXPY"=Algorithmus, der ursprünglich aus der Bibliothek
 \gls{blas} stammt \cite[vgl.][]{lawson1979}. Dieser führt die Berechnung
-\[\vec{y} = a \cdot \vec{x} + \vec{y}\]
+
+\begin{equation}\label{sycl:ueberblick:axpy:formel}
+    \vec{y} = a \cdot \vec{x} + \vec{y}
+\end{equation}
+
 aus und ist aufgrund seiner Einfachheit und hohen erreichbaren Parallelität
 (sofern $\vec{x}$ und $\vec{y}$ viele Elemente enthalten) sehr beliebt.
 
-AXPY lässt sich auch für eine Einführung in SYCL gut verwenden und wird daher in
-den folgenden Abschnitten als illustrierendes Beispiel genutzt.
+AXPY lässt sich für eine Einführung in SYCL gut verwenden und wird daher in den
+folgenden Abschnitten als illustrierendes Beispiel genutzt.
 
 Ein SYCL"=Programm lässt sich in mehrere aufeinander aufbauende Stufen
-unterteilen, wie in Quelltext~\ref{sycl:ueberblick:saxpy:struktur} zu sehen ist.
+unterteilen, wie in Quelltext~\ref{sycl:ueberblick:axpy:struktur} zu sehen ist.
 Die einzelnen Platzhalter im Quelltext werden in den nächsten Abschnitten mit
 Inhalt gefüllt.
 
@@ -108,23 +114,24 @@ auto main() -> int
 }
     \end{minted}
     \caption{Struktur eines SYCL-Programms}
-    \label{sycl:ueberblick:saxpy:struktur}
+    \label{sycl:ueberblick:axpy:struktur}
 \end{code}
 
 \subsubsection{Beschleunigerwahl und Befehlswarteschlange}
-\label{sycl:ueberblick:saxpy:queue}
+\label{sycl:ueberblick:axpy:queue}
 
 Von \gls{opencl} erbt SYCL die Plattformunabhängigkeit. Es wird das
 Vorhandensein mindestens einer \gls{opencl}"=Plattform auf dem System
-angenommen\footnote{Aber nicht vorausgesetzt! Jede SYCL"=Implementierung muss
-auch ohne eine OpenCL"=Plattform auf dem Host lauffähig sein.}, was im
-Umkehrschluss bedeutet, dass unter Umständen zwischen mehreren verschiedenen
-Plattformen konkurrierender Hersteller gewählt werden muss. 
+angenommen\footnote{Diese wird aber nicht vorausgesetzt! Jede
+SYCL"=Implementierung muss auch ohne eine OpenCL"=Plattform auf dem Host
+lauffähig sein.}, was im Umkehrschluss bedeutet, dass unter Umständen zwischen
+mehreren verschiedenen Plattformen konkurrierender Hersteller gewählt werden
+muss. 
 
 Die SYCL"=Spezifikation bietet dem Programmierer mehrere Möglichkeiten, die
 gewünschte Plattform für sein Programm auszuwählen. Der einfachste Ansatz
-besteht darin, eine Befehlswarteschlange (die \texttt{queue} genannt wird) für
-einen Beschleuniger zu konstruieren. Über die Befehlswarteschlange erfolgt die
+besteht darin, eine Befehlswarteschlange (die \textit{Queue} genannt wird) für
+einen Beschleuniger zu konstruieren. Über die \textit{Queue} erfolgt die
 Kommunikation zwischen dem \textit{Host} und einem \textit{Device}, also
 Kopieroperationen, das Starten eines \textit{Kernels} sowie die
 Synchronisierung. Letztere ist notwendig, da es sich bei dem \textit{Device}
@@ -132,9 +139,9 @@ um eine vom \textit{Host} weitestgehend unabhängige Hardware handelt, die
 Operationen also (aus Sicht des \textit{Hosts}) asynchron ablaufen.
 
 Jedes genutzte \textit{Device} erhält in SYCL mindestens eine eigene
-\texttt{queue}, so dass auch die Nutzung mehrerer Beschleuniger möglich ist.
+\textit{Queue}, so dass auch die Nutzung mehrerer Beschleuniger möglich ist.
 
-Eine \texttt{queue} kann durch das Übergeben eines Auswahlkriteriums für das
+Eine \textit{Queue} kann durch das Übergeben eines Auswahlkriteriums für das
 gewünschte \textit{Device} konstruiert werden. Die Auswahlkriterien werden in
 der SYCL"=Spezifikation \texttt{device\_selector} genannt. Neben den in der
 Spezifikation vorhandenen Kriterien (beispielsweise \texttt{cpu\_selector},
@@ -143,9 +150,9 @@ Programmierer selbst möglich, durch das Erben von der Elternklasse
 \texttt{device\_selector} eigene Kriterien zu definieren. Beispielsweise findet
 sich in den Testfällen der von Xilinx entwickelten SYCL"=Implementierung ein
 \texttt{device\_selector} für die eigenen Geräte, der die \gls{fpga}s über den
-Firmennamen findet. Mit dessen Hilfe lässt sich die Befehlswarteschlange für
-einen Xilinx"=FPGA wie in Quelltext~\ref{sycl:ueberblick:saxpy:queue:src}
-dargestellt erzeugen.
+Firmennamen findet. Mit dessen Hilfe lässt sich die \textit{Queue} für ein
+Xilinx"=FPGA wie in Quelltext~\ref{sycl:ueberblick:axpy:queue:src} dargestellt
+erzeugen.
 %
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -163,8 +170,8 @@ class XOCLDeviceSelector : public cl::sycl::device_selector {
 auto queue = cl::sycl::queue{XOCLDeviceSelector{}};
     \end{minted}
     \caption{Auswahl eines Xilinx"=FPGAs und Erzeugung einer zugehörigen
-             Befehlswarteschlange}
-    \label{sycl:ueberblick:saxpy:queue:src}
+             \textit{Queue}}
+    \label{sycl:ueberblick:axpy:queue:src}
 \end{code}
 %
 \noindent
@@ -177,13 +184,13 @@ Fundament der gewählten Plattform erzeugt der Programmierer im nächsten Schrit
 einen SYCL"=Kontext (der einen \gls{opencl}"=Kontext kapselt). Der Kontext
 stellt wiederum eine Liste aller \textit{Devices} der Plattform bereit, aus der
 ein oder mehrere Beschleuniger ausgesucht werden können. Die Auswahl dient dann
-als Parameter für die Erzeugung einer SYCL"=Befehlswarteschlange. In jedem
-der genannten Schritte stehen dem Programmierer zahlreiche Informationen über
-die jeweilige Klasse zur Verfügung (Hersteller der Plattform oder des
+als Parameter für die Erzeugung einer SYCL"=\textit{Queue}. In jedem der
+genannten Schritte stehen dem Programmierer zahlreiche Informationen über die
+jeweilige Klasse zur Verfügung (Hersteller der Plattform oder des
 Beschleunigers, Hardware"=Eigenschaften, verfügbare Erweiterungen, usw.), die
 eine Verfeinerung der Auswahl erlauben.
 
-Der Quelltext~\ref{sycl:ueberblick:saxpy:queue:ausfuehrlich} zeigt das
+Der Quelltext~\ref{sycl:ueberblick:axpy:queue:ausfuehrlich} zeigt das
 ausführliche Schema, in den folgenden Abschnitten wird jedoch die oben gezeigte,
 einfachere und kürzere Variante verwendet.
 
@@ -199,14 +206,15 @@ auto my_device = /* ... */;
 
 auto queue = cl::sycl::queue{my_device};
     \end{minted}
-    \caption{Ausführliche Beschleunigerwahl und Befehlswarteschlangen"=Konstruktion}
-    \label{sycl:ueberblick:saxpy:queue:ausfuehrlich}
+    \caption{Ausführliche Beschleunigerwahl und \textit{Queue}"=Konstruktion}
+    \label{sycl:ueberblick:axpy:queue:ausfuehrlich}
 \end{code}
 
 \subsubsection{Speicherreservierung und -initialisierung}
-\label{sycl:ueberblick:saxpy:buffer}
+\label{sycl:ueberblick:axpy:buffer}
 
-Für die Vektoren $\vec{x}$ und $\vec{y}$ ist eine Speicherreservierung auf dem
+Für die Vektoren $\vec{x}$ und $\vec{y}$ der
+Formel~\ref{sycl:ueberblick:axpy:formel} ist eine Speicherreservierung auf dem
 \textit{Device} sowie die Initialisierung des reservierten Speichers notwendig
 (die Konstante $a$ kann als einfacher Parameter übergeben werden). SYCL stellt
 dafür zwei Klassen bereit:
@@ -256,7 +264,7 @@ SYCL unterscheidet sechs verschiedene Zugriffstypen:
 \end{itemize}
 
 Für das AXPY"=Beispiel lassen sich die benötigten Felder wie in
-Quelltext~\ref{sycl:ueberblick:saxpy:buffer:src} dargestellt anlegen und
+Quelltext~\ref{sycl:ueberblick:axpy:buffer:src} dargestellt anlegen und
 initialisieren.
 %
 \begin{code}
@@ -280,21 +288,21 @@ for(auto i = 0; i < 1024; ++i)
 }
     \end{minted}
     \caption{Speicherreservierung und -initialisierung in SYCL}
-    \label{sycl:ueberblick:saxpy:buffer:src}
+    \label{sycl:ueberblick:axpy:buffer:src}
 \end{code}
 
 \subsubsection{Kerneldefinition und -ausführung}
-\label{sycl:ueberblick:saxpy:kernel}
+\label{sycl:ueberblick:axpy:kernel}
 
 Im nächsten Schritt wird der eigentliche Kernel definiert und ausgeführt. Ein
 SYCL"=Kernel besteht aus zwei Teilen: der eigentlichen Kernel"=Funktion, also
 der Abbildung des Algorithmus auf SYCL"=C++"=Quelltext, sowie den Abhängigkeiten
 (in Form von \texttt{accessor}"=Variablen). Kernel"=Funktion und Abhängigkeiten
 bilden gemeinsam eine \textit{command group} und werden in dieser Form an die
-\texttt{queue} zur Ausführung übergeben. Dabei kann jede \textit{command group}
+\textit{Queue} zur Ausführung übergeben. Dabei kann jede \textit{command group}
 nur genau eine Kernel"=Funktion (oder explizite Kopieroperation) enthalten. Es
 bildet sich damit für das AXPY"=Beispiel das in
-Quelltext~\ref{sycl:ueberblick:saxpy:kernel:cg} gezeigte Grundgerüst einer
+Quelltext~\ref{sycl:ueberblick:axpy:kernel:cg} gezeigte Grundgerüst einer
 \textit{command group}, welche in diesem Fall als C++"=Lambdafunktion notiert
 wird.
 
@@ -309,7 +317,7 @@ wird.
 }
     \end{minted}
     \caption{Struktur einer \textit{command group}}
-    \label{sycl:ueberblick:saxpy:kernel:cg}
+    \label{sycl:ueberblick:axpy:kernel:cg}
 \end{code}
 
 SYCL bietet für verschiedene Anwendungsfälle unterschiedliche Methoden für den
@@ -318,9 +326,9 @@ allem der Aufruf mittels der Methode \texttt{parallel\_for} an. Diese
 entspricht dem aus \gls{opencl} bekannten \textit{NDRange}"=Kernel und nutzt die
 SIMD"=Eigenschaften der zur Verfügung stehenden Beschleuniger. Auf CPUs können
 so durch einen Aufruf mehrere Kerne und deren SIMD"=Register genutzt werden oder
-auf einer GPU die Multiprozessoren und SIMD"=Einheiten. Auf einem FPGA kann
-durch \texttt{parallel\_for} ebenfalls eine SIMD"=Schaltung synthetisiert
-werden. 
+auf einer GPU die Multiprozessoren und SIMD"=Einheiten. Durch
+\texttt{parallel\_for} kann auf einem FPGA ebenfalls eine SIMD"=Schaltung
+synthetisiert werden. 
 
 Für aufgabenparallele Algorithmen steht in SYCL der Aufruf \texttt{single\_task}
 zur Verfügung, was einem \textit{Task}"=Kernel in \gls{opencl} entspricht.
@@ -329,14 +337,14 @@ Kernel dieses Typs lassen sich dann parallel auf den vorhandenen Kernen
 ausführen.
 
 Für das AXPY"=Beispiel bietet sich der datenparallele Fall an, weshalb die
-Kernel"=Funktion wie in Quelltext~\ref{sycl:ueberblick:saxpy:kernel:call}
-gezeigt aufgerufen wird. Die \num{1024} Elemente der Vektoren werden dabei als
-Arbeitsgröße mit übergeben. Die SYCL"=Laufzeitumgebung generiert daraus einen
-Ausführungsraum mit \num{1024} \textit{work-items}, einer Abstraktion der
-zugrundeliegenden Hardware"=Features (SIMD"=Register, Threads, usw.). Der Index
-des jeweiligen \textit{work-items} wird als Parameter an die Kernel"=Funktion
-übergeben und kapselt einen Index, der für den Zugriff auf ein Element im
-Speicher verwendet werden kann. 
+Kernel"=Funktion mittels \texttt{parallel\_for} aufgerufen wird (siehe
+Quelltext~\ref{sycl:ueberblick:axpy:kernel:call}). Die \num{1024} Elemente der
+Vektoren werden dabei als Arbeitsgröße mit übergeben. Die SYCL"=Laufzeitumgebung
+generiert daraus einen Ausführungsraum mit \num{1024} \textit{work-items}, einer
+Abstraktion der zugrundeliegenden Hardware"=Features (SIMD"=Register, Threads,
+usw.). Das jeweilige \textit{work-item} wird als Parameter an die
+Kernel"=Funktion übergeben. Es kapselt unter anderem einen Index, der für den
+Zugriff auf ein Element im Speicher verwendet werden kann. 
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -354,19 +362,19 @@ Speicher verwendet werden kann.
 }
     \end{minted}
     \caption{Struktur einer \textit{command group} mit Kernel"=Aufruf}
-    \label{sycl:ueberblick:saxpy:kernel:call}
+    \label{sycl:ueberblick:axpy:kernel:call}
 \end{code}
 
 \subsubsection{Synchronisierung}
-\label{sycl:ueberblick:saxpy:sync}
+\label{sycl:ueberblick:axpy:sync}
 
-Nachdem der Kernel an die Befehlswarteschlange übergeben wurde, muss das
-Ergebnis überprüft werden. Um darauf zugreifen zu können, ist zunächst die
+Nachdem der Kernel an die \textit{Queue} übergeben wurde, muss das Ergebnis
+berprüft werden. Um darauf zugreifen zu können, ist zunächst die
 Synchronisierung von \textit{Host} und \textit{Device} erforderlich, da beide
-asynchron zueinander arbeiten. Die \texttt{queue} verfügt jedoch über die
+asynchron zueinander arbeiten. Die \textit{Queue} verfügt jedoch über die
 Methode \texttt{wait}, die den \textit{Host} so lange warten lässt, bis alle bis
 zu diesem Zeitpunkt eingereihten Befehle abgearbeitet wurden. Dies ist in
-Quelltext~\ref{sycl:ueberblick:saxpy:sync:wait} dargestellt. Anschließend
+Quelltext~\ref{sycl:ueberblick:axpy:sync:wait} dargestellt. Anschließend
 lassen sich die Elemente des Vektors $\vec{y}$ auf der \textit{Host}"=Seite
 über den während der Initialisierung der Puffer angelegten \texttt{accessor}
 überprüfen.
@@ -376,15 +384,15 @@ lassen sich die Elemente des Vektors $\vec{y}$ auf der \textit{Host}"=Seite
 queue.wait();
     \end{minted}
     \caption{Struktur einer \textit{command group} mit Kernel"=Aufruf}
-    \label{sycl:ueberblick:saxpy:sync:wait}
+    \label{sycl:ueberblick:axpy:sync:wait}
 \end{code}
 
 \subsubsection{Zusammenfassung}
-\label{sycl:ueberblick:saxpy:zusammenfassung}
+\label{sycl:ueberblick:axpy:zusammenfassung}
 
 Das gesamte SYCL"=AXPY"=Beispiel findet sich in
-Quelltext~\ref{sycl:ueberblick:saxpy:zusammenfassung:code}, einschließlich
-einiger kleinerer, in den vorigen Abschnitten ausgelassener, Details.
+Quelltext~\ref{sycl:ueberblick:axpy:zusammenfassung:code}, einschließlich
+einiger unwesentlicher in den vorigen Abschnitten ausgelassener Details.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -438,11 +446,13 @@ auto main() -> int {
     // Synchronisierung
     queue.wait();
 
+    // Zugriff auf h_acc_x und h_acc_y ab hier wieder möglich
+
     return EXIT_SUCCESS;
 }
     \end{minted}
     \caption{AXPY -- vollständiges SYCL"=Beispiel}
-    \label{sycl:ueberblick:saxpy:zusammenfassung:code}
+    \label{sycl:ueberblick:axpy:zusammenfassung:code}
 \end{code}
 
 \section{Weiterführende Konzepte}\label{sycl:konzepte}
@@ -578,12 +588,12 @@ Modell.
     \label{sycl:konzepte:abstraktion:plattform}
 \end{figure}
 
-Um die Parallelität mehrerer CUs nutzen zu können, ist es sinnvoll, die Arbeit
-des Kernels aufzuteilen. Bei acht verfügbaren CUs wäre es daher wünschenswert,
-die Berechnungen in mindestens acht Blöcken (oder einem Vielfachen davon)
-parallel durchzuführen. Diese Aufteilung wird in \gls{opencl} und SYCL
-\textit{work"=group} genannt. \textit{Work"=groups} werden durch ihre Zuordnung
-zu unterschiedlichen CUs asynchron zueinander ausgeführt und eine
+Um die Parallelität mehrerer CUs nutzen zu können, ist es erforderlich, die
+Arbeit des Kernels aufzuteilen. Bei acht verfügbaren CUs wäre es daher
+wünschenswert, die Berechnungen in mindestens acht Blöcken (oder einem
+Vielfachen davon) parallel durchzuführen. Diese Aufteilung wird in \gls{opencl}
+und SYCL \textit{work"=group} genannt. \textit{Work"=groups} werden durch ihre
+Zuordnung zu unterschiedlichen CUs asynchron zueinander ausgeführt und eine
 Synchronisierung der Gruppen ist nicht ohne weiteres möglich.
 
 Eine \textit{work"=group} besteht aus mindestens einem \textit{work"=item},
@@ -592,7 +602,9 @@ festlegen kann. Ein \textit{work"=item} wird während der Ausführung einem PE
 zugeteilt. \textit{Work"=items} werden zueinander asynchron ausgeführt, lassen
 sich jedoch über Funktionen der gemeinsamen \textit{work"=group}
 synchronisieren. Es ist jedoch nicht möglich, \textit{work"=items} verschiedener
-\textit{work"=groups} zu synchronisieren.
+\textit{work"=groups} direkt über das SYCL"=Interface zu synchronisieren. Diese
+können nur über den globalen Speicher oder über atomare Funktionen miteinander
+kommunizieren.
 
 Durch diese Hardware"=Abstraktion wird aus Sicht der Programmierers ein
 Indexraum aufgespannt -- in OpenCL und SYCL \textit{NDRange} genannt --, in dem
@@ -770,30 +782,32 @@ mehrdimensionale Algorithmen auf diese Weise einfach implementieren.
 
 Im Unterschied zu \gls{opencl} kann bei SYCL die Angabe der Aufteilung in
 \textit{work"=groups} und \textit{work"=items} entfallen, lediglich die
-Gesamtzahl der \textit{work"=items} muss angegeben werden. In diesem Fall ist
-es Aufgabe der SYCL"=Implementierung, die Zahl der nötigen \textit{work"=groups}
-zu bestimmen sowie die Zuordnung der \textit{work"=items} durchzuführen. Dadurch
-verliert der Programmierer jedoch die Möglichkeit, gruppenweite Operationen
-durchzuführen, wie z.B. die Synchronisierung innerhalb der \textit{work"=group}.
+Gesamtzahl der \textit{work"=items} muss immer angegeben werden. Sofern der
+Programmierer darauf verzichtet, die Größe der \textit{work"=groups} selbst
+festzulegen, ist es Aufgabe der SYCL"=Implementierung, die Zahl der nötigen
+\textit{work"=groups} zu bestimmen und die Zuordnung der \textit{work"=items}
+durchzuführen. Mit dieser Entscheidung verliert der Programmierer jedoch die
+Möglichkeit, gruppenweite Operationen durchzuführen, wie z.B. die
+Synchronisierung innerhalb der \textit{work"=group}.
 
 \subsection{Abhängigkeiten zwischen Kerneln}
 \label{sycl:konzepte:abhaengigkeiten}
 
 Alle \textit{command groups}, die der Programmierer in eine
-SYCL"=\texttt{queue} einreiht, werden grundsätzlich asynchron ausgeführt, sofern
+SYCL"=\textit{Queue} einreiht, werden grundsätzlich asynchron ausgeführt, sofern
 keine Abhängigkeiten zueinander bestehen. Vorhandene Abhängigkeiten werden über
 die von den Kerneln verwendeten Puffer durch die SYCL"=Laufzeitumgebung
 automatisch erkannt und die Kernel in der richtigen Reihenfolge ausgeführt
 \cite[vgl.][21--23]{sycl2019}. In diesem Aspekt unterscheidet sich SYCL von
-\gls{opencl}, das neben vollständig seriellen Warteschlangen nur asynchrone
-Warteschlangen kennt, bei denen die richtige Sortierung der Kernel Aufgabe des
+\gls{opencl}, das neben vollständig seriellen \textit{Queues} nur asynchrone
+\textit{Queues} kennt, bei denen die richtige Sortierung der Kernel Aufgabe des
 Programmierers ist. Wichtig ist außerdem, dass die Abhängigkeiten über die
 Puffer"=Verfügbarkeit ermittelt werden -- und nicht über das Ende der Kernel
 \cite[vgl.][166]{sycl2019}.
 
 Graphisch lässt sich dies in Form eines gerichteten Graphen veranschaulichen,
 wie für einen einfachen Fall in
-Abbildung~\ref{sycl:konzepte:abhaengigkeiten:graph}gezeigt. Im Beispiel hängen
+Abbildung~\ref{sycl:konzepte:abhaengigkeiten:graph} gezeigt. Im Beispiel hängen
 die \textit{command groups} B und C von der \textit{command group} A ab, sind
 jedoch voneinander unabhängig. Dadurch müssen sie beide auf das Ende von A
 warten, können danach jedoch parallel ausgeführt werden. Die
@@ -801,7 +815,7 @@ warten, können danach jedoch parallel ausgeführt werden. Die
 Ergebnisse und wartet daher auf deren Ende.
 
 Quelltext~\ref{sycl:konzepte:abhaengigkeiten:src} zeigt die dem Graphen
-entsprechende Verwendung einer SYCL"=\texttt{queue}. Wie man leicht sieht, ist
+entsprechende Verwendung einer SYCL"=\textit{Queue}. Wie man leicht sieht, ist
 der Aufwand hinsichtlich der Abhängigkeitsverwaltung für den Programmierer sehr
 gering.
 
@@ -839,109 +853,20 @@ SYCL übernimmt das System der Ausnahmefehler (engl. \textit{exceptions}) aus
 der C++"=Standardbibliothek. Das Fehlersystem ist in SYCL asynchron:
 grundsätzlich werden nur (synchrone) Fehler der Host"=Seite ausgegeben, während
 auf der Device"=Seite aufgetretene Fehler ignoriert werden. Das Abfangen der
-Device"=Fehler erfordert einen weiteren Parameter für die \texttt{queue}. Dieser
+Device"=Fehler erfordert einen weiteren Parameter für die \textit{Queue}. Dieser
 ist eine Datenstruktur, welche die asynchronen Fehler der Device"=Seite abfängt
 und in synchrone Host"=Fehler umwandt, die dann vom Programmierer weiter
-verarbeitet werden können (siehe Quelltext~\ref{sycl:konzepte:exceptions:src}).
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-#include <cstdlib>
-#include <CL/sycl.hpp>
-
-class XOCLDeviceSelector : public cl::sycl::device_selector {
-    /* ... */
-};
-
-auto main() -> int
-{
-    try
-    {
-        auto exception_handler = [] (cl::sycl::exception_list exceptions)
-        {
-            for(std::exception_ptr e : exceptions)
-            {
-                try
-                {
-                    std::rethrow_exception(e);
-                }
-                catch(const cl::sycl::exception& err)
-                {
-                    /* Fehlerbehandlung Device */
-                }
-            }
-        };
-
-        // Beschleunigerwahl und Befehlswarteschlange
-        auto queue = cl::sycl::queue{XOCLDeviceSelector{},
-                                     exception_handler};
-
-        /* ... */
-
-        // Synchronisierung und Ausnahmefehler
-        queue.wait_and_throw();
-    }
-    catch(const cl::sycl::exception& err)
-    {
-        /* Fehlerbehandlung Host */
-    }
-
-    return EXIT_SUCCESS;
-}
-    \end{minted}
-    \caption{Verwendung von SYCL"=Ausnahmefehlern}
-    \label{sycl:konzepte:exceptions:src}
-\end{code}
+verarbeitet werden können (siehe den
+Anhang~\ref{anhang:source:cpp:syclexceptions}).
 
 \subsection{Profiling}
 
-SYCL ermöglicht über die \texttt{queue} ein rudimentäres Profiling. Dieses
-bietet dem Programmierer die Möglichkeit, über von der \texttt{queue} generierte
-\texttt{events} Informationen über Start- und Endzeitpunkt der Kernel sowie den
+SYCL ermöglicht über die \textit{Queue} ein rudimentäres Profiling. Dieses
+bietet dem Programmierer die Möglichkeit, über von der \textit{Queue} generierte
+\textit{Events} Informationen über Start- und Endzeitpunkt der Kernel sowie den
 gegenwärtigen Ausführungsstand eines Kernels zu erhalten. Dazu muss der
-\texttt{queue} ein besonderer Parameter während der Konstruktion übergeben
-werden (siehe Quelltext~\ref{sycl:konzepte:profiling:src}).
-
-\begin{code}
-    \begin{minted}[fontsize=\small]{c++}
-#include <cstdlib>
-#include <CL/sycl.hpp>
-
-class XOCLDeviceSelector : public cl::sycl::device_selector {
-    /* ... */
-};
-
-auto main() -> int
-{
-    // Beschleunigerwahl und Befehlswarteschlange
-    auto queue = cl::sycl::queue{XOCLDeviceSelector{},
-                                 cl::sycl::property::queue::enable_profiling{}};
-
-    // Kernel-Event generieren
-    auto event = queue.submit(/* ... */);
-
-    // Ausführungsstatus abfragen - Rückgabe: submitted, running oder complete
-    auto status =
-        event.get_info<cl::sycl::info::event::command_execution_status>();
-
-    // Synchronisierung
-    queue.wait();
-
-    // Profilinginformationen abfragen - Rückgabe: Zeitpunkt in ns
-    auto start =
-        event.get_profiling_info<
-                            cl::sycl::info::event_profiling::command_start>();
-    auto stop =
-        event.get_profiling_info<cl::sycl::info::event_profiling::command_end>();
-
-    auto duration = stop - start;
-
-    return EXIT_SUCCESS;
-}
-    \end{minted}
-    \caption{Verwendung von SYCL"=Profiling}
-    \label{sycl:konzepte:profiling:src}
-\end{code}
+\textit{Queue} ein besonderer Parameter während der Konstruktion übergeben
+werden (siehe den Anhang~\ref{anhang:source:cpp:syclprofiling}).
 
 \subsection{Referenz-Semantik}
 
@@ -978,8 +903,8 @@ lediglich um eine Referenz auf das ursprüngliche Objekt.
 \section{Implementierungen}\label{sycl:implementierungen}
 
 Der ersten Veröffentlichung der SYCL-Spezifikation im Mai 2015 folgten im Laufe
-der Zeit einige Implementierungen. Diese werden in den folgenden Abschnitten
-vorgestellt.
+der Zeit einige konkrete Implementierungen verschiedener Anbieter. Diese werden
+in den folgenden Abschnitten vorgestellt.
 
 Darüber hinaus existiert eine von der Firma Codeplay betreute Internet-Seite,
 die sich dem gesamten \gls{sycl}"=Ökosystem widmet. \cite[vgl.][]{sycltech}
@@ -1011,14 +936,18 @@ Das Projekt triSYCL ist eine quelloffene Implementierung des
 \gls{sycl}"=Standards, die früher von der Firma AMD und jetzt von Xilinx
 entwickelt wird. Nach eigener Aussage dient es vornehmlich experimentellen
 Zwecken, um dem \gls{sycl}"=Komitee und dem \gls{opencl}"=C++"=Komitee des
-Khronos"=Konsortiums sowie dem C++"=Standardisierungskomitee der ISO Feedback
-liefern zu können. Das Hauptprojekt unterstützt \gls{cpu}s (über \gls{openmp}
+Khronos"=Konsortiums sowie dem C++"=Standardisierungskomitee der \gls{iso}
+Feedback liefern zu können. Das Hauptprojekt unterstützt \gls{cpu}s (über \gls{openmp}
 oder \gls{tbb}) sowie \gls{opencl}"=Implementierungen, die die Verarbeitung des
-\gls{spir}"=Zwischencodes unterstützen. \cite[vgl.][]{trisycl}
+\gls{spir}"=Zwischencodes unterstützen. Die meisten SYCL"=Features werden
+unterstützt, jedoch sind einige SYCL"=Klassen noch nicht vollständig
+implementiert.\cite[vgl.][]{trisycl}
 
-Daneben existiert ein von der Intel"=Implementierung abgeleitetes
-Compiler-Projekt, das sich vornehmlich der besseren Unterstützung von
-Xilinx"=\gls{fpga}s anzunehmen scheint. \cite[vgl.][]{trisyclclang}
+Daneben existiert unter dem Dach des triSYCL"=Projekts ein von der
+Intel"=Implementierung abgeleitetes Compiler"=Projekt, das sich vornehmlich der
+besseren Unterstützung von Xilinx"=\gls{fpga}s anzunehmen scheint. Dieser
+Compiler wird im Folgenden der Einfachheit halber als Xilinx"=Implementierung
+bezeichnet. \cite[vgl.][]{trisyclclang}
 
 \subsection{hipSYCL}
 
@@ -1035,7 +964,7 @@ oder die Möglichkeit, Ausnahmefehler zu werfen und abzufangen.
 
 \subsection{sycl-gtx}
 
-Eine weitere Open-Source-Implementierung ist das eingangs erwähnte
+Eine weitere Open-Source-Implementierung ist das in der Einleitung erwähnte
 \textit{sycl"=gtx}. Ursprünglich ist diese Implementierung im Rahmen einer
 Masterarbeit entstanden \cite[vgl.][]{zuzek2016} und wird bis heute vom
 ursprünglichen Autoren weiterentwickelt. Aufgrund der begrenzten
@@ -1050,6 +979,29 @@ sehr portabel, da es nicht auf eine bestimmte Hardware beschränkt ist;
 grundsätzlich soll es mit jeder \gls{opencl}"=Umgebung kompatibel sein, die
 mindestens den Standard in Version 1.2 unterstützt. 
 \cite[vgl.][47\psqq]{zuzek2016}
+
+\subsection{Zusammenfassung}
+
+In der Tabelle~\ref{sycl:implementierungen:zusammenfassung:tabelle} sind die
+einzelnen Implementierungen mit ihren unterstützten Hardware"=Plattformen und
+dem jeweiligen Implementierungsstand zusammengefasst.
+
+\begin{table}[htb]
+    \centering
+    \begin{tabulary}{\textwidth}{@{}LLL@{}}
+        \toprule
+        \textbf{Implementierung} & \textbf{Hardwareunterstützung} &
+        \textbf{Featurestatus} \tabularnewline\midrule
+        ComputeCpp & \makecell[cl]{Automotive, Embedded,\\ Intel (CPU, GPU),\\NVIDIA-GPU (experimentell)} & vollständig\tabularnewline\midrule
+        Intel & \makecell[cl]{Intel-CPU, Intel-GPU,\\ Intel-FPGA (langfristig)} & vollständig\tabularnewline\midrule
+        Xilinx & wie Intel, dazu Xilinx-FPGA & vollständig\tabularnewline\midrule
+        triSYCL & CPU, SPIR-fähige OpenCL-Hardware & unvollständig\tabularnewline\midrule
+        hipSYCL & AMD-GPU, NVIDIA-GPU & unvollständig\tabularnewline\midrule
+        sycl-gtx & OpenCL-1.2.-fähige Hardware & unvollständig\tabularnewline\bottomrule
+    \end{tabulary}
+    \caption{Übersicht der verfügbaren SYCL"=Implementierungen}
+    \label{sycl:implementierungen:zusammenfassung:tabelle}
+\end{table}
 
 \section{Erweiterungen für FPGAs}\label{sycl:erweiterungen}
 
@@ -1143,7 +1095,9 @@ Durch die Verteilung eines Datenfeldes auf mehrere physische Speichersegmente
 lässt sich für manche Anwendungen eine höhere Speicherbandbreite erzielen.
 Mit Xilinx' High-Level-Synthese lässt sich ein logisches Datenfeld auf drei
 verschiedene Weisen zerlegen: \textit{cyclic}, \textit{block} und
-\textit{complete}. \cite[vgl.][16]{sdxpragma2019}
+\textit{complete}. Diese Strategien sind in
+Abbildung~\ref{sycl:erweiterungen:xilinx:partitioning:img} grafisch dargestellt.
+\cite[vgl.][16]{sdxpragma2019}
 
 Der Typ \textit{cyclic} führt eine zyklische Zerlegung des Feldes durch. Geht
 man von einem acht-elementigen Feld aus und hat vier physische Speicher zur
@@ -1203,3 +1157,149 @@ struct kernel
     \caption{Feldpartitionierung in SYCL}
     \label{sycl:erweiterungen:xilinx:partitioning:sycl}
 \end{code}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        % cyclic
+        \draw (0.0, 0.0) rectangle (0.5, 0.5) node [pos = 0.5, align = center] {15};
+        \draw (0.0, 0.5) rectangle (0.5, 1.0) node [pos = 0.5, align = center] {14};
+        \draw (0.0, 1.0) rectangle (0.5, 1.5) node [pos = 0.5, align = center] {13};
+        \draw (0.0, 1.5) rectangle (0.5, 2.0) node [pos = 0.5, align = center] {12};
+        \draw (0.0, 2.0) rectangle (0.5, 2.5) node [pos = 0.5, align = center] {11};
+        \draw (0.0, 2.5) rectangle (0.5, 3.0) node [pos = 0.5, align = center] {10};
+        \draw (0.0, 3.0) rectangle (0.5, 3.5) node [pos = 0.5, align = center] {9};
+        \draw (0.0, 3.5) rectangle (0.5, 4.0) node [pos = 0.5, align = center] {8};
+        \draw (0.0, 4.0) rectangle (0.5, 4.5) node [pos = 0.5, align = center] {7};
+        \draw (0.0, 4.5) rectangle (0.5, 5.0) node [pos = 0.5, align = center] {6};
+        \draw (0.0, 5.0) rectangle (0.5, 5.5) node [pos = 0.5, align = center] {5};
+        \draw (0.0, 5.5) rectangle (0.5, 6.0) node [pos = 0.5, align = center] {4};
+        \draw (0.0, 6.0) rectangle (0.5, 6.5) node [pos = 0.5, align = center] {3};
+        \draw (0.0, 6.5) rectangle (0.5, 7.0) node [pos = 0.5, align = center] {2};
+        \draw (0.0, 7.0) rectangle (0.5, 7.5) node [pos = 0.5, align = center] {1};
+        \draw (0.0, 7.5) rectangle (0.5, 8.0) node [pos = 0.5, align = center] {0};
+
+        \draw (2.5, -0.75) rectangle (3.0, -0.25) node [pos = 0.5, align = center] {15};
+        \draw (2.5, -0.25) rectangle (3.0, 0.25) node [pos = 0.5, align = center] {11};
+        \draw (2.5, 0.25) rectangle (3.0, 0.75) node [pos = 0.5, align = center] {7};
+        \draw (2.5, 0.75) rectangle (3.0, 1.25) node [pos = 0.5, align = center] {3};
+
+        \draw (2.5, 1.75) rectangle (3.0, 2.25) node [pos = 0.5, align = center] {14};
+        \draw (2.5, 2.25) rectangle (3.0, 2.75) node [pos = 0.5, align = center] {10};
+        \draw (2.5, 2.75) rectangle (3.0, 3.25) node [pos = 0.5, align = center] {6};
+        \draw (2.5, 3.25) rectangle (3.0, 3.75) node [pos = 0.5, align = center] {2};
+
+        \draw (2.5, 4.25) rectangle (3.0, 4.75) node [pos = 0.5, align = center] {13};
+        \draw (2.5, 4.75) rectangle (3.0, 5.25) node [pos = 0.5, align = center] {9};
+        \draw (2.5, 5.25) rectangle (3.0, 5.75) node [pos = 0.5, align = center] {5};
+        \draw (2.5, 5.75) rectangle (3.0, 6.25) node [pos = 0.5, align = center] {1};
+
+        \draw (2.5, 6.75) rectangle (3.0, 7.25) node [pos = 0.5, align = center] {12};
+        \draw (2.5, 7.25) rectangle (3.0, 7.75) node [pos = 0.5, align = center] {8};
+        \draw (2.5, 7.75) rectangle (3.0, 8.25) node [pos = 0.5, align = center] {4};
+        \draw (2.5, 8.25) rectangle (3.0, 8.75) node [pos = 0.5, align = center] {0};
+
+        \node [align = center] (cyclictext) at (1.5, 9.75) {\textbf{cyclic}};
+
+        \draw [-Latex] (0.5, 7.75) -- (2.5, 8.5); % 0
+        \draw [-Latex] (0.5, 7.25) -- (2.5, 6.0); % 1
+        \draw [-Latex] (0.5, 6.75) -- (2.5, 3.5); % 2
+        \draw [-Latex] (0.5, 6.25) -- (2.5, 1.0); % 3
+
+        \draw [line width = 0.75mm] (3.5, -1.0) -- (3.5, 9.0); 
+
+        % block
+        \draw (4.0, 0.0) rectangle (4.5, 0.5) node [pos = 0.5, align = center] {15};
+        \draw (4.0, 0.5) rectangle (4.5, 1.0) node [pos = 0.5, align = center] {14};
+        \draw (4.0, 1.0) rectangle (4.5, 1.5) node [pos = 0.5, align = center] {13};
+        \draw (4.0, 1.5) rectangle (4.5, 2.0) node [pos = 0.5, align = center] {12};
+        \draw (4.0, 2.0) rectangle (4.5, 2.5) node [pos = 0.5, align = center] {11};
+        \draw (4.0, 2.5) rectangle (4.5, 3.0) node [pos = 0.5, align = center] {10};
+        \draw (4.0, 3.0) rectangle (4.5, 3.5) node [pos = 0.5, align = center] {9};
+        \draw (4.0, 3.5) rectangle (4.5, 4.0) node [pos = 0.5, align = center] {8};
+        \draw (4.0, 4.0) rectangle (4.5, 4.5) node [pos = 0.5, align = center] {7};
+        \draw (4.0, 4.5) rectangle (4.5, 5.0) node [pos = 0.5, align = center] {6};
+        \draw (4.0, 5.0) rectangle (4.5, 5.5) node [pos = 0.5, align = center] {5};
+        \draw (4.0, 5.5) rectangle (4.5, 6.0) node [pos = 0.5, align = center] {4};
+        \draw (4.0, 6.0) rectangle (4.5, 6.5) node [pos = 0.5, align = center] {3};
+        \draw (4.0, 6.5) rectangle (4.5, 7.0) node [pos = 0.5, align = center] {2};
+        \draw (4.0, 7.0) rectangle (4.5, 7.5) node [pos = 0.5, align = center] {1};
+        \draw (4.0, 7.5) rectangle (4.5, 8.0) node [pos = 0.5, align = center] {0};
+
+        \draw (6.5, -0.75) rectangle (7.0, -0.25) node [pos = 0.5, align = center] {15};
+        \draw (6.5, -0.25) rectangle (7.0, 0.25) node [pos = 0.5, align = center] {14};
+        \draw (6.5, 0.25) rectangle (7.0, 0.75) node [pos = 0.5, align = center] {13};
+        \draw (6.5, 0.75) rectangle (7.0, 1.25) node [pos = 0.5, align = center] {12};
+
+        \draw (6.5, 1.75) rectangle (7.0, 2.25) node [pos = 0.5, align = center] {11};
+        \draw (6.5, 2.25) rectangle (7.0, 2.75) node [pos = 0.5, align = center] {10};
+        \draw (6.5, 2.75) rectangle (7.0, 3.25) node [pos = 0.5, align = center] {9};
+        \draw (6.5, 3.25) rectangle (7.0, 3.75) node [pos = 0.5, align = center] {8};
+
+        \draw (6.5, 4.25) rectangle (7.0, 4.75) node [pos = 0.5, align = center] {7};
+        \draw (6.5, 4.75) rectangle (7.0, 5.25) node [pos = 0.5, align = center] {6};
+        \draw (6.5, 5.25) rectangle (7.0, 5.75) node [pos = 0.5, align = center] {5};
+        \draw (6.5, 5.75) rectangle (7.0, 6.25) node [pos = 0.5, align = center] {4};
+
+        \draw (6.5, 6.75) rectangle (7.0, 7.25) node [pos = 0.5, align = center] {3};
+        \draw (6.5, 7.25) rectangle (7.0, 7.75) node [pos = 0.5, align = center] {2};
+        \draw (6.5, 7.75) rectangle (7.0, 8.25) node [pos = 0.5, align = center] {1};
+        \draw (6.5, 8.25) rectangle (7.0, 8.75) node [pos = 0.5, align = center] {0};
+
+        \node [align = center] (cyclictext) at (5.5, 9.75) {\textbf{block}};
+
+        \draw [-Latex] (4.5, 7.75) -- (6.5, 8.5); % 0
+        \draw [-Latex] (4.5, 7.25) -- (6.5, 8.0); % 1
+        \draw [-Latex] (4.5, 6.75) -- (6.5, 7.5); % 2
+        \draw [-Latex] (4.5, 6.25) -- (6.5, 7.0); % 3
+
+        \draw [line width = 0.75mm] (7.5, -1.0) -- (7.5, 9.0); 
+
+        % complete
+        \draw (8.0, 0.0) rectangle (8.5, 0.5) node [pos = 0.5, align = center] {15};
+        \draw (8.0, 0.5) rectangle (8.5, 1.0) node [pos = 0.5, align = center] {14};
+        \draw (8.0, 1.0) rectangle (8.5, 1.5) node [pos = 0.5, align = center] {13};
+        \draw (8.0, 1.5) rectangle (8.5, 2.0) node [pos = 0.5, align = center] {12};
+        \draw (8.0, 2.0) rectangle (8.5, 2.5) node [pos = 0.5, align = center] {11};
+        \draw (8.0, 2.5) rectangle (8.5, 3.0) node [pos = 0.5, align = center] {10};
+        \draw (8.0, 3.0) rectangle (8.5, 3.5) node [pos = 0.5, align = center] {9};
+        \draw (8.0, 3.5) rectangle (8.5, 4.0) node [pos = 0.5, align = center] {8};
+        \draw (8.0, 4.0) rectangle (8.5, 4.5) node [pos = 0.5, align = center] {7};
+        \draw (8.0, 4.5) rectangle (8.5, 5.0) node [pos = 0.5, align = center] {6};
+        \draw (8.0, 5.0) rectangle (8.5, 5.5) node [pos = 0.5, align = center] {5};
+        \draw (8.0, 5.5) rectangle (8.5, 6.0) node [pos = 0.5, align = center] {4};
+        \draw (8.0, 6.0) rectangle (8.5, 6.5) node [pos = 0.5, align = center] {3};
+        \draw (8.0, 6.5) rectangle (8.5, 7.0) node [pos = 0.5, align = center] {2};
+        \draw (8.0, 7.0) rectangle (8.5, 7.5) node [pos = 0.5, align = center] {1};
+        \draw (8.0, 7.5) rectangle (8.5, 8.0) node [pos = 0.5, align = center] {0};
+
+        \draw (11.5, 0.0) rectangle (12.0, 0.5) node [pos = 0.5, align = center] {15};
+        \draw (11.5, 1.0) rectangle (12.0, 1.5) node [pos = 0.5, align = center] {14};
+        \draw (11.5, 2.0) rectangle (12.0, 2.5) node [pos = 0.5, align = center] {13};
+        \draw (11.5, 3.0) rectangle (12.0, 3.5) node [pos = 0.5, align = center] {12};
+
+        \draw (11.5, 4.0) rectangle (12.0, 4.5) node [pos = 0.5, align = center] {11};
+        \draw (11.5, 5.0) rectangle (12.0, 5.5) node [pos = 0.5, align = center] {10};
+        \draw (11.5, 6.0) rectangle (12.0, 6.5) node [pos = 0.5, align = center] {9};
+        \draw (11.5, 7.0) rectangle (12.0, 7.5) node [pos = 0.5, align = center] {8};
+
+        \draw (10.5, 0.5) rectangle (11.0, 1.0) node [pos = 0.5, align = center] {7};
+        \draw (10.5, 1.5) rectangle (11.0, 2.0) node [pos = 0.5, align = center] {6};
+        \draw (10.5, 2.5) rectangle (11.0, 3.0) node [pos = 0.5, align = center] {5};
+        \draw (10.5, 3.5) rectangle (11.0, 4.0) node [pos = 0.5, align = center] {4};
+
+        \draw (10.5, 4.5) rectangle (11.0, 5.0) node [pos = 0.5, align = center] {3};
+        \draw (10.5, 5.5) rectangle (11.0, 6.0) node [pos = 0.5, align = center] {2};
+        \draw (10.5, 6.5) rectangle (11.0, 7.0) node [pos = 0.5, align = center] {1};
+        \draw (10.5, 7.5) rectangle (11.0, 8.0) node [pos = 0.5, align = center] {0};
+
+        \node [align = center] (cyclictext) at (9.5, 10.0) {\textbf{complete}};
+
+        \draw [-Latex] (8.5, 7.75) -- (10.5, 7.75); % 0
+        \draw [-Latex] (8.5, 7.25) -- (10.5, 6.75); % 1
+        \draw [-Latex] (8.5, 6.75) -- (10.5, 5.75); % 2
+        \draw [-Latex] (8.5, 6.25) -- (10.5, 4.75); % 3
+    \end{tikzpicture}
+    \caption{Darstellung der Feldpartitionierungsstrategien}
+    \label{sycl:erweiterungen:xilinx:partitioning:img}
+\end{figure}
