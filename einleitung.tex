@@ -82,24 +82,25 @@ Das ist durchaus nicht unproblematisch: so waren in den Anfangsjahren des
 Grafikschnittstellen programmierbar, erforderten dafür aber die Nutzung des
 erstmals 2006 erschienenen NVIDIA"=eigenen CUDA"=API. Dieses war (und ist)
 jedoch nicht mit Konkurrenzprodukten kompatibel. Für CPUs etablierte sich
-schnell die seit 1997 entwickelte Schnittstelle \gls{openmp} als Mittel der Wahl
-für die Nutzung mehrerer Rechenkerne. Die Vektorisierung erfordert dagegen
-entweder befehlssatzspezifische Erweiterungen -- die auch innerhalb derselben
-Befehlssatzfamilie mitunter inkompatibel sind -- oder sehr gut optimierende
-Compiler. Die seit 2011 verfügbaren HLS"=Werkzeuge des FPGA"=Herstellers Xilinx
-ermöglichten zwar die Nutzung der Hochsprachen, reicherten diese aber mit
-zahlreichen Erweiterungen an, was die Übertragung zwischen den Plattformen
-erschwert.
+schnell die seit 1997 entwickelte Schnittstelle \textit{Open Multi-Processing}
+(\gls{openmp}) als Mittel der Wahl für die Nutzung mehrerer Rechenkerne. Die
+Vektorisierung erfordert dagegen entweder befehlssatzspezifische Erweiterungen
+-- die auch innerhalb derselben Befehlssatzfamilie mitunter inkompatibel sind --
+oder sehr gut optimierende Compiler. Die seit 2011 verfügbaren HLS"=Werkzeuge
+des FPGA"=Herstellers Xilinx ermöglichten zwar die Nutzung der Hochsprachen,
+reicherten diese aber mit zahlreichen Erweiterungen an, was die Übertragung
+ zwischen den Plattformen erschwert.
 
 Um die Entwicklung portabler Programme zu ermöglichen, wurden früh verschiedene
 Ansätze entwickelt. Das Khronos"=Industriekonsortium gab 2008 die Spezifikation
-der \gls{opencl} heraus. Dahinter verbarg sich die Idee, eine einheitliche
-Schnittstelle für den Programmierer zu schaffen, die im Hintergrund von
-jedem Hardware"=Hersteller für die eigenen Produkte implementiert und optimiert
-wird. Die OpenCL"=Entwicklung wurde anfangs von zahlreichen namhaften Hard- und
-Software"=Herstellern unterstützt (z.B. Apple, AMD, NVIDIA, Intel, Altera und
-Xilinx), flachte jedoch nach wenigen Jahren wieder ab und konnte sich auf GPUs
-nicht gegen CUDA und auf CPUs nicht gegen OpenMP durchsetzen.
+der \textit{Open Computing Language} (\gls{opencl}) heraus. Dahinter verbarg sich
+die Idee, eine einheitliche Schnittstelle für den Programmierer zu schaffen, die
+im Hintergrund von jedem Hardware"=Hersteller für die eigenen Produkte
+implementiert und optimiert wird. Die OpenCL"=Entwicklung wurde anfangs von
+zahlreichen namhaften Hard"= und Software"=Herstellern unterstützt (z.B. Apple,
+AMD, NVIDIA, Intel, Altera und Xilinx), flachte jedoch nach wenigen Jahren
+wieder ab und konnte sich auf GPUs nicht gegen \gls{cuda} und auf CPUs nicht
+gegen \gls{openmp} durchsetzen.
 
 Ein anderer Ansatz liegt in der Entwicklung eines abstrakten Interfaces, das im
 Hintergrund auf die herstellereigenen Schnittstellen abgebildet wird. Ein

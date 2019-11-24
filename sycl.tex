@@ -58,7 +58,7 @@ lässt sich ein SYCL"=Programm auf jeder \gls{cpu} ausführen, für die ein
 (moderner) C++"=Compiler existiert, wenngleich dies Einschränkungen bei der
 erreichbaren Leistung bedeuten kann. So schreibt die SYCL"=Spezifikation für
 diesen Fall nur die Ausführbarkeit selbst vor, aber nicht die Nutzung aller
-\gls{cpu}"=Kerne oder SIMD"=Register. \cite[vgl.][15]{sycl2019}
+\gls{cpu}"=Kerne oder Vektorregister. \cite[vgl.][15]{sycl2019}
 
 Seit der ersten Veröffentlichung im März 2014 \cite[vgl.][]{khronos2014} mit der
 Versionsnummer 1.2 wurde die SYCL"=Spezifikation stetig weiterentwickelt; die
@@ -224,7 +224,7 @@ dafür zwei Klassen bereit:
           Speicherbereiche. Dabei ist zu beachten, dass ein \texttt{buffer}
           keinem \textit{Device} direkt zugeordnet ist, sondern dem gesamten
           Kontext zur Verfügung steht. Ein \texttt{buffer} kann so auch auf
-          mehreren \textit{Devices} verwendet werden, die notwendige
+          mehreren \textit{Devices} verwendet werden. Die notwendige
           Synchronisierung wird von der SYCL"=Laufzeitumgebung vorgenommen.
     \item Ein \texttt{accessor} sorgt für den Zugriff auf den von einem
           \texttt{buffer} verwalteten Speicher. Es existieren verschiedene
@@ -324,11 +324,12 @@ SYCL bietet für verschiedene Anwendungsfälle unterschiedliche Methoden für de
 Aufruf der Kernel"=Funktion. Für datenparallele Algorithmen bietet sich vor
 allem der Aufruf mittels der Methode \texttt{parallel\_for} an. Diese
 entspricht dem aus \gls{opencl} bekannten \textit{NDRange}"=Kernel und nutzt die
-SIMD"=Eigenschaften der zur Verfügung stehenden Beschleuniger. Auf CPUs können
-so durch einen Aufruf mehrere Kerne und deren SIMD"=Register genutzt werden oder
-auf einer GPU die Multiprozessoren und SIMD"=Einheiten. Durch
-\texttt{parallel\_for} kann auf einem FPGA ebenfalls eine SIMD"=Schaltung
-synthetisiert werden. 
+SIMD\footnote{Das ist \gls{simd}, eine von Flynn definierte Klasse innerhalb
+seiner Taxonomie \cite[vgl.][]{flynn1966}.}"=Eigenschaften der zur Verfügung
+stehenden Beschleuniger. Auf CPUs können so durch einen Aufruf mehrere Kerne und
+deren SIMD"=Register genutzt werden oder auf einer GPU die Multiprozessoren und
+SIMD"=Einheiten. Durch \texttt{parallel\_for} kann auf einem FPGA ebenfalls eine
+SIMD"=Schaltung synthetisiert werden. 
 
 Für aufgabenparallele Algorithmen steht in SYCL der Aufruf \texttt{single\_task}
 zur Verfügung, was einem \textit{Task}"=Kernel in \gls{opencl} entspricht.
@@ -856,8 +857,7 @@ auf der Device"=Seite aufgetretene Fehler ignoriert werden. Das Abfangen der
 Device"=Fehler erfordert einen weiteren Parameter für die \textit{Queue}. Dieser
 ist eine Datenstruktur, welche die asynchronen Fehler der Device"=Seite abfängt
 und in synchrone Host"=Fehler umwandt, die dann vom Programmierer weiter
-verarbeitet werden können (siehe den
-Anhang~\ref{anhang:source:cpp:syclexceptions}).
+verarbeitet werden können (siehe Anhang~\ref{anhang:source:cpp:syclexceptions}).
 
 \subsection{Profiling}
 
@@ -866,7 +866,7 @@ bietet dem Programmierer die Möglichkeit, über von der \textit{Queue} generier
 \textit{Events} Informationen über Start- und Endzeitpunkt der Kernel sowie den
 gegenwärtigen Ausführungsstand eines Kernels zu erhalten. Dazu muss der
 \textit{Queue} ein besonderer Parameter während der Konstruktion übergeben
-werden (siehe den Anhang~\ref{anhang:source:cpp:syclprofiling}).
+werden (siehe Anhang~\ref{anhang:source:cpp:syclprofiling}).
 
 \subsection{Referenz-Semantik}
 
@@ -952,13 +952,13 @@ bezeichnet. \cite[vgl.][]{trisyclclang}
 \subsection{hipSYCL}
 
 Der Heidelberger Doktorand Aksel Alpay ist der Autor einer weiteren
-SYCL-Implementierung. Diese setzt auf dem CUDA"=Klon der Firma AMD auf, der
+SYCL"=Implementierung. Diese setzt auf dem CUDA"=Klon der Firma AMD auf, der
 \gls{gpgpu}"=Sprache \gls{hip}. \gls{hip} ist sowohl auf AMD- als auch auf
 NVIDIA"=\gls{gpu}s ausführbar. Dadurch können auch mit hipSYCL entwickelte
 Programme auf diesen \gls{gpu}s ausgeführt werden. hipSYCL war über weite
 Strecken ein Ein-Mann-Projekt, erst seit Februar 2019 ist die regelmäßige
 Mitarbeit eines weiteren Entwicklers zu verzeichnen. Aus diesem Grund ist
-hipSYCL unvollständig implementiert, es fehlen unter anderem atomare Funktionen
+hipSYCL unvollständig implementiert. Es fehlen unter anderem atomare Funktionen
 oder die Möglichkeit, Ausnahmefehler zu werfen und abzufangen.
 \cite[vgl.][]{hipsycl}
 
@@ -997,7 +997,7 @@ dem jeweiligen Implementierungsstand zusammengefasst.
         Xilinx & wie Intel, dazu Xilinx-FPGA & vollständig\tabularnewline\midrule
         triSYCL & CPU, SPIR-fähige OpenCL-Hardware & unvollständig\tabularnewline\midrule
         hipSYCL & AMD-GPU, NVIDIA-GPU & unvollständig\tabularnewline\midrule
-        sycl-gtx & OpenCL-1.2.-fähige Hardware & unvollständig\tabularnewline\bottomrule
+        sycl-gtx & OpenCL-1.2-fähige Hardware & unvollständig\tabularnewline\bottomrule
     \end{tabulary}
     \caption{Übersicht der verfügbaren SYCL"=Implementierungen}
     \label{sycl:implementierungen:zusammenfassung:tabelle}
@@ -1062,7 +1062,7 @@ insgesamt sowie die Latenz verringern können.
 In der von Xilinx ausgelieferte OpenCL-Implementierung handelt es sich bei
 dieser Erweiterung um das Attribut \texttt{xcl\_pipeline\_loop}, mit dem
 Schleifen markiert werden. In SYCL ist sie unter dem Namen \texttt{pipeline}
-verfügbar und wird auf Funktionen angewendet, deren innere Schleifen dann dieser
+verfügbar und wird auf Funktionen angewendet, deren innere Schleifen dieser
 Optimierung unterzogen werden (siehe
 Quelltext~\ref{sycl:erweiterungen:xilinx:pipeline:sycl}).
 

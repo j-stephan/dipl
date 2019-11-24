@@ -1,10 +1,13 @@
 % \RequirePackage[ngerman=ngerman-x-latest]{hyphsubst}
-\documentclass[english,ngerman,
+\documentclass[english,greek,ngerman,
                abstract=section,abstract=nottotoc,abstract=all,abstract=vfill,
                declaration=true,declaration=section,declaration=totoc]{tudscrbook}
 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
 \usepackage{anyfontsize}
-\usepackage[english,ngerman]{babel}
+\usepackage{babel}
 \usepackage[backend=biber,style=alphabetic]{biblatex}
 \usepackage[math]{blindtext}
 \usepackage{booktabs}
@@ -12,8 +15,7 @@
 \usepackage[outline]{contour}
 \usepackage{csquotes}
 \usepackage{dialogue}
-\usepackage[T1]{fontenc}
-\usepackage[acronyms,nonumberlist,nopostdot,toc,savewrites,xindy]{glossaries}
+\usepackage[acronyms,nonumberlist,nopostdot,toc,savewrites,xindy={glsnumbers=false}]{glossaries}
 \usepackage[ngerman=ngerman-x-latest]{hyphsubst}
 \usepackage{isodate}
 \usepackage{makecell}
@@ -119,6 +121,6 @@
 \appendix
 \input{anhang}
 
-\confirmation
+\confirmation[language=ngerman]
 
 \end{document}

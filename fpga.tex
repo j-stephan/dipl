@@ -3,7 +3,7 @@
 Konzeption und Aufbau der \gls{fpga}s sowie der zugehörige Entwicklungsprozess
 werden in diesem Kapitel geschildert. Dabei wird auf die Vorteile der
 High"=Level"=Synthese gegenüber dem hardwarenahen Schaltungsentwurf auf der
-Register"=Transfer"=Ebene ebenso eingegangen wie auf die auf FPGAs möglichen
+Register"=Transfer"=Ebene ebenso eingegangen wie auf die bei FPGAs möglichen
 Parallelisierungskonzepte.
 
 \section{Überblick}\label{fpga:ueberblick}
@@ -497,17 +497,17 @@ Schaltkreisentwurfs eingesetzt. So setzt die Firma Microsoft beispielsweise
 Netzwerkkarten ein \cite[vgl.][]{firestone2018}. Der Cloud"=Anbieter Amazon
 bietet spezielle FPGA"=Instanzen an, in denen Xilinx"=FPGAs als Beschleuniger
 genutzt werden können \cite[vgl.][]{amazonec2f1}, wovon in der Literatur bereits
-Gebrauch gemacht wurde \cite[vgl.][]{ditucci2017}.
+Gebrauch gemacht wurde \cite[vgl. etwa][]{ditucci2017}.
 
 \section{Entwicklungsprozess}\label{fpga:entwicklung}
 
 Es sind bei der Software"=Entwicklung für \gls{fpga}s zwei Vorgehensweisen
 voneinander abzugrenzen: einerseits die Entwicklung durch
-Hardware"=Beschreibungssprachen (die in dieser Arbeit nur kurz skizziert
-werden) und andererseits die High"=Level"=Synthese, die auf in Hochsprachen
-implementierten Algorithmen basiert. Die Ansätze unterscheiden sich durch ihre
-Abstraktion der zugrunde liegenden Hardware (die verschiedenen
-Abstraktionsebenen wurden von Gajski in seinem Y"=Diagramm zusammengefasst, siehe
+Hardware"=Beschreibungssprachen (in dieser Arbeit nur kurz skizziert) und
+andererseits die High"=Level"=Synthese, die auf in Hochsprachen implementierten
+Algorithmen basiert. Die Ansätze unterscheiden sich durch ihre Abstraktion der
+zugrunde liegenden Hardware (die verschiedenen Abstraktionsebenen wurden von
+Gajski in seinem Y"=Diagramm zusammengefasst, siehe
 Abbildung~\ref{fpga:entwicklung:ydiagramm}). Die Hardware"=Beschreibungssprachen
 befinden sich mit der Register"=Transfer"=Ebene auf einem hardware"=nahen Level
 und Detaillierungsgrad, während die Hochsprachene auf der algorithmischen
@@ -757,7 +757,7 @@ unterschiedlichem Verhalten oder internen Aufbau wiederverwenden.
 Eine Verhaltensbeschreibung ist aus mehreren \textit{Prozessen} aufgebaut; sie
 besteht dabei nicht aus weiteren (Teil-)Komponenten.
 Quelltext~\ref{fpga:hdl:regbeh} zeigt eine solche Verhaltensbeschreibung für
-das in Quelltext~\ref{fpga:hdl:regentity} eingeführte 2"=Bit"=Register. Diese
+das in Quelltext~\ref{fpga:hdl:regentity} eingeführte 2"=Bit"=Register. Dieses
 besteht aus zwei \textit{Prozessen}, \texttt{reg} und \texttt{mux}. Diese sind
 untereinander mit den internen Signalen \texttt{q0\_s}, \texttt{q0\_ns},
 \texttt{q1\_s} und \texttt{q1\_ns} sowie nach außen über die (in
@@ -780,7 +780,7 @@ Abbildung~\ref{fpga:hdl:moore} dargestellten Moore"=Schaltwerks.
     \includegraphics[width=\textwidth]{reg2_waveform.png}
     \caption[Verhalten des 2-Bit-Registers]{Zu Beginn wird das Register über
              das \texttt{res}"=Signal zurückgesetzt. Dadurch werden zunächst die
-             internen Signale\texttt{q0\_s} und \texttt{q1\_s} sowie
+             internen Signale\texttt{q0\_s} und \texttt{q1\_s}, sowie
              \SI{2}{\nano\second} später die Ausgangssignale \texttt{q0} und
              \texttt{q1} von ihrem undefinierten Zustand auf den Wert
              \glqq 0\grqq\ gesetzt. Dann wird \texttt{res} auf \glqq 0\grqq\
@@ -872,7 +872,7 @@ interne Signale für die Kommunikation der Teil-Komponenten untereinander. Die
 einzelnen Komponenten werden zunächst mit ihren lokalen Ports deklariert
 (\texttt{COMPONENT}"=Abschnitte) und danach instanziiert; \texttt{I1} und
 \texttt{I0} sind dabei Bezeichnungen für eine \textit{Instanz} der jeweiligen
-\texttt{Entity}. In der \texttt{PORT MAP} werden die Ports und Signale der
+\textit{Entity}. In der \texttt{PORT MAP} werden die Ports und Signale der
 Komponente den lokalen Ports der Teil-Komponenten zugeordnet.
 \cite[vgl.][37]{kesel2013}
 
@@ -1163,8 +1163,8 @@ neue Schleifeniteration verarbeiten kann (z.B. aufgrund bestehender
 Abhängigkeiten zwischen einzelnen Iterationen). Die Anzahl der Zyklen, die
 zwischen dem Beginn zweier aufeinanderfolgender Iterationen liegen, werden als
 \gls{ii} bezeichnet. Wenn $\text{II} = 1$ gilt, beginnt die Pipeline mit
-jedem Takt eine neue Schleifeniteration. Bei $\text{II} = 2$ kann sie dies nur
-alle zwei Takte tun, bei $\text{II} = 4$ mit jedem vierten Takt, usw.
+jedem Takt eine neue Schleifeniteration. Bei $\text{II} = 2$ schafft sie dies
+nur alle zwei Takte, bei $\text{II} = 4$ mit jedem vierten Takt, usw.
 \cite[vgl.][20--21]{hlsintro2019}
 
 \begin{figure}[htb]

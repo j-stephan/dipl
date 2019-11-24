@@ -3,44 +3,112 @@
 \newacronym{api}{API}{\textit{application programming interface}}
 \newacronym{alu}{ALU}{\textit{arithmetic logic unit}}
 \newacronym{apu}{APU}{\textit{accelerated processing unit}}
-\newacronym{asic}{ASIC}{\textit{application-specific integrated circuit}}
-\newacronym{blas}{BLAS}{\textit{Basic Linear Algebra Subprograms}}
+\newacronym{asic}{ASIC}{\textit{ap\-pli\-ca\-tion-spe\-cif\-ic integrated circuit}}
 \newacronym{clb}{CLB}{\textit{configurable logic block}}
 \newacronym{cmt}{CMT}{\textit{clock management tile}}
 \newacronym{cpu}{CPU}{\textit{central processing unit}}
+\newacronym{cu}{CU}{\textit{compute unit}}
+\newacronym{dram}{DRAM}{\textit{dynamic random-access memory}}
 \newacronym{dsp}{DSP}{\textit{digital signal processor}}
+\newacronym{fifo}{FIFO}{\textit{first in, first out}}
 \newacronym{fpga}{FPGA}{\textit{field programmable gate array}}
-\newacronym{gpgpu}{GPGPU}{\textit{general-purpose computing on graphics processing units}}
+\newacronym{gpgpu}{GPGPU}{\textit{general-purpose computing on graphics
+                                  processing units}}
 \newacronym{gpu}{GPU}{\textit{graphics processing unit}}
 \newacronym{hls}{HLS}{\textit{High-Level-Synthese}}
 \newacronym{hpc}{HPC}{\textit{high-performance computing}}
+\newacronym{ic}{IC}{\textit{integrated circuit}}
 \newacronym{ii}{II}{\textit{initiation interval}}
+\newacronym{io}{I/O}{\textit{input/output}}
 \newacronym{iob}{IOB}{\textit{input/output block}}
 \newacronym{lut}{LUT}{Lookup-Tabelle}
-\newacronym{opencl}{OpenCL}{\textit{Open Computing Language}}
-\newacronym{openmp}{OpenMP}{\textit{Open Multi-Processing}}
+\newacronym{pe}{PE}{\textit{processing element}}
+\newacronym{ram}{RAM}{\textit{random-access memory}}
+\newacronym{simd}{SIMD}{\textit{single instruction, multiple data}}
 \newacronym{slr}{SLR}{\textit{super logic region}}
+\newacronym{vhsic}{VHSIC}{\textit{very high speed integrated circuit}}
 
+\newglossaryentry{alpaka}{name = Alpaka,
+                          description = {C++-Abstraktionsbibliothek für die
+                                         Beschleunigerprogrammierung}}
+\newglossaryentry{architecture}{name = \textit{Architecture},
+                                description = {Verhaltensbeschreibung einer
+                                               VHDL-Komponente}}
+\newglossaryentry{blas}{name = BLAS,
+                        description = {\textit{Basic Linear Algebra
+                                       Subprograms}, Fortran-Bibliothek für
+                                       Operationen der linearen Algebra}}
 \newglossaryentry{cuda}{name = CUDA,
                         description = {GPGPU-Sprache der Firma NVIDIA}}
 \newglossaryentry{device}{name = Device,
-                          description = {Alpaka- und SYCL-Bezeichnung für einen Beschleuniger},
+                          description = {Alpaka- und SYCL-Bezeichnung für einen
+                                         Beschleuniger},
                           plural = Devices}
+\newglossaryentry{entity}{name = \textit{Entity},
+                          description = {Schnittstellenbeschreibung einer
+                                         VHDL-Komponente}}
+\newglossaryentry{flipflop}{name = Flip-Flop,
+                            description = {Elektronische Schaltung mit zwei
+                                           Zuständen des Ausgangssignals, die
+                                           ein Bit beliebig lange speichern
+                                           kann. Die Zustandsänderung erfolgt
+                                           durch Ereignisse, nicht durch die
+                                           Zeit.}}
+\newglossaryentry{hip}{name = HIP,
+                       description = {\textit{Heterogeneous-compute Interface
+                                      for Portability}, von CUDA abgeleitete
+                                      GPGPU-Sprache der Firma AMD}}
+\newglossaryentry{host}{name = Host,
+                        description = {Alpaka- und SYCL-Bezeichnung für den Teil
+                                       des Rechners, der den Kontrollfluss
+                                       steuert}}
+\newglossaryentry{iso}{name = ISO,
+                       description = {\textit{International Organization for
+                                      Standardization}. Kurzname von griechisch
+                                      \textgreek{ίσος} (\glqq gleich\grqq).
+                                      Internationale Vereinigung von
+                                      Normungsorganisationen, umfasst unter
+                                      anderem das Deutsche Institut für Normung
+                                      (DIN)}}
 \newglossaryentry{kernel}{name = Kernel,
                           description = {Programm, das auf einem Beschleuniger
                                          ausgeführt wird.},
                           plural = Kernel}
-\newglossaryentry{hip}{name = HIP,
-                       description = {\textit{Heterogeneous-compute Interface for Portability}, von CUDA abgeleitete GPGPU-Sprache der Firma AMD}}
-\newglossaryentry{host}{name = Host,
-                        description = {Alpaka- und SYCL-Bezeichnung für den Teil des Rechners, der den Kontrollfluss steuert}}
-\newglossaryentry{iigls}{name = Initiation Interval,
-                         description = {Anzahl der Zyklen zwischen dem Ausführungsbeginn aufeinanderfolgender Schleifeniterationen}}
-\newglossaryentry{iso}{name = \textit{International Organization for Standardization},
-                       description = {Internationale Vereinigung der Normungsorganisationen, umfasst unter anderen das Deutsche Institut für Normung (DIN)}}
+\newglossaryentry{latch}{name = Latch,
+                         description = {Sonderform des Flip-Flops. Kann den
+                                        Zustand von der Anfangs- bis zur
+                                        Endflanke des Taktschrittes ändern.}}
+\newglossaryentry{opencl}{name = OpenCL,
+                          description = {\textit{Open Computing Language},
+                                         standardisierte C-Schnittstelle des
+                                         Industriekonsortiums \textit{Khronos}
+                                         für die Programmierung von
+                                         Beschleunigern}}
+\newglossaryentry{openmp}{name = OpenMP,
+                          description = {\textit{Open Multi-Processing},
+                                         standardisierte C, C++- und
+                                         Fortran-Schnittstelle des
+                                         Industriekonsortiums
+                                         \textit{OpenMP Architecture Review
+                                         Board} für die parallele Programmierung
+                                         auf Thread-Ebene}}
 \newglossaryentry{spir}{name = SPIR,
-                        description = {\textit{Standard Portable Intermediate Language}, offene Zwischencode-Sprache}}
+                        description = {\textit{Standard Portable Intermediate
+                                       Language}, standardisierte
+                                       Zwischencode-Sprache des
+                                       Industriekonsortiums \textit{Khronos}}}
 \newglossaryentry{sycl}{name = SYCL,
-                        description = {moderne C++-Abstraktionsschicht über OpenCL}}
+                        description = {standardisierte C++-Schnittstelle des
+                                       Industriekonsortiums \textit{Khronos} für
+                                       die Programmierung von Beschleunigern}}
 \newglossaryentry{tbb}{name = TBB,
-                       description = {\textit{Threading Building Blocks}, von der Firma Intel entwickelte Bibliothek für die parallele Programmierung von Mehrkern-CPUs}}
+                       description = {\textit{Threading Building Blocks}, von
+                                      der Firma Intel entwickelte Bibliothek für
+                                      die parallele Programmierung von
+                                      Mehrkern-CPUs}}
+\newglossaryentry{verilog}{name = Verilog,
+                           description = {Hardware-Beschreibungssprache}}
+\newglossaryentry{vhdl}{name = VHDL,
+                        description = {\textit{VHSIC Hardware Description
+                                       Language},
+                                       Hardware-Beschreibungssprache}}
