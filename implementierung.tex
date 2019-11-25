@@ -15,68 +15,10 @@ ebenfalls aufgeführt.
 Das SYCL"=Backend wurde auf Basis des Alpaka"=Entwicklungszweigs
 \texttt{develop} entwickelt und hat dessen Neuentwicklungen im Laufe der Arbeit
 regelmäßig übernommen. Es basiert auf dem Stand vom 23.\ September 2019
-(Commit \#82d3294).
-
-\iffalse
-\begin{table}[htb]
-    \centering
-    \begin{tabulary}{\textwidth}{@{}LLL@{}}
-        \toprule
-        % Überschrift
-        \textbf{Bereich} & \textbf{Alpaka} & \textbf{SYCL} \tabularnewline\midrule
-        % 1. Zeile
-        \multirow{3}{*}{Attribute} & \texttt{ALPAKA\_FN\_HOST}
-            & nicht nötig \tabularnewline
-        & \texttt{ALPAKA\_FN\_ACC} & nicht nötig \tabularnewline
-        & \texttt{ALPAKA\_FN\_HOST\_ACC} & nicht nötig \tabularnewline\midrule
-        % 2. Zeile
-        \multirow{3}{*}{Adressräume} &
-            \texttt{block::shared::st::allocVar()} &
-            siehe Abschnitt~\ref{implementierung:probleme:shared}\tabularnewline
-            & \texttt{ALPAKA\_STATIC\_ACC\_MEM\_CONSTANT} &
-            siehe Abschnitt~\ref{implementierung:probleme:globalvar}\tabularnewline
-            & \texttt{ALPAKA\_STATIC\_ACC\_MEM\_GLOBAL} &
-            siehe Abschnitt~\ref{implementierung:probleme:globalvar} \tabularnewline\midrule
-        \multirow{4}{*}{Indizes} & \texttt{getIdx<Block, Threads>()} &
-            \texttt{nd\_item::get\_local\_id()}\tabularnewline
-            & \texttt{getIdx<Grid, Blocks>()} &
-            \texttt{nd\_item::get\_group()}\tabularnewline
-            & \texttt{getWorkDiv<Block, Threads>()} &
-            \texttt{nd\_item::get\_local\_range()}\tabularnewline
-            & \texttt{getWorkDiv<Grid, Blocks>()} &
-            \texttt{nd\_item::get\_group\_range()}\tabularnewline\midrule
-        Typen & \texttt{Vec<TDim, TVal>} & \texttt{nd\_range<TDim>}\tabularnewline\midrule
-        \multirow{4}{*}{Devices} & \texttt{reset(device)} &
-            siehe Abschnitt~\ref{implementierung:probleme:device}\tabularnewline
-            & \texttt{wait(device)} &
-            siehe Abschnitt~\ref{implementierung:probleme:device}\tabularnewline
-            & \texttt{getDevCount()} & siehe Abschnitt~\ref{implementierung:probleme:device}\tabularnewline
-            & \texttt{getAccDevProps()} & \texttt{device::get\_info()}\tabularnewline\midrule
-        \multirow{5}{*}{Queues} & \texttt{QueueBlocking} & \texttt{queue}\tabularnewline
-            & \texttt{QueueNonBlocking} & \texttt{queue} \tabularnewline
-            & \texttt{empty(queue)} & siehe Abschnitt~\ref{implementierung:besonderheiten:queue}\tabularnewline
-            & \texttt{wait(queue)} & \texttt{queue::wait\_and\_throw()}\tabularnewline
-            & \texttt{wait(queue, event)}& siehe Abschnitt~\ref{implementierung:probleme:events}\tabularnewline\midrule
-        \multirow{4}{*}{Events} & \texttt{Event} & \texttt{event}\tabularnewline
-            & \texttt{test(event)} & \texttt{event::get\_info()}\tabularnewline
-            & \texttt{enqueue(queue, event)} & siehe Abschnitt~\ref{implementierung:probleme:events}\tabularnewline
-            & \texttt{wait(event)} & \texttt{event::wait\_and\_throw()}\tabularnewline\midrule
-        \multirow{7}{*}{Speicher} & \texttt{alloc()} & \texttt{buffer}\tabularnewline
-            & \texttt{copy()} (synchron) & \texttt{handler::copy()}\tabularnewline
-            & \texttt{copy()} (asynchron) & \texttt{handler::copy()}\tabularnewline
-            & \texttt{set()} (synchron) & \texttt{handler::fill()}\tabularnewline
-            & \texttt{set()} (asynchron) & \texttt{handler::fill()}\tabularnewline
-            & \texttt{getMemBytes()} & \texttt{device::get\_info()}\tabularnewline
-            & \texttt{getFreeMemBytes()} & siehe Abschnitt~\ref{implementierung:probleme:speicher}\tabularnewline\midrule
-        \multirow{2}{*}{Kernel} & \texttt{exec(queue, workDiv, kernel, ...)} &
-            \texttt{queue.enqueue()}\tabularnewline
-            & \texttt{BlockSharedExternMemSizeBytes}
-            & siehe Abschnitt~\ref{implementierung:besonderheiten:sharedmem}\tabularnewline\bottomrule
-    \end{tabulary}
-    \caption{Implementierung der Alpaka"=Funktionalität durch SYCL.}
-    \label{implementierung:abbildung}
-\end{table}
-\fi
+(Commit \#82d3294). Alpaka unterstützt mit seinem Interface noch den
+C++11"=Standard. Für das Backend selbst wurde jedoch auf C++17 gesetzt, da
+dieser Standard von den SYCL"=Implementierungen ComputeCpp, Intel und Xilinx
+unterstützt wird und die letzteren beiden C++17 sogar voraussetzen.
 
 \section{\textit{Device}-Verwaltung}
 \label{implementierung:device}
@@ -84,7 +26,8 @@ regelmäßig übernommen. Es basiert auf dem Stand vom 23.\ September 2019
 Am Anfang jedes Alpaka"=Programms steht die Auswahl des Beschleunigers. In
 Alpaka findet diese zur Compile"=Zeit statt. Da der Beschleunigertyp bislang
 durch die Auswahl des Backends impliziert wurde (CUDA \textrightarrow{} GPU,
-HIP \textrightarrow{} GPU, OpenMP \textrightarrow{} CPU, \ldots).
+HIP \textrightarrow{} GPU, OpenMP \textrightarrow{} CPU, \ldots), führte dies
+nicht zu Problemen.
 
 In SYCL wird diese Wahl erst zur Laufzeit durchgeführt. Der Programmierer gibt
 zwar einen \texttt{device\_selector} zur Compile"=Zeit an (oder wählt den
@@ -117,9 +60,23 @@ Task ohne weitere Informationen gegeben ist?
 Die Frage der \textit{Device}"=Wahl ließ sich im Rahmen der Arbeit nicht
 befriedigend lösen. Darüber hinaus ist dies kein SYCL"=spezifisches Problem,
 da neuere OpenMP"=Standards ebenfalls mehrere Beschleunigertypen kennen. Hier
-ist eine Alpaka"=weite Lösung erforderlich. Der SYCL"=Backend"=Prototyp
-erfordert deshalb eine manuelle Auswahl des gewünschten
-\textit{device\_selectors} innerhalb der \texttt{Pltf}"=Schicht.
+ist eine Alpaka"=weite Lösung erforderlich. Denkbar wäre beispielsweise nicht
+nur die Angabe der gewünschten Backend"=Plattform (z.B. \texttt{Sycl}), sondern
+auch die zusätzliche Wahl eines konkreten \textit{Devices} zur Compile"=Zeit
+(z.B. \texttt{XilinxFpga}) anstelle der \texttt{Acc}"=Datenstruktur. Sowohl das
+Backend als auch das gewählte \textit{Device} sollten dabei ausschließlich auf
+der \textit{Host}"=Seite instanziiert werden, da es ansonsten wieder zu den
+Problemen kommt, die momentan bei der Verwendung der \texttt{Acc}"=Struktur
+auftreten.
+
+Die Angabe generischer \textit{Devices} zur Compile"=Zeit und die Auswahl eines
+konkreten \textit{Devices} zur Laufzeit dürfte nicht ausreichen, da es z.B.
+zwischen FPGAs verschiedener Hersteller durch unterschiedliche Erweiterungen
+auch zu herstellerabhängigen Code"=Pfaden kommen kann.
+
+Der SYCL"=Backend"=Prototyp erfordert aus den genannten Gründen eine manuelle
+Auswahl des gewünschten \textit{device\_selectors} innerhalb der
+\texttt{Pltf}"=Schicht.
 
 Wünscht der Nutzer das SYCL"=Backend, steht ihm die Klasse \texttt{AccSycl} zur
 Verfügung. Diese dient als Parameter für die Klasse \texttt{PltfSycl}, welche
@@ -133,26 +90,34 @@ abbildet.
 
 Alpaka bietet dem Nutzer die Möglichkeit, auf Laufzeit"=Informationen über das
 verwendete \textit{Device} zuzugreifen. Darunter fällt auch die Angabe, wie viel
-globaler Speicher noch unbelegt isti (\texttt{dev::getFreeMemBytes()}). Da es in
+globaler Speicher noch unbelegt ist (\texttt{dev::getFreeMemBytes()}). Da es in
 SYCL keine Möglichkeit gibt, diese Information abzufragen, konnte diese Funktion
 nicht implementiert werden.
 
 \subsection{Fehlende \textit{Device}"=Funktionen}
 
-In CUDA und deshalb auch in Alpaka (über die Funktion \texttt{dev::reset()})
-gibt es die Möglichkeit, ein \textit{Device} komplett zurückzusetzen. Dadurch
-wird der gesamte Zustand des \textit{Devices} in seinen Ursprungszustand
-versetzt: laufende Kernel werden unterbrochen und alle Speicherbereiche
-freigegeben. 
+In CUDA und deshalb auch in Alpaka gibt es die Möglichkeit, ein \textit{Device}
+in seinen Ursprungszustand zurückzusetzen. Alpakas Funktion
+\texttt{dev::reset()} unterbricht laufende Kernel und gibt alle Speicherbereiche
+frei. 
 
 In SYCL spielt die \texttt{device}"=Struktur eine weitaus weniger wichtige
 Rolle als seine CUDA"= und Alpaka"=Äquivalente. Ein Äquivalent zu
-\texttt{dev::reset()} existiert dadurch auch nicht, und die Dokumentation zum
+\texttt{dev::reset()} existiert deswegen nicht, und die Dokumentation zum
 Destruktor der \texttt{device}"=Klasse enthält keine Angaben darüber, wie sich
-der Aufruf auf den Zustand des tatsächlichen \textit{Devices} auswirkt.
+der Aufruf auf den Zustand des tatsächlichen \textit{Devices} auswirkt
+\cite[vgl.][33,41,58]{sycl2019}.
 
 Eine befriedigende Implementierung der \texttt{dev::reset()}"=Funktion konnte
-daher nicht gefunden werden.
+daher nicht gefunden werden. Das ist problematisch: CUDA"=fähige Beschleuniger
+nutzen diese Funktion, um während des Profilings gepufferte
+Profiling"=Informationen auf der Festplatte zu speichern. Wird das Programm
+vorher beendet, gehen diese Informationen möglicherweise verloren. Aufgrund des
+Zustands der zur Verfügung stehenden SYCL"=Implementierungen (siehe
+Abschnitt~\ref{sycl:nutzbarkeit}) und der Tatsache, dass NVIDIA ohnehin kein
+Profiling für OpenCL"=basierte Programme mehr ermöglicht, kann noch keine
+Aussage darüber getroffen werden, inwieweit sich das Fehlen der
+\texttt{dev::reset()}"=Funktion für SYCL"=Backends bemerkbar machen wird.
 
 \section{Queues und Events}
 \label{implementierung:queue}
@@ -213,8 +178,8 @@ weiterhin das Problem, dass es sich dabei nicht um eine echte
 Abhängigkeitsverwaltung im Sinne der SYCL"=Spezifikation handelt und deswegen zu
 Problemen führen kann.
 
-In der Klasse \texttt{EventSycl} wurde Alpakas Event"=System soweit wie möglich
-implementiert.
+In der Klasse \texttt{EventSycl} wurde Alpakas Event"=System mit den
+beschriebenen Einschränkungen implementiert.
 
 \section{Tasks}
 \label{implementierung:task}
@@ -229,9 +194,10 @@ Implementierung dieses fundamentalen Alpaka"=Konzepts beschrieben.
 \subsection{Kernel"=Tasks}
 \label{implementierung:task:kernel}
 
-Ein Alpaka"=Kernel"=Task verknüpft die eigentliche Kernel"=Funktion mit
-konkreten Daten. Damit ähnelt ein Kernel"=Task stark SYCLs
-\textit{command groups}, was die Umsetzung dieses Konzepts stark vereinfacht.
+Ein Alpaka"=Kernel"=Task (im Folgenden als Kernel"=Task bezeichnet) verknüpft
+die eigentliche Kernel"=Funktion mit konkreten Daten. Damit ähnelt ein
+Kernel"=Task stark SYCLs \textit{command groups}, was die Umsetzung dieses
+Konzepts vereinfacht.
 
 Die Struktur \texttt{TaskKernelSycl} enthält die SYCL"=Implementierung der
 Kernel"=Tasks. Diese ist aus mehreren Teilen aufgebaut (siehe
@@ -254,7 +220,7 @@ Quelltext~\ref{implementierung:task:kernel:struktur}):
           aufgerufen und nimmt konkrete Werte für die gewünschte
           Arbeitsaufteilung, den auszuführenden Kernel und die zugehörigen Daten
           an. Die Implementierung des Konstruktors ist im
-          Anhang~\ref{anhang:implementierung:task:kernel:konstruktor} zu finden.
+          Anhang~\ref{anhang:source:cpp:taskkernelsyclkonst} zu finden.
     \item Den Variablen \texttt{m\_kernelFnObj} und \texttt{m\_args} werden vom
           Konstruktor die konkrete Kernelfunktion bzw.\ die zugehörigen Daten
           zugewiesen.
@@ -292,16 +258,17 @@ class TaskKernelSycl final : public workdiv::workDivMembers<TDim, TIdx>
 In der \textit{command group} wird der eigentliche SYCL"=Kernel gestartet, der
 wiederum die vom Nutzer geschriebene Alpaka"=Kernel"=Funktion mit ihren
 Parametern aufruft. SYCL stellt drei verschiedene Möglichkeiten für den
-Kernel"=Start zur Verfügung: \texttt{single\_task}, \texttt{parallel\_for} und
+Kernel"=Start zur Verfügung (siehe Abschnitt~\ref{sycl:konzepte:kernelstart}:
+\texttt{single\_task}, \texttt{parallel\_for} und
 \texttt{parallel\_for\_work\_group}.
 
-\texttt{single\_task} stellt von sich aus keinerlei Parallelität zur Verfügung
-und ist in seiner Funktion mit einem einzelnen CPU"=Thread vergleichbar, der auf
-genau einem CPU"=Kern ausgeführt wird. In Kombination mit den in
-Kapitel~\ref{sycl} aufgeführten FPGA"=Erweiterungen ist dieses Verhalten für
-FPGAs durchaus sinnvoll, jedoch für CPU"= und GPU"=Beschleuniger wenig nützlich
-bis kontraproduktiv. Im Interesse eines portablen Backends scheidet diese
-Variante aus.
+\texttt{single\_task} stellt keine Parallelität durch \textit{work"=items} zur
+Verfügung und ist in seiner Funktion mit einem einzelnen CPU"=Thread
+vergleichbar, der auf genau einem CPU"=Kern ausgeführt wird. In Kombination mit
+den in Kapitel~\ref{sycl} aufgeführten FPGA"=Erweiterungen ist dieses Verhalten
+für FPGAs durchaus sinnvoll, jedoch für CPU"= und GPU"=Beschleuniger wenig
+nützlich bis kontraproduktiv. Im Interesse eines portablen Backends scheidet
+diese Variante aus.
 
 \texttt{parallel\_for} ist für datenparallele Algorithmen gedacht. Der
 Programmierer hat die Möglichkeit, die Zahl der \textit{work"=groups} und ihrer
@@ -325,14 +292,16 @@ Kernel"=Start"=Funktion gewählt wurde.
 
 Für die Nutzung der \texttt{parallel\_for}"=Funktion muss die Gesamtanzahl der
 \textit{work"=items} sowie die Anzahl der \textit{work"=items} pro
-\textit{work"=group} angegeben werden. Da Alpaka diese Informationen in etwas
-anderem Format (Anzahl der \textit{Blocks} und Anzahl der \textit{Threads} pro
-\textit{Block}) sowie in eigenen Datenstrukturen enthält, ist eine Konversion
-erforderlich. Die Funktion \texttt{get\_global\_size()} berechnet aus der Zahl
-der \textit{Blocks} und der \textit{Threads} pro \textit{Block} die Gesamtanzahl
-der \textit{Threads} (was der Gesamtanzahl der SYCL"=\textit{work"=items}
-entspricht) und führt die Konversion in ein SYCL"=kompatibles Format durch. Die
-Funktion \texttt{get\_local\_size()} nimmt die Zahl der \textit{Threads} und
+\textit{work"=group} angegeben werden.
+
+Da Alpaka diese Informationen in etwas anderem Format (Anzahl der
+\textit{Blocks} und Anzahl der \textit{Threads} pro \textit{Block}) sowie in
+eigenen Datenstrukturen enthält, ist eine Konvertierung erforderlich. Die
+Funktion \texttt{get\_global\_size()} berechnet aus der Zahl der \textit{Blocks}
+und der \textit{Threads} pro \textit{Block} die Gesamtanzahl der
+\textit{Threads} (was der Gesamtanzahl der SYCL"=\textit{work"=items}
+entspricht) und führt die Konvertierung in ein SYCL"=kompatibles Format durch.
+Die Funktion \texttt{get\_local\_size()} nimmt die Zahl der \textit{Threads} und
 konvertiert diese in eine SYCL"=Datenstruktur, die die Zahl der
 \textit{work"=items} enthält.
 
@@ -398,15 +367,16 @@ extrahiert und an den Kernel übergeben.
 
 Diese Vorgehensweise war mit allen bisher in Alpaka vorhandenen Backends
 unproblematisch, wenngleich etwas altmodisch. SYCL verlangt als Parameter für
-die Kernel"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen,
-eine Übergabe von Zeigern an den Kernel wird in der Spezifikation explizit
+die Kernel"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen.
+Eine Übergabe von Zeigern an den Kernel wird in der Spezifikation explizit
 verboten \cite[vgl.][192]{sycl2019}. Zwar gibt die Spezifikation an, dass sich
 die \texttt{accessor}"=Typen implizit in reine Zeiger umwandeln lassen
 \cite[vgl.][27]{sycl2019}, was jedoch von keiner der verfügbaren
-Implementierungen unterstützt wird\footnote{Im Rahmen dieser Arbeit wurde dieser
-Umstand an das SYCL"=Spezifikationskomitee gemeldet und infolgedessen als Fehler
-in der Spezifikation anerkannt, der in zukünftigen Versionen behoben sein wird
-(siehe die Diskussion in
+Implementierungen unterstützt wird\footnote{Im Rahmen dieser Arbeit wurde der
+Konflikt in dieser Frage zwischen der Spezifikation und den vorhandenen
+Implementierungen an das SYCL"=Spezifikationskomitee gemeldet. Infolgedessen
+wurde der Wortlaut der Spezifikation als Fehler anerkannt, der in zukünftigen
+Fassungen der Spezifikation behoben sein wird (siehe die Diskussion in
 Anhang~\ref{anhang:diskussion:syclspec:implicitaccessor}).}.
 
 \begin{code}
@@ -596,7 +566,7 @@ sowie \textit{statisch}, das heißt innerhalb des Kernel"=Codes und mit einer zu
 Compile"=Zeit feststehenden Größe. Alpaka stellt für beide Varianten eine
 Schnittstelle bereit.
 
-\subsection{Dynamischer geteilter Speicher}
+\subsection{Dynamischer, geteilter Speicher}
 
 Das \textit{type trait} \texttt{kernel::traits::BlockSharedMemDynSizeBytes}
 muss für den dynamischen Fall vom Programmierer auf der Host"=Seite für seine
@@ -610,7 +580,7 @@ SYCL"=\textit{accessor} für den lokalen Speicher (dem SYCL"=Äquivalent zum
 geteilten Speicher) angelegt werden, auf den die genannte Funktion zugreifen und
 den zugehörigen Zeiger zurückgeben kann.
 
-\subsection{Statischer geteilter Speicher}
+\subsection{Statischer, geteilter Speicher}
 
 Für den statischen Fall existiert die Funktion
 \texttt{block::shared::st::allocVar()}, die innerhalb des Kernels aufgerufen
@@ -641,7 +611,7 @@ Die Makros \texttt{ALPAKA\_STATIC\_ACC\_MEM\_GLOBAL} und
 \texttt{ALPAKA\_STATIC\_ACC\_MEM\_CONSTANT} werden von Alpaka zur Verfügung
 gestellt, um globale Variablen direkt im globalen bzw. konstanten
 \textit{Device}"=Speicher anlegen zu können. Diese dienen vornehmlich der
-Abstraktion der CUDA"=Schlüsselwörter texttt{\_\_device\_\_} und
+Abstraktion der CUDA"=Schlüsselwörter \texttt{\_\_device\_\_} und
 \texttt{\_\_constant\_\_}, die dieselbe Funktion erfüllen. Diese Funktionalität
 wurde für die restlichen Alpaka"=Backends bisher nicht benötigt. Im Zusammenhang
 mit SYCL kommt es hier jedoch zu Problemen.
@@ -671,11 +641,12 @@ auto acc = x_buf.get_access</* ... */>(cgh);
 Daher konnte die Implementierung der obigen Makros für das SYCL"=Backend nicht
 durchgeführt werden.
 
-\section{Mathematik-Funktionen}
+\section{Mathematikfunktionen}
 
 Bei der Implementierung der von Alpaka vorgegebenen mathematischen Funktionen
-kam es zu keinen Schwierigkeiten, da SYCL für alle Alpaka"=Funktionen ein
-Äquivalent zur Verfügung stellt.
+kam es zu keinen Schwierigkeiten. SYCL stellt für alle Alpaka"=Funktionen ein
+Äquivalent zur Verfügung, das Datentypen mit halber, einfacher und doppelter
+Präzision entgegennimmt.
 
 \section{FPGA-Erweiterungen}\label{implementierung:probleme:fpga}
 
@@ -689,26 +660,31 @@ nutzbar gemacht werden können. Für den SYCL"=Backend"=Prototypen wurde auf
 Erweiterungen verzichtet, um die Hardware"=Unabhängigkeit nicht zu gefährden.
 Dies ist jedoch kein dauerhaft wünschenswerter Zustand, da die Erweiterungen
 ganz erhebliche Performanzgewinne zur Folge haben können. Denkbar ist ein
-ähnliches Erweiterungs"=Konzept für Alpaka, in welchem dem Nutzer abstrahierte
+ähnliches Erweiterungskonzept für Alpaka, in welchem dem Nutzer abstrahierte
 Formen der SYCL"=Erweiterungen zur Verfügung gestellt werden, die er selbst in
 seinem Kernel nutzen kann. Diese bedarf jedoch einer vorherigen Diskussion
 innerhalb der Alpaka"=Entwicklergemeinde.
 
 \section{Zufallszahlen und Zeit}
 
-Da SYCL erst wenige Jahre alt ist, ist das zugehörige Ökosystem noch nicht
-sonderlich stark ausgeprägt. So fehlt auch Funktionalität, die auf Seiten des
-\textit{Devices} die Generierung von Zufallszahlen oder Zeitmessung erlauben.
-Alpaka stellt diese Funktionen jedoch zur Verfügung. Eine Lösung für dieses
-Problem konnte im Rahmen dieser Arbeit nicht gefunden werden, diese
-Funktionalität fehlt daher für das SYCL"=Backend.
+Da SYCL erst vor wenigen Jahren erstmals veröffentlicht wurde, ist das
+zugehörige Ökosystem noch nicht sonderlich stark ausgeprägt. So fehlt auch
+Funktionalität, die auf Seiten des \textit{Devices} die Generierung von
+Zufallszahlen oder Zeitmessung erlauben. Alpaka stellt diese Funktionen jedoch
+zur Verfügung. Eine Lösung für dieses Problem konnte im Rahmen dieser Arbeit
+nicht gefunden werden, diese Funktionalität fehlt daher für das SYCL"=Backend.
 
 \section{Zusammenfassung}
 
 Der strukturelle Aufbau des SYCL"=Backends bzw.\ die in ihm abgebildeten
 Alpaka"=Konzepte sind in der
-Abbildung~\ref{implementierung:zusammenfassung:struktur} zusammengefasst.
-Insgesamt umfasst das Backend \num{6936} Zeilen C++"=Quelltext.
+Abbildung~\ref{implementierung:zusammenfassung:struktur} zusammengefasst. Dabei
+zeigt blau eine Implementierung aller Features des zugrunde liegenden Konzepts,
+gelb die Implementierung einer Teilmenge des Konzepts und lila eine
+nicht erfolgte Implementierung.
+
+Insgesamt umfasst das Backend \num{5011} Zeilen C++"=Quelltext (ohne Kommentare
+und Leerzeilen).
 
 \begin{figure}
     \centering
@@ -739,7 +715,8 @@ Insgesamt umfasst das Backend \num{6936} Zeilen C++"=Quelltext.
         \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 1.05) rectangle (7.9, 2.05)
               node [pos = 0.5, align = center] {\color{white}\textbf{Math}};
         \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 2.15) rectangle (7.9, 3.15)
-              node [pos = 0.5, align = center] {\color{white}\textbf{Rand}};
+              node [pos = 0.5, align = center] {\color{white}\textbf{Rand}\\
+                                                \color{white}\textbf{Time}};
         \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 3.25) rectangle (7.9, 4.25)
               node [pos = 0.5, align = center] {\color{white}\textbf{Atomic}};
         \draw [rounded corners, draw = white, fill = HKS07!50] (5.6, 4.35) rectangle (7.9, 5.35)
@@ -794,9 +771,9 @@ Insgesamt umfasst das Backend \num{6936} Zeilen C++"=Quelltext.
         \draw [rounded corners, fill = HKS44!70] (8.25, 0) rectangle (12.75, 8.4);
         \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 1.05) rectangle (12.65, 2.05)
               node [pos = 0.5, align = center] {\color{white}\texttt{MathSycl}};
-        \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 2.15) rectangle (12.65, 3.15)
+        \draw [rounded corners, draw = white, fill = HKS36!50] (8.35, 2.15) rectangle (12.65, 3.15)
               node [pos = 0.5, align = center] {\color{white}\textbf{nicht implementiert}};
-        \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 3.25) rectangle (12.65, 4.25)
+        \draw [rounded corners, draw = white, fill = HKS57!50] (8.35, 3.25) rectangle (12.65, 4.25)
               node [pos = 0.5, align = center] {\color{white}\texttt{AtomicSycl}};
         \draw [rounded corners, draw = white, fill = HKS44!50] (8.35, 4.35) rectangle (12.65, 5.35)
               node [pos = 0.5, align = center] {\color{white}\texttt{IdxBtSycl}};
@@ -812,18 +789,22 @@ Insgesamt umfasst das Backend \num{6936} Zeilen C++"=Quelltext.
                                                 \color{white}\texttt{TaskSetSycl}};
         \draw [rounded corners, fill = HKS44!70] (8.25, 11.55) rectangle (12.75, 15.05)
               node [pos = 0.5, align = center] {\color{white}\texttt{BufSycl}};
-        \draw [rounded corners, fill = HKS44!70] (8.25, 15.15) rectangle (12.75, 16.25)
+        \draw [rounded corners, fill = HKS57!70] (8.25, 15.15) rectangle (12.75, 16.25)
               node [pos = 0.5, align = center] {\color{white}\texttt{EventSycl}};
-        \draw [rounded corners, fill = HKS44!70] (8.25, 16.35) rectangle (12.75, 17.45)
+        \draw [rounded corners, fill = HKS57!70] (8.25, 16.35) rectangle (12.75, 17.45)
               node [pos = 0.5, align = center] {\color{white}\texttt{QueueSyclNonBlocking}\\
                                                 \color{white}\texttt{QueueSyclBlocking}};
-        \draw [rounded corners, fill = HKS44!70] (8.25, 17.55) rectangle (12.75, 18.65)
+        \draw [rounded corners, fill = HKS57!70] (8.25, 17.55) rectangle (12.75, 18.65)
               node [pos = 0.5, align = center] {\color{white}\texttt{DevSycl}};
-        \draw [rounded corners, fill = HKS44!70] (8.25, 18.75) rectangle (12.75, 19.85)
+        \draw [rounded corners, fill = HKS57!70] (8.25, 18.75) rectangle (12.75, 19.85)
               node [pos = 0.5, align = center] {\color{white}\texttt{PltfSycl}};
         \draw [rounded corners, fill = HKS44!100] (8.25, 20.1) rectangle (12.75, 22.1)
               node [pos = 0.5, align = center] {\color{white}\textbf{Implementierung}};
     \end{tikzpicture}
-    \caption{Struktureller Aufbau des SYCL"=Alpaka"=Backends}
+    \caption[Struktureller Aufbau des SYCL"=Alpaka"=Backends]{Struktureller
+             Aufbau des SYCL"=Alpaka"=Backends. Blau zeigt eine vollständige
+             Implementierung an, dunkelgrün eine unvollständige Implementierung
+             und lila signalisiert das vollständige Fehlen einer
+             Implementierung.}
     \label{implementierung:zusammenfassung:struktur}
 \end{figure}

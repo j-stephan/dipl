@@ -781,15 +781,44 @@ lässt sich ebenfalls bestimmen \cite[vgl.][25]{opencl2012}:
 Da eine \textit{NDRange} bis zu drei Dimensionen umfassen kann, lassen sich
 mehrdimensionale Algorithmen auf diese Weise einfach implementieren.
 
-Im Unterschied zu \gls{opencl} kann bei SYCL die Angabe der Aufteilung in
-\textit{work"=groups} und \textit{work"=items} entfallen, lediglich die
-Gesamtzahl der \textit{work"=items} muss immer angegeben werden. Sofern der
-Programmierer darauf verzichtet, die Größe der \textit{work"=groups} selbst
-festzulegen, ist es Aufgabe der SYCL"=Implementierung, die Zahl der nötigen
-\textit{work"=groups} zu bestimmen und die Zuordnung der \textit{work"=items}
-durchzuführen. Mit dieser Entscheidung verliert der Programmierer jedoch die
-Möglichkeit, gruppenweite Operationen durchzuführen, wie z.B. die
-Synchronisierung innerhalb der \textit{work"=group}.
+\subsection{Kernel"=Start}
+\label{sycl:konzepte:kernelstart}
+
+SYCL unterstützt verschiedene Möglichkeiten, den Kernel unter Einbeziehung der
+im vorigen Abschnitt geschilderten Hierarchie aus \textit{NDRange},
+\textit{work"=groups} und \textit{work"=items} zu starten.
+
+Der Aufruf eines Kernels über die Funktion \texttt{parallel\_for()} erzeugt
+eine \textit{NDRange} nach dem oben beschriebenen Muster. Der Programmierer muss
+immer die Anzahl der \textit{work"=items} innerhalb der \textit{NDRange}
+angeben, während die Angabe der Zahl der \textit{work"=items} pro
+\textit{work"=group} optional ist. Sofern der Programmierer darauf verzichtet,
+die Größe der \textit{work"=groups} selbst festzulegen, ist es Aufgabe der
+SYCL"=Implementierung, die Zahl der nötigen \textit{work"=groups} zu bestimmen
+und die Zuordnung der \textit{work"=items} durchzuführen. Mit dieser
+Entscheidung verliert der Programmierer jedoch die Möglichkeit, gruppenweite
+Operationen durchzuführen, wie z.B. die Synchronisierung innerhalb der
+\textit{work"=group}.
+
+Durch den Aufruf über die Funktion \texttt{parallel\_for\_work\_group()} hat der
+Programmierer die Möglichkeit, seinen Kernel hierarchisch zu gliedern. Der
+Kernel führt seine Anweisungen zunächst auf der Ebene der \textit{work"=group}
+aus, das heißt, dass jede Anweisung von einem einzigen \textit{work"=item}
+durchgeführt und das Ergebnis der gesamten \textit{work"=group} bekannt gemacht
+wird. Innerhalb des Kernels kann durch die Funktion
+\texttt{parallel\_for\_work\_item()} die Parallelität auf der
+\textit{work"=item}"=Ebene ausgedrückt werden: Anweisungen innerhalb dieses
+Kernel"=Teils werden individuell von einer Menge von \textit{work"=items}
+ausgeführt. Diese kann alle \textit{work"=items} der \textit{work"=group}
+umfassen oder nur einen Teil der \textit{work"=group}. Am Ende des
+\textit{work"=item}"=Teils erfolgt eine implizite Synchronisierung der
+\textit{work"=items}.
+
+Sequentielle Kernel lassen sich über die Funktion \texttt{single\_task()}
+starten. Die aufgespannte \textit{NDRange} umfasst dann genau eine
+\textit{work"=group} mit genau einem \textit{work"=item}. Durch den wiederholten
+Aufruf von \texttt{single\_task()} lassen sich komplexe Ketten aufeinander
+folgender sequentieller Aufgaben einfach modellieren.
 
 \subsection{Abhängigkeiten zwischen Kerneln}
 \label{sycl:konzepte:abhaengigkeiten}
