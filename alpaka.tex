@@ -1164,7 +1164,6 @@ allerdings auch deutlich langsamer an den Chip angebunden. Er fungiert außerdem
 als Bindeglied zum Speicher des \textit{Host}"=Systems, da Kopien vom
 \textit{Host} auf das \textit{Device} über den globalen Speicher durchgeführt
 werden. Alpakas und SYCLs \textit{global"=memory}"=Konzepte entsprechen einander.
-\cite[vgl.][17]{worpitz2015}
 
 Auf der nächsten Ebene befindet sich der von den \textit{Threads} eines
 einzelnen \textit{Blocks} geteilte Speicher (\textit{shared memory}). Jeder
@@ -1173,12 +1172,11 @@ verworfen werden, sobald alle \textit{Threads} des \textit{Blocks} ihre
 Ausführung beendet haben. Gegenüber dem \textit{global memory} zeichnet sich der
 \textit{shared memory} durch eine höhere Geschwindigkeit bei gleichzeitig
 deutlich weniger Speicherplatz aus. SYCL kennt ein ähnliches Speicherprinzip,
-das \textit{local memory} genannt wird. \cite[vgl.][20]{worpitz2015}
+das \textit{local memory} genannt wird.
 
 Jeder \textit{Thread} besitzt außerdem eine Reihe von Registern, auf die nur er
 selbst Zugriff hat. In diesen werden z.B. \textit{thread}"=lokale Variablen
 gespeichert. SYCLs Äquivalent wird \textit{private memory} genannt.
-\cite[vgl.][17]{worpitz2015}
 
 \subsection{Abhängigkeiten zwischen Kerneln}
 \label{alpaka:konzepte:abhaengigkeiten}
