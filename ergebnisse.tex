@@ -70,10 +70,27 @@ absehbar, dass kurz"= bis mittelfristig auch die FPGAs dieses Herstellers
 unterstützt werden sollen.
 
 Intels Compiler ist die einzige SYCL"=Implementierung, die Alpaka"=Quelltexte
-mit aktiviertem SYCL"=Backend kompilieren konnte und kommt deshalb zur
-Verfizierung desselben zum Einsatz.
+mit aktiviertem SYCL"=Backend kompilieren konnte und kam deshalb zur
+Verfizierung zum Einsatz.
 
 \subsection{Xilinx}
+
+Während der Niederschrift dieser Arbeit wurde der Entwicklungszweig der
+Xilinx"=SYCL"=Implementierung verwendet, der dem Hauptzweig einige Wochen voraus
+und näher an der zugrunde liegenden Intel"=Implementierung ist. Die folgenden
+Ausführungen beziehen sich auf:
+
+\begin{itemize}
+    \item den Commit \#\texttt{dfb95af} des Zweiges \texttt{sycl/unified/next}
+          der Xilinx"=Implementierung,
+    \item die Entwicklungsumgebung SDAccel 2019.1,
+    \item die OpenCL"=Umgebung XRT 2.2 und
+    \item die Deployment"=Plattform \texttt{xilinx-u200-xdma} für den
+          Beschleuniger Alveo U200 in der Version \texttt{201830.2-2580015} für
+          Ubuntu 18.04 und
+    \item die zugehörigen Entwicklungs"=Plattform \texttt{xilinx-u200-xdma-dev}
+          in der Version \texttt{201830.2-2580015} für Ubuntu 18.04.
+\end{itemize}
 
 Die SYCL"=Implementierung der Firma Xilinx hängt eng mit der Entwicklung des
 Intel"=SYCL"=Compilers zusammen. Dabei wird in unregelmäßigen Abständen die
@@ -109,11 +126,52 @@ mit Besserung zu rechnen ist. Dieser Fehler ist der hauptsächliche Grund, warum
 das aus vielen Strukturen bestehende Alpaka nicht mit Xilinx'
 SYCL"=Implementierung verwendet werden kann.
 
+\subsection{BlockRAM und Pipelining}
+
+In Xilinx' OpenCL"=Implementierung wird \textit{local memory} in BlockRAM
+synthetisiert, um den Logikblöcken möglichst schnelle Speicherzugriffe bieten zu
+können. Xilinx' SYCL"=Implementierung verfügt ebenfalls über die notwendigen
+Klassen und Strukturen, um \textit{local memory} innerhalb eines
+\textit{Kernels} verwenden zu können. Aufgrund eines Compiler"=Fehlers werden
+diese jedoch nicht als solche erkannt, wodurch Felder im \textit{local memory}
+tatsächlich im \textit{global memory} angelegt werden.
+
+Alternativ ließe sich BlockRAM über die in
+Abschnitt~\ref{sycl:erweiterungen:xilinx:partitioning} erwähnten
+SYCL"=Erweiterungen für die Feldpartitionierung verwenden. Diese sind jedoch
+ebenfalls vom oben genannten Problem mit \textit{kernel}"=fremden Strukturen
+betroffen und führen zu einem Compiler"=Absturz.
+
+Zusammengefasst lässt sich BlockRAM mit keiner der in SYCL dafür vorgesehenen
+Funktionalität nutzen. Dies wirkt sich auch auf die Nutzung der Erweiterung
+für Pipelining aus. Ein häufiges Speicherzugriffsmuster bei FPGAs sind die
+\textit{burst reads} genannten Speicherzugriffe. In einer Schleife werden
+aufeinander folgende Daten -- z.B. eine Pixelzeile eines Bildes -- vom
+\textit{global memory} in den \textit{local memory} kopiert. Durch die Anwendung
+des Pipelining"=Prinzips auf diese Schleife lässt sich die zur Verfügung
+stehende Bandbreite besser ausnutzen, als wenn erst im eigentlichen Algorithmus
+auf die Daten des \textit{global memory} zugegriffen würde.
+
+Da der \textit{local memory} nicht zur Verfügung steht, erfolgen Lese"= und
+Schreibzugriffe ausschließlich auf den \textit{global memory}. Die Zahl der
+zugehörigen Lese"= und Schreib"=Ports ist jedoch begrenzt, wodurch die Schleife
+nicht dem Pipelining"=Prinzip unterworfen werden kann.
+
+\subsubsection{Kompatibilität mit der SDAccel"=Umgebung}
+
+Zur Generierung von Profiling"=Informationen während der Hardware"=Emulation ist
+es notwendig, die ausführbare Datei mit Debug"=Symbolen zu generieren
+(Compiler"=Flag \texttt{-g}). Durch einen Compiler"=Fehler werden allerdings im
+\textit{Kernel}"=Kompilat inkompatible Debug"=Symbole generiert, die von Xilinx'
+OpenCL"=Umgebung nicht verarbeitet werden können. Das macht die Nutzung des
+mitgelieferten visuellen Profilers \texttt{sdx} bzw. die Visualisierung der
+Profiling"=Ergebnisse in Form von Timelines unmöglich.
+
 \subsubsection{OpenCL-Treiber}
 
 Xilinx' OpenCL"=Treiber, auf dem die SYCL"=Implementierung aufsetzt, erwies sich
-im Zusammenspiel mit SYCL ebenfalls als äußerst instabil. Aufgrund seiner
-internen Struktur ist er nicht in der Lage, einmal reservierten Speicher wieder
+im Zusammenspiel mit SYCL als äußerst instabil. Aufgrund seiner internen
+Struktur ist er nicht in der Lage, einmal reservierten Speicher wieder
 freizugeben, wenn das reservierende Programm abstürzt. Der Speicher bleibt so
 lange unzugänglich, bis er neugestartet wird. Da dies nur mit
 Administrationsrechten funktioniert, ist dies de facto ein Ausschlusskriterium
@@ -129,9 +187,10 @@ Fehlerverhalten denkbar ungeeignet.
 \subsection{Zusammenfassung}
  
 Von den beschriebenen SYCL"=Implementierungen konnte nur der Intel"=Compiler im
-Zusammenhang mit Alpaka genutzt werden, was als Ziel"=Hardware nur Intel"=CPUs
-und -GPUs zulässt. Insbesondere FPGAs können zum aktuellen Zeitpunkt nicht vom
-Alpaka"=SYCL"=Backend verwendet werden.
+Zusammenhang mit Alpaka genutzt werden, was als Ziel"=Hardware für das
+SYCL"=Backend nur Intel"=CPUs und -GPUs zulässt. Insbesondere Xilinx"=FPGAs
+können zum aktuellen Zeitpunkt aufgrund zahlreicher Probleme der
+SYCL"=Implementierung derzeit nicht vom Alpaka"=SYCL"=Backend verwendet werden.
 
 \section{Vergleich zwischen Alpaka und SYCL}
 
@@ -167,16 +226,52 @@ Anwendungen im Einsatz, während sich SYCLs Ökosystem bislang auf die diversen
 Implementierungen sowie einige von der Firma Codeplay entwickelte Bibliotheken
 für Mathematik und neuronale Netzwerke beschränkt. 
 
+\section{Verifizierung des SYCL-Alpaka-Backends}
+\label{ergebnisse:verifizierung}
+
+Das SYCL"=Alpaka"=Backend wurde mit dem Commit \#\texttt{78d9957} des
+\texttt{sycl}"=Zweigs des Intel"=SYCL"=Compilers verifiziert. Dazu wurde
+Alpakas Test"=Suite mit aktiviertem SYCL"=Backend kompiliert und ausgeführt.
+
 \section{Messergebnisse}
 \label{ergebnisse:messergebnisse}
 
-\subsection{Methoden}
-\label{ergebnisse:messergebnisse:methoden}
+\subsection{Verwendete Hard- und Software}
+\label{ergebnisse:messergebnisse:stack}
 
-\subsubsection{Verwendete Hard- und Software}
-\label{ergebnisse:messergebnisse:methoden:stack}
+\subsection{Beispielalgorithmen}
+\label{ergebnisse:messergebnisse:algorithmus}
 
-\subsubsection{Beispielalgorithmus}
-\label{ergebnisse:messergebnisse:methoden:algorithmus}
-
+\subsubsection{Photoncounter}
 \cite{benner2018}
+
+\subsubsection{Box-Filter}
+
+Kernel-Compilation:     0h26m06s\\
+sdx\_link:              0h00n08s\\
+Block-Level-Synthese:   1h55m06s\\
+Logik-Optimierung:      0h24m41s\\
+Logik-Placement:        1h49m50s\\
+Routing:                2h23m40s\\
+Bitstream:              0h32m46s\\
+Gesamt:                 7h06m41s\\
+
+Ressourcen:\\ 
+FF: 532942 (est.) vs. 288210 (real)\\
+LUT: 415921 (est.) vs. 309710 (real)\\
+DSP: 5944 (est.) vs 5175 (real)\\
+BRAM: 18 (est.) vs 90,5 (real)\\
+URAM: 0 (est.) vs 0 (real)
+
+\begin{figure}
+    \centering
+    \pdfimageresolution=92
+    \includegraphics{box_resources.png}
+    \pdfimageresolution=72
+    \caption[Ressourcenverbrauch des Box-Filter-Kernels]{Ressourcenverbrauch des
+             Box-Filter-Kernels. Blaue Bereiche werden verwendet, dunkelgraue
+             sind nicht in Gebrauch. Der orange Bereich ist für die
+             Laufzeitumgebung reserviert. Die kräftigen grauen und roten Balken
+             repräsentieren die Zahl der Verbindungen zwischen den
+             FPGA"=Komponenten.}
+\end{figure}
