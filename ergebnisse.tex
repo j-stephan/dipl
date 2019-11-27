@@ -394,7 +394,10 @@ Sofern ein Pixel am Bildrand liegt, wird der Wert der Nachbarn, die außerhalb
 des Bildes lägen, als $0$ angenommen.
 
 Der dem Algorithmus entsprechende SYCL"=Kernel ist im
-Anhang~\ref{anhang:source:cpp:boxkernel} zu finden.
+Anhang~\ref{anhang:source:cpp:boxkernel} zu finden. Obwohl \textit{local memory}
+und Pipelining zur Zeit von der Xilinx"=SYCL"=Implementierung nicht unterstützt
+werden bzw. zu der Nutzung des falschen Speichertyps führen, wurden sie im
+Kernel"=Quelltext zur Illustration der FPGA"=SYCL"=Programmierung verwendet.
 
 \subsection{Messergebnisse}
 
@@ -416,7 +419,7 @@ HPC"=Systems \textit{Hemera}. Dieses verfügt über zwei
 Xilinx"=FPGA"=Beschleuniger des Typs \textit{Alveo U200}, wovon einer für die
 Messungen verwendet wurde. Softwareseitig kamen auf diesem Knoten die Module
 \texttt{gcc/9.1.0} und \texttt{xilinx/2.2} zum Einsatz. Die
-SYCL"=Implementierung steht nicht als Modul zu Verfügung und musste zunächst
+SYCL"=Implementierung steht nicht als Modul zur Verfügung und musste zunächst
 in der oben genannten Version lokal im Benutzerverzeichnis auf dem Knoten
 kompiliert werden.
 
@@ -575,12 +578,23 @@ stehenden \textit{Block RAM}.
 \subsubsection{Laufzeiten}
 
 Über die in SYCL vorhandenen Profiling"=Funktionen lassen sich Erkenntnisse über
-die Laufzeit gewinnen. Leider war trotz vorherige Verifizierung durch Software"=
-und Hardware"=Emulation nur die \texttt{float}"=Schaltung auf dem FPGA"=Knoten
-lauffähig. Diese benötigte für die Filterung von 512 Bildern etwa
-\SI{22.26}{\second}, oder \SI{45}{\milli\second} pro Bild.
+die Laufzeit gewinnen. Unglücklicherweise war nur die \texttt{float}"=Schaltung
+auf dem FPGA"=Knoten lauffähig. Diese benötigte für die Filterung von
+512 Bildern etwa \SI{22.26}{\second}, oder ca. \SI{45}{\milli\second} pro Bild.
+Das entspricht einer Verarbeitungsfrequenz von rund 23 Bildern pro Sekunde,
+womit ungefähr die Geschwindigkeit der Intel"=GPU bei der Ausführung des
+\textit{jungfrau"=photoncounter} im vorigen Abschnitt erreicht ist. Für einen
+Beschleuniger, der für den Einsatz in Rechenzentren ausgelegt wurde, ist das
+deutlich zu wenig. Es ist allerdings zu bedenken, dass die Synthesewerkzeuge
+aufgrund des Entwicklungsstandes der Xilinx"=SYCL"=Implementierung keinerlei
+Optimierungen -- wie z.B. die Nutzung des Block RAM oder Pipelining -- vornehmen
+konnte, obwohl diese im Kernel"=Quelltext selbst eingefügt wurden. Mit
+zunehmendem Reifegrad der Xilinx"=SYCL"=Implementierung dürfte derselbe
+Quelltext zukünftig deutlich bessere Ergebnisse liefern.
 
-Die \texttt{int}"=Schaltung führte dagegen entweder zu einem Absturz des
+Die \texttt{int}"=Schaltung führte dagegen -- trotz vorheriger Verifizierung
+durch Software"= und Hardware"=Emulation -- entweder zu einem Absturz des
 gesamten Knotens oder wurde vom HPC"=System nach einer Stunde(!) beendet, ohne
 ein Ergebnis zu produzieren. Daher ist ein Vergleich der Laufzeiten zwischen
-den Schaltungen für verschiedene Datentypen nicht möglich.
+den Schaltungen für verschiedene Datentypen zum aktuellen Zeitpunkt nicht
+möglich.
