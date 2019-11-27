@@ -1,0 +1,29 @@
+int
+
+Kernel-Compilation:     0h26m18s
+Block-Level-Synthese:   2h32m48s
+Logik-Optimierung:      0h28m55s
+Logik-Placement:        2h11m42s
+Routing:                3h12m19s
+Bitstream:              0h45m29s
+Gesamt:                 9h12m02s
+
+float
+
+Kernel-Compilation:     0h26m14s
+Block-Level-Synthese:   1h55m06s
+Logik-Optimierung:      0h24m41s
+Logik-Placement:        1h49m50s
+Routing:                2h23m40s
+Bitstream:              0h32m46s
+Gesamt:                 7h06m41s
+
+double - Abgebrochen durch Verbindungsverlust
+
+Kernel-Compilation:     0h26m18s
+Block-Level-Synthese:   2h15m13s
+Logik-Optimierung:      0h25m13s
+Logik-Placement:        2h07m42s
+Routing:                
+Bitstream:
+Gesamt

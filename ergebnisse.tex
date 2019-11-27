@@ -127,9 +127,9 @@ mit Besserung zu rechnen ist. Dieser Fehler ist der hauptsächliche Grund, warum
 das aus vielen Strukturen bestehende Alpaka nicht mit Xilinx'
 SYCL"=Implementierung verwendet werden kann.
 
-\subsection{BlockRAM und Pipelining}
+\subsection{Block RAM und Pipelining}
 
-In Xilinx' OpenCL"=Implementierung wird \textit{local memory} in BlockRAM
+In Xilinx' OpenCL"=Implementierung wird \textit{local memory} in Block RAM
 synthetisiert, um den Logikblöcken möglichst schnelle Speicherzugriffe bieten zu
 können. Xilinx' SYCL"=Implementierung verfügt ebenfalls über die notwendigen
 Klassen und Strukturen, um \textit{local memory} innerhalb eines
@@ -143,7 +143,7 @@ SYCL"=Erweiterungen für die Feldpartitionierung verwenden. Diese sind jedoch
 ebenfalls vom oben genannten Problem mit \textit{kernel}"=fremden Strukturen
 betroffen und führen zu einem Compiler"=Absturz.
 
-Zusammengefasst lässt sich BlockRAM mit keiner der in SYCL dafür vorgesehenen
+Zusammengefasst lässt sich Block RAM mit keiner der in SYCL dafür vorgesehenen
 Funktionalität nutzen. Dies wirkt sich auch auf die Nutzung der Erweiterung
 für Pipelining aus. Ein häufiges Speicherzugriffsmuster bei FPGAs sind die
 \textit{burst reads} genannten Speicherzugriffe. In einer Schleife werden
@@ -397,8 +397,8 @@ des Bildes lägen, als $0$ angenommen.
 
 Der obige Algorithmus wurde in einer Schleife nacheinander auf \num{512} Bilder
 mit jeweils $512 \times 256$ Pixeln angewendet. Außerdem wurden separate
-Messungen für die Pixel"=Datentypen \texttt{int}, \texttt{float} und
-\texttt{double} vorgenommen, um die dadurch verursachten Veränderungen des
+Messungen für die Pixel"=Datentypen \texttt{int} und \texttt{float}
+vorgenommen, um die durch einen anderen Datentyp verursachten Veränderungen des
 Ressourcenverbrauchs beobachten zu können.
 
 Der SYCL"=Quelltext des Programms wurde mit dem SYCL"=Compiler der
@@ -419,9 +419,101 @@ kompiliert werden.
 
 \subsubsection{Compile"=Zeiten}
 
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[title = {Vergleich der für die HLS notwendigen Zeitaufwände},
+                     axis line style = {HKS92},
+                     %
+                     xlabel = {Syntheseschritte},
+                     xtick = data,
+                     symbolic x coords = {Kernel,Synthese,Optimierung,Platzierung,Routing,Bitstream},
+                     x tick label style = {align=center},
+                     xlabel near ticks,
+                     %
+                     ylabel = {benötigte Zeit},
+                     y filter/.code = {\pgfmathparse{#1/3600}},
+                     yticklabel = { % Aufteilung in Stunden, Minuten und Sekunden
+                        \pgfmathsetmacro\hours{floor(\tick)}%
+                        \pgfmathsetmacro\minutes{(\tick - \hours) * 0.6}%
+                        \pgfmathprintnumber{\hours}h\pgfmathprintnumber[fixed, fixed zerofill, skip 0.=true, dec sep = {}]{\minutes}m
+                     },
+                     ylabel near ticks,
+                     %
+                     ymajorgrids = true,
+                     grid style = dashed,
+                     legend cell align = left,
+                     legend pos = north east,
+                     legend style = {draw = HKS92},
+                     no markers,
+                     ybar,
+                     width = \textwidth
+                     ]
+
+            \addplot[HKS92, fill=HKS44] table [x = step, y = int, col sep = semicolon] {data/compile.csv};
+            \addlegendentry{\texttt{int}};
+
+            \addplot[HKS92, fill=HKS33] table [x = step, y = float, col sep = semicolon] {data/compile.csv};
+            \addlegendentry{\texttt{float}};
+        \end{axis}
+    \end{tikzpicture}
+    \caption[Vergleich der für die HLS notwendigen Zeitaufwände bei
+             verschiedenen Datentypen]{Vergleich der für die HLS notwendigen
+             Zeitaufwände bei verschiedenen Datentypen. Die Syntheseschritte
+             werden während der HLS von links nach rechts ausgeführt. Der
+             Schritt \textit{Kernel} bezeichnet die Umwandlung des SYCL"=Kernels
+             in ein für die HLS geeignetes Format. Der Schritt \textit{Synthese}
+             meint die Block"=Level"=Synthese, \textit{Optimierung} die
+             Logikoptimierung, \textit{Platzierung} die Logikplatzierung,
+             \textit{Routing} das Routing und \textit{Bitstream} die
+             Bitstream"=Generierung.}
+    \label{ergebnisse:box:messung:zeitvergleich}
+\end{figure}
+
 \subsubsection{Ressourcenverbrauch}
 
-\begin{figure}
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[title = {Vergleich der Ressourcennutzung},
+                     axis line style = {HKS92},
+                     %
+                     xlabel = {Ressourcen},
+                     xtick = data,
+                     symbolic x coords = {CLB,Flip-Flops,LUTs,DSPs,Block RAM,UltraRAM},
+                     x tick label style = {align=center},
+                     xlabel near ticks,
+                     %
+                     ylabel = {Auslastung},
+                     yticklabel = {\pgfmathprintnumber{\tick}\%},
+                     ylabel near ticks,
+                     ymin = 0,
+                     ymax = 100,
+                     %
+                     ymajorgrids = true,
+                     grid style = dashed,
+                     legend cell align = left,
+                     legend pos = north east,
+                     legend style = {draw = HKS92},
+                     no markers,
+                     ybar,
+                     %scale only axis
+                     width = \textwidth
+                     ]
+
+            \addplot[HKS92, fill=HKS44] table [x = res, y = int, col sep = semicolon] {data/resources.csv};
+            \addlegendentry{\texttt{int}};
+
+            \addplot[HKS92, fill=HKS33] table [x = res, y = float, col sep = semicolon] {data/resources.csv};
+            \addlegendentry{\texttt{float}};
+        \end{axis}
+    \end{tikzpicture}
+    \caption[Vergleich der Ressourcennutzung bei verschiedenen Datentypen]
+            {Vergleich der Ressourcennutzung bei verschiedenen Datentypen}
+    \label{ergebnisse:box:messung:ressourcenvergleich}
+\end{figure}
+
+\begin{figure}[htb]
     \centering
     \pdfimageresolution=92
     \includegraphics{box_resources.png}
@@ -438,35 +530,8 @@ kompiliert werden.
 
 \section{Rohdaten}
 
-\subsubsection{Box-Filter-Int}
-
-Kernel-Compilation:     0h26m18s\\
-Block-Level-Synthese:   2h32m48s\\
-Logik-Optimierung:      0h28m55s\\
-Logik-Placement:        2h11m42s\\ 
-Routing:                3h12m19s\\
-Bitstream:              0h45m29s\\
-Gesamt:                 9h12m02s\\
-\\
-Ressourcen:\\
-FF:\\
-LUT:\\
-DSP:\\
-BRAM:\\
-URAM:\\
-\\
-Laufzeit:
-
 \subsubsection{Box-Filter-Float}
 
-Kernel-Compilation:     0h26m14s\\
-Block-Level-Synthese:   1h55m06s\\
-Logik-Optimierung:      0h24m41s\\
-Logik-Placement:        1h49m50s\\
-Routing:                2h23m40s\\
-Bitstream:              0h32m46s\\
-Gesamt:                 7h06m41s\\
-\\
 Ressourcen:\\ 
 FF: 532942 (est.) vs. 288210 (real)\\
 LUT: 415921 (est.) vs. 309710 (real)\\
