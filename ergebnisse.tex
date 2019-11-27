@@ -393,6 +393,9 @@ $(x, y)$ horizontal, vertikal und diagonal angrenzenden Pixelwerte:
 Sofern ein Pixel am Bildrand liegt, wird der Wert der Nachbarn, die außerhalb
 des Bildes lägen, als $0$ angenommen.
 
+Der dem Algorithmus entsprechende SYCL"=Kernel ist im
+Anhang~\ref{anhang:source:cpp:boxkernel} zu finden.
+
 \subsection{Messergebnisse}
 
 Der obige Algorithmus wurde in einer Schleife nacheinander auf \num{512} Bilder
@@ -418,6 +421,16 @@ in der oben genannten Version lokal im Benutzerverzeichnis auf dem Knoten
 kompiliert werden.
 
 \subsubsection{Compile"=Zeiten}
+
+Schon während der Synthese der Schaltungen ergaben sich durch den Austausch der
+Datentypen signifikante zeitliche Unterschiede bei den einzelnen
+Syntheseschritten (siehe Abbildung~\ref{ergebnisse:box:messung:zeitvergleich}).
+Während beide Datentypen während der Umwandlung des SYCL"=Kernels in ein
+HLS"=taugliches Format noch ungefähr die gleiche Zeit benötigen, benötigt die
+\texttt{int}"=Schaltung in allen folgenden Schritten deutlich messbar mehr Zeit
+als das \texttt{float}"=Äquivalent. Anscheinend fällt es den
+Synthesewerkzeugen leichter, optimierte Schaltungen für
+\texttt{float}"=Operationen zu generieren.
 
 \begin{figure}[htb]
     \centering
@@ -472,6 +485,26 @@ kompiliert werden.
 
 \subsubsection{Ressourcenverbrauch}
 
+Beim Blick auf die Auslastung der zur Verfügung stehenden Ressourcen (siehe
+Abbildung~\ref{ergebnisse:box:messung:ressourcenvergleich}) fallen zwei Dinge
+auf:
+
+Zum einen benötigt die \texttt{int}"=Schaltung nicht nur mehr Zeit, sondern auch
+mehr Ressourcen als ihr \texttt{float}"=Gegenstück. Die CLBs und ihre
+Komponenten werden wesentlich stärker in Anspruch genommen als bei der
+\texttt{float}"=Schaltung. Besonders deutlich wird der Unterschied bei der
+Betrachtung der Netzlisten (siehe
+Abbildung~\ref{ergebnisse:box:messung:netzliste}). Es ist klar zu sehen, dass
+die \texttt{int}"=Schaltung weitaus mehr Fläche auf dem Chip belegt als ihr
+\texttt{float}"=Gegenstück. Eine weitere Erkenntnis ist, dass die Synthese
+zunächst den inneren Bereich des FPGAs zu füllen scheint und erst dann auf die
+weiter außen liegenden Bereiche ausweicht.
+
+Zum anderen ist das im vorigen Abschnitt beschriebene fehlerhafte Verhalten
+bezüglich SYCLs \textit{local memory} gut sichtbar. Beide Schaltungen verwenden
+keinen \textit{UltraRAM} und nur einen sehr kleinen Anteil des zur Verfügung
+stehenden \textit{Block RAM}.
+
 \begin{figure}[htb]
     \centering
     \begin{tikzpicture}
@@ -516,47 +549,38 @@ kompiliert werden.
 \begin{figure}[htb]
     \centering
     \pdfimageresolution=92
-    \includegraphics{box_resources.png}
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics{box_res_int.png}
+        \caption*{Netzliste für den Datentyp \texttt{int}}
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics{box_res_float.png}
+        \caption*{Netzliste für den Datentyp \texttt{float}}
+    \end{minipage}
     \pdfimageresolution=72
-    \caption[Ressourcenverbrauch des Box-Filter-Kernels]{Ressourcenverbrauch des
-             Box-Filter-Kernels. Blaue Bereiche werden verwendet, dunkelgraue
-             sind nicht in Gebrauch. Der orange Bereich ist für die
-             Laufzeitumgebung reserviert. Die kräftigen grauen und roten Balken
-             repräsentieren die Zahl der Verbindungen zwischen den
+    \caption[Netzliste des synthetisierten Box-Filter-Kernels mit verschiedenen
+             Datentypen]{Netzliste des Box-Filter-Kernels mit verschiedenen
+             Datentypen. Die unterschiedliche Auslastung der
+             Hardware"=Ressourcen ist in dieser Ansicht deutlich sichtbar. Blaue
+             Bereiche werden für die Schaltung verwendet, dunkelgraue sind nicht
+             in Gebrauch. Der orange Bereich ist für die Laufzeitumgebung
+             reserviert. Die kräftigen grauen und roten Balken repräsentieren
+             die Zahl der Verbindungen zwischen den einzelnen
              FPGA"=Komponenten.}
+    \label{ergebnisse:box:messung:netzliste}
 \end{figure}
 
 \subsubsection{Laufzeiten}
 
-\section{Rohdaten}
+Über die in SYCL vorhandenen Profiling"=Funktionen lassen sich Erkenntnisse über
+die Laufzeit gewinnen. Leider war trotz vorherige Verifizierung durch Software"=
+und Hardware"=Emulation nur die \texttt{float}"=Schaltung auf dem FPGA"=Knoten
+lauffähig. Diese benötigte für die Filterung von 512 Bildern etwa
+\SI{22.26}{\second}, oder \SI{45}{\milli\second} pro Bild.
 
-\subsubsection{Box-Filter-Float}
-
-Ressourcen:\\ 
-FF: 532942 (est.) vs. 288210 (real)\\
-LUT: 415921 (est.) vs. 309710 (real)\\
-DSP: 5944 (est.) vs 5175 (real)\\
-BRAM: 18 (est.) vs 90,5 (real)\\
-URAM: 0 (est.) vs 0 (real)
-\\
-Laufzeit:
-
-\subsubsection{Box-Filter-Double}
-
-Kernel-Compilation:     0h26m18s\\
-Block-Level-Synthese:   \\
-Logik-Optimierung:      \\
-Logik-Placement:        \\ 
-Routing:                \\
-Bitstream:              \\
-Gesamt:                 \\
-\\
-Ressourcen:\\
-FF:\\
-LUT:\\
-DSP:\\
-BRAM:\\
-URAM:\\
-\\
-Laufzeit:
-
+Die \texttt{int}"=Schaltung führte dagegen entweder zu einem Absturz des
+gesamten Knotens oder wurde vom HPC"=System nach einer Stunde(!) beendet, ohne
+ein Ergebnis zu produzieren. Daher ist ein Vergleich der Laufzeiten zwischen
+den Schaltungen für verschiedene Datentypen nicht möglich.

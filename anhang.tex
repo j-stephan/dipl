@@ -286,20 +286,66 @@ constexpr auto transform(std::tuple<TArgs...> args,
              Template"=Meta"=Programmierung}
 \end{code}
 
-\chapter{Fehlerberichte und Korrekturen}
-\label{anhang:fehler}
+\subsection{Box-Filter-Kernel}
+\label{anhang:source:cpp:boxkernel}
 
-\section{Fehlerberichte und Korrekturen für die Xilinx-OpenCL-Laufzeitumgebung}
-\label{anhang:fehler:xrt}
+\begin{code}
+    \begin{minted}[fontsize=\small]{c++}
+cgh.single_task<box_filter>([=]() { for(auto y = 0ul; y < dim_y; ++y) {
+    for(auto c = 0ul; c < (dim_x / chunk_size); ++c) {
+        const auto cl_id = cl::sycl::id<2>{c * chunk_size - 1ul, y};
+        const auto left = (c == 0ul) ? 0 : buffers_in[cl_id];
+        /* right analog */
 
-\section{Fehlerberichte und Korrekturen für den Xilinx-SYCL-Compiler}
-\label{anhang:fehler:xilinx}
+        // lese 3 Zeilen aus globalem in lokalen Speicher
+        cl::sycl::xilinx::pipeline([&]() {
+            for(auto x = 0ul; x < chunk_size; ++x) {
+                if(y == 0ul) {
+                    const auto local = cl::sycl::id<2>{x, 0ul};
+                    local_in[local] = 0.0;
+                } else {
+                    const auto global = cl::sycl::id<2>{
+                                            c * chunk_size + x, y - 1ul}; 
+                    const auto local = cl::sycl::id<2>{x, 0ul};
+                    local_in[local] = buffers_in[global];
+                }
+            }
+        }); /* Zeilen 2 und 3 analog */
 
-\section{Fehlerberichte und Korrekturen für den Intel-SYCL-Compiler}
-\label{anhang:fehler:intel}
+        cl::sycl::xilinx::pipeline([&]() { // box filter
+            for(auto x = 0ul; x < chunk_size; ++x) {
+                const auto tl_id = cl::sycl::id<2>{x - 1ul, 0ul};
+                const auto tl = (x == 0ul) ? left : local_in[tl_id];
+                /* cl und bl analog */
+                const auto tc_id = cl::sycl::id<2>{x, 0ul};
+                const auto tc = local_in[tc_id];
+                /* cc und bc analog */
+                const auto tr_id = cl::sycl::id<2>{x + 1ul, 0ul};
+                const auto tr = (x == (chunk_size - 1ul)) ?
+                                    right : local_in[tr_id];
+                /* cr und br analog */
+                const auto top = tl + tc + tr;
+                const auto center = cl + cc + cr;
+                const auto bottom = bl + bc + br;
 
-\section{Fehlerberichte und Korrekturen für den ComputeCpp-SYCL-Compiler}
-\label{anhang:fehler:computecpp}
+                const auto local = cl::sycl::id<1>{x};
+                local_out[local] = (top + center + bottom) / 9;
+            }
+        });
+
+        // schreibe Ergebnis in globalen Speicher
+        cl::sycl::xilinx::pipeline([&]() {
+            for(auto x = 0ul; x < chunk_size; ++x) {
+                const auto global = cl::sycl::id<2>{c * chunk_size + x, y};
+                const auto local = cl::sycl::id<1>{x};
+                buffers_out[global] = local_out[local];
+            }
+        });
+    }
+}});
+    \end{minted}
+    \caption{SYCL"=Box"=Filter"=Kernel}
+\end{code}
 
 \chapter{Online-Diskussionen}\label{anhang:diskussionen}
 
@@ -606,4 +652,3 @@ struct pointer_traits
 
 \section{Diskussionen mit Xilinx-Angestellten}
 
-\section{Diskussionen mit Codeplay-Angestellten}
