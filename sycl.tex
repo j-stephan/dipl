@@ -72,12 +72,13 @@ mittelfristig plant; für Intel"=\gls{cpu}s und "=\gls{gpu}s ist bereits eine
 SYCL"=Implementierung verfügbar (der Abschnitt~\ref{sycl:implementierungen}
 befasst sich mit allen verfügbaren Implementierungen).
 
-\subsection{SYCL am Beispiel des AXPY-Algorithmus}
+\subsection{Der AXPY-Algorithmus als Beispiel}
 \label{sycl:ueberblick:axpy}
 
-Ein im Bereich der Programmierung häufig verwendetes einführendes Beispiel
-ist der sogenannte AXPY"=Algorithmus, der ursprünglich aus der Bibliothek
-\gls{blas} stammt \cite[vgl.][]{lawson1979}. Dieser führt die Berechnung
+Ein im Bereich der parallelen Programmierung häufig verwendetes einführendes
+Beispiel ist der sogenannte AXPY"=Algorithmus, der ursprünglich aus der
+Bibliothek \gls{blas} stammt \cite[vgl.][]{lawson1979}. Dieser führt die
+Berechnung
 
 \begin{equation}\label{sycl:ueberblick:axpy:formel}
     \vec{y} = a \cdot \vec{x} + \vec{y}
@@ -89,6 +90,8 @@ aus und ist aufgrund seiner Einfachheit und hohen erreichbaren Parallelität
 AXPY lässt sich für eine Einführung in SYCL gut verwenden und wird daher in den
 folgenden Abschnitten als illustrierendes Beispiel genutzt.
 
+\subsection{Struktur eines SYCL-Programms}
+
 Ein SYCL"=Programm lässt sich in mehrere aufeinander aufbauende Stufen
 unterteilen, wie in Quelltext~\ref{sycl:ueberblick:axpy:struktur} zu sehen ist.
 Die einzelnen Platzhalter im Quelltext werden in den nächsten Abschnitten mit
@@ -97,7 +100,6 @@ Inhalt gefüllt.
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
 #include <cstdlib>
-
 #include <CL/sycl.hpp>
 
 auto main() -> int
@@ -117,7 +119,7 @@ auto main() -> int
     \label{sycl:ueberblick:axpy:struktur}
 \end{code}
 
-\subsubsection{Beschleunigerwahl und Befehlswarteschlange}
+\subsection{Beschleunigerwahl und Befehlswarteschlange}
 \label{sycl:ueberblick:axpy:queue}
 
 Von \gls{opencl} erbt SYCL die Plattformunabhängigkeit. Es wird das
@@ -174,7 +176,7 @@ auto queue = cl::sycl::queue{XOCLDeviceSelector{}};
     \label{sycl:ueberblick:axpy:queue:src}
 \end{code}
 %
-\noindent
+\vspace{5mm}
 Programmierern, die mehr Kontrolle über die Initialisierung des Beschleunigers
 oder der gesamten SYCL"=Laufzeitumgebung wünschen, stellt die
 SYCL"=Spezifikation das aus \gls{opencl} bekannte Schema zur Verfügung. Der
@@ -210,7 +212,7 @@ auto queue = cl::sycl::queue{my_device};
     \label{sycl:ueberblick:axpy:queue:ausfuehrlich}
 \end{code}
 
-\subsubsection{Speicherreservierung und -initialisierung}
+\subsection{Speicherreservierung und -initialisierung}
 \label{sycl:ueberblick:axpy:buffer}
 
 Für die Vektoren $\vec{x}$ und $\vec{y}$ der
@@ -291,7 +293,7 @@ for(auto i = 0; i < 1024; ++i)
     \label{sycl:ueberblick:axpy:buffer:src}
 \end{code}
 
-\subsubsection{Kerneldefinition und -ausführung}
+\subsection{Kerneldefinition und -ausführung}
 \label{sycl:ueberblick:axpy:kernel}
 
 Im nächsten Schritt wird der eigentliche Kernel definiert und ausgeführt. Ein
@@ -319,7 +321,7 @@ wird.
     \caption{Struktur einer \textit{command group}}
     \label{sycl:ueberblick:axpy:kernel:cg}
 \end{code}
-
+\vspace{5mm}
 SYCL bietet für verschiedene Anwendungsfälle unterschiedliche Methoden für den
 Aufruf der Kernel"=Funktion. Für datenparallele Algorithmen bietet sich vor
 allem der Aufruf mittels der Methode \texttt{parallel\_for} an. Diese
@@ -366,7 +368,7 @@ Zugriff auf ein Element im Speicher verwendet werden kann.
     \label{sycl:ueberblick:axpy:kernel:call}
 \end{code}
 
-\subsubsection{Synchronisierung}
+\subsection{Synchronisierung}
 \label{sycl:ueberblick:axpy:sync}
 
 Nachdem der Kernel an die \textit{Queue} übergeben wurde, muss das Ergebnis
@@ -388,7 +390,7 @@ queue.wait();
     \label{sycl:ueberblick:axpy:sync:wait}
 \end{code}
 
-\subsubsection{Zusammenfassung}
+\subsection{Zusammenfassung}
 \label{sycl:ueberblick:axpy:zusammenfassung}
 
 Das gesamte SYCL"=AXPY"=Beispiel findet sich in
