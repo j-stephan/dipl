@@ -114,10 +114,11 @@ nutzen diese Funktion, um während des Profilings gepufferte
 Profiling"=Informationen auf der Festplatte zu speichern. Wird das Programm
 vorher beendet, gehen diese Informationen möglicherweise verloren. Aufgrund des
 Zustands der zur Verfügung stehenden SYCL"=Implementierungen (siehe
-Abschnitt~\ref{sycl:nutzbarkeit}) und der Tatsache, dass NVIDIA ohnehin kein
-Profiling für OpenCL"=basierte Programme mehr ermöglicht, kann noch keine
+Abschnitt~\ref{ergebnisse:nutzbarkeit}) und der Tatsache, dass NVIDIA ohnehin
+kein Profiling für OpenCL"=basierte Programme mehr ermöglicht, kann noch keine
 Aussage darüber getroffen werden, inwieweit sich das Fehlen der
-\texttt{dev::reset()}"=Funktion für SYCL"=Backends bemerkbar machen wird.
+\texttt{dev::reset()}"=Funktion für SYCL"=Backends zukünftig bemerkbar machen
+wird.
 
 \section{Queues und Events}
 \label{implementierung:queue}
@@ -279,7 +280,7 @@ SYCL"=Kernel"=Start darstellt.
 
 \texttt{parallel\_for\_work\_group} bietet dieselbe Funktionalität wie
 \texttt{parallel\_for}, exponiert diese jedoch mit einem anderen Schwerpunkt.
-Mit diesem Ansatz wird der Kernel in zwei separate Bereiche aufgeteilt: einmal
+Mit diesem Ansatz wird der Kernel in zwei separate Bereiche aufgeteilt: Einmal
 auf Ebene der \textit{work"=groups} und einmal auf Ebene der
 \textit{work"=items}, wobei die letztere der ersteren untergeordnet ist bzw.
 aus ihr heraus aufgerufen wird. Befehle auf der \textit{work"=group}"=Ebene

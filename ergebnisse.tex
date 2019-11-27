@@ -74,6 +74,7 @@ mit aktiviertem SYCL"=Backend kompilieren konnte und kam deshalb zur
 Verfizierung zum Einsatz.
 
 \subsection{Xilinx}
+\label{ergebnisse:nutzbarkeit:xilinx}
 
 Während der Niederschrift dieser Arbeit wurde der Entwicklungszweig der
 Xilinx"=SYCL"=Implementierung verwendet, der dem Hauptzweig einige Wochen voraus
@@ -229,39 +230,196 @@ für Mathematik und neuronale Netzwerke beschränkt.
 \section{Verifizierung des SYCL-Alpaka-Backends}
 \label{ergebnisse:verifizierung}
 
+Als Integrationstest für das SYCL"=Backend diente das in Alpaka geschriebene
+Programm \textit{jungfrau"=photoncounter}, das von der Gruppe
+\textit{Computergestützte Strahlenphysik} des \textit{Instituts für
+Strahlenphysik} am \textit{Helmholtz"=Zentrum Dresden"=Rossendorf} in
+Zusammenarbeit mit dem schweizerischen
+\textit{Paul Scherrer Institut}\footnote{Sic! Das PSI schreibt sich ohne
+Bindestriche.} (PSI) entwickelt wird und 2018 in Sebastian Benners
+Bachelorarbeit beschrieben wurde \cite[vgl.][]{benner2018}.
+
+\subsection{Der \textit{jungfrau-photoncounter}}
+\label{ergebnisse:verifizierung:jungfrau}
+
+Der \textit{jungfrau"=photoncounter} wertet Daten des Photonendetektor"=Typs
+JUNGFRAU (\textit{ad\textbf{ju}sti\textbf{n}g \textbf{g}ain detector
+\textbf{f}o\textbf{r} the \textbf{A}ramis \textbf{u}ser station}) aus und zählt
+die von diesem registrierten Photonen. Der JUNGFRAU"=Detektortyp wird für den am
+PSI befindlichen Freie"=Elektronen"=Laser \textit{SwissFEL} entwickelt. Ein
+JUNGFRAU"=Detektor verfügt über eine Auflösung von 16 Megapixeln mit 2 Byte pro
+Pixel und produziert Messergebnisse mit einer Frequenz von derzeit
+\SI{100}{\hertz} (umgerechnet \SI{3.2}{\giga\byte\per\second}). Der Detektortyp
+befindet sich nach wie vor in Entwicklung und soll langfristig Daten mit einer
+Frequenz von \SI{2.2}{\kilo\hertz} (umgerechnet \SI{74}{\giga\byte\per\second})
+generieren. Das macht eine dementsprechend schnelle Weiterverarbeitung der Daten
+durch den \textit{jungfrau"=photoncounter} notwendig.
+
+In Rahmen dieser Arbeit wurde nur der Teil des gesamten Funktionsumfangs des
+\textit{jungfrau"=photoncounters} betrachtet, der sich mit dem Zählen der
+Photonen pro Detektor"=Pixel befasst. Der Algorithmus berechnet für jedes
+Detektorpixel die Formel
+
+\begin{equation}\label{ergebnisse:verifizierung:jungfrau:formel}
+    N_\gamma = \frac{\text{ADC} - \text{Sockel}}{\text{Verstärkung} \cdot E_\gamma}
+\end{equation}
+\noindent
+Dabei bezeichnet $N_\gamma$ die Zahl der erkannten Photonen, \textit{ADC} das
+vom Analogen ins Digitale konvertierte Messergebnis des Pixels, \textit{Sockel}
+das von Mess- und Umweltbedingungen abhängige Grundrauschen des jeweiligen
+Pixels (engl. \textit{pedestal}), \textit{Verstärkung} die Signalverstärkung
+des Pixels (engl. \textit{gain}) und $E_\gamma$ die Konstante der
+Photonenenergie.
+
+Um -- im Vergleich zur Multiplikation -- langsame Divisionen bei der Berechnung
+zu vermeiden, werden für \textit{Verstärkung} und $E_\gamma$ vor der Ausführung
+des Algorithmus die Kehrwerte gebildet. Für $E_\gamma$ kann dies global
+erfolgen. Für \textit{Verstärkung} erfolgt die Invertierung mittels eines
+eigenen \textit{Kernels} (\texttt{GainmapInversionKernel}), der den Kehrwert für
+jedes Pixel bildet.
+
+Der \textit{Sockel}"=Wert wird ebenfalls für jedes Pixel bestimmt. Je nach
+Messbedingungen kann er entweder im Abstand einiger Stunden gemessen (z.B. beim
+Betrieb des Lasers bei Zimmertemperatur) oder kontinuierlich während der Messung
+aktualisiert (z.B. beim Betrieb bei Temperaturen unter dem Gefrierpunkt, da hier
+die Pixel empfindlicher sind) werden. Der zweite Fall wird durch einen weiteren
+\textit{Kernel} (\texttt{CalibrationKernel}) abgedeckt, der anhand der
+Standardabweichung und des Durchschnitts der zuletzt betrachteten Messergebnisse
+und \textit{Sockel}"=Werte einen neuen \textit{Sockel}"=Wert berechnet.
+
+Die Formel~\ref{ergebnisse:verifizierung:jungfrau:formel} wird in einem eigenen
+\textit{Kernel} umgesetzt (\texttt{PhotonFinderKernel}), der auf jedes vom
+Detektor produzierte Messergebniss angewendet wird.
+
+\subsection{Verifizierung und Performanz}
+\label{ergebnisse:verifizierung:performanz}
+
 Das SYCL"=Alpaka"=Backend wurde mit dem Commit \#\texttt{78d9957} des
-\texttt{sycl}"=Zweigs des Intel"=SYCL"=Compilers verifiziert. Dazu wurde
-Alpakas Test"=Suite mit aktiviertem SYCL"=Backend kompiliert und ausgeführt.
+\texttt{sycl}"=Zweigs des Intel"=SYCL"=Compilers in Kombination mit der
+\textit{Intel Graphics Compute Runtime for OpenCL} in der Version 19.46.14807
+verifiziert. Dabei wurde eine integrierte GPU des Typs \textit{Intel HD Graphics
+520} (auch als \textit{Skylake GT2} bezeichnet) als Hardware"=Plattform
+verwendet, die über \SI{6}{\gibi\byte} Speicher verfügen kann. Diesen muss sie
+jedoch mit dem \textit{Host}"=System teilen. Diese GPU erreicht eine maximale
+Performanz von \num{100.8} GFLOPS bei doppelter Präzision\footnote{Die doppelte
+Präzision wird innerhalb des Programms benötigt, da einige Zwischenergebnisse in
+diesem Format gespeichert werden.}. Das \textit{Host}"=System selbst verfügt
+über insgesamt \SI{8}{\gibi\byte} Speicher und ist mit einem Intel"=Prozessor
+des Typs i7-6500U ausgestattet, der eine maximale Taktfrequenz von
+\SI{3.1}{\giga\hertz} erreichen kann. Als Betriebssystem kam Ubuntu 19.10 zum
+Einsatz.
 
-\section{Messergebnisse}
-\label{ergebnisse:messergebnisse}
+Der Quelltext des \textit{jungfrau"=photoncounters} wurde dem
+\texttt{master}"=Zweig des Projekts entnommen (Commit \#\texttt{d94f836}) und
+geringfügig an das SYCL"=Backend angepasst. Dabei wurden keine Optimierungen der
+\textit{Kernel} für Intel"=Hardware vorgenommen. Von den Entwicklern des
+\textit{jungfrau"=photoncounters} wurde für die Messungen der Datensatz mit der
+Bezeichung \texttt{px\_101016} zur Verfügung gestellt, der \num{10000}
+Messungen mit jeweils $1024 \times 512$ Pixeln umfasst. Aufgrund der
+Speicherlimitierung des Gesamtsystems wurde der Datensatz auf \num{1000}
+Messergebnisse reduziert.
 
-\subsection{Verwendete Hard- und Software}
-\label{ergebnisse:messergebnisse:stack}
+Die Abbildung~\ref{ergebnisse:verifizierung:performanz:photonen} zeigt das
+Ergebnis des oben beschriebenen Algorithmus für den reduzierten Datensatz. Die
+weißen Pixel zeigen ungültige Messergebnisse an. Diese werden im
+\textit{jungfrau"=photoncounter} durch eine separate Maske eigentlich
+abgeschaltet. Durch einen Fehler unbekannter Herkunft funktionierte dieser Teil
+des Programms jedoch nicht mit dem Alpaka"=SYCL"=Backend. Stattdessen wurden
+alle Pixel maskiert, was zu einem leeren Ergebnis führte. Aus diesem Grund wurde
+auf den Einsatz der Maske verzichtet.
 
-\subsection{Beispielalgorithmen}
-\label{ergebnisse:messergebnisse:algorithmus}
+Nach mündlicher Aussage der Entwickler des \textit{jungfrau"=photoncounter} ist
+es nicht möglich, die Ergebnisse des im vorigen Abschnitt beschriebenen
+Algorithmus anhand synthetischer Daten zu verifizieren. Die Verifizierung realer
+Daten erfolgt deswegen durch die Anwender des \textit{Paul Scherrer Instituts},
+die die Ergebnisse auf ihre Plausibilität prüfen. Die
+Abbildung~\ref{ergebnisse:verifizierung:performanz:photonen} wurde von einem der
+Entwickler des \textit{jungfrau"=photoncounter}, Jonas Schenke, für plausibel
+befunden.
 
-\subsubsection{Photoncounter}
-\cite{benner2018}
+\begin{figure}
+    \centering
+    \includegraphics{log/photon.png}
+    \caption[Visualisierung eines Ergebnisses des
+             \textit{jungfrau-photoncounters}]{Visualisierung eines Ergebnisses
+             des \textit{jungfrau-photoncounters}. Weiße Pixel zeigen
+             ungültige Ergebnisse an, die nicht maskiert werden konnten.}
+    \label{ergebnisse:verifizierung:performanz:photonen}
+\end{figure}
 
-\subsubsection{Box-Filter}
+Das gezeigte Bild wurde anhand von \num{1000} Messergebnissen berechnet. Die
+genannte GPU benötigte für die Verarbeitung der Eingangsdaten (ohne das Laden
+der Daten von der Festplatte, Kalibrierung und Invertierung)
+\SI{48.372}{\second}. Damit erreicht sie eine Verarbeitungsfrequenz von
+\num{20.6731} Messungen pro Sekunde, was unter den derzeitigen \SI{100}{\hertz}
+und deutlich unter den avisierten \SI{2.2}{\kilo\hertz} des JUNGFRAU"=Detektors
+liegt. Da es sich bei der verwendeten GPU nicht um einen
+Hochleistungsbeschleuniger handelt und ihr tatsächlicher Einsatz im Umfeld eines
+JUNGFRAU"=Detektors nicht zu erwarten ist, reicht dieses Ergebnis als Beweis
+für die grundsätzliche Funktionstüchtigkeit des Alpaka"=SYCL"=Backends aus. In
+einem realen Anwendungsszenario wären Beschleuniger mit höherer Leistung
+(insbesondere bei doppelter Präzision) zwingend erforderlich, um die angestrebte
+Frequenz des JUNGFRAU"=Detektors erreichen zu können.
 
-Kernel-Compilation:     0h26m06s\\
-sdx\_link:              0h00n08s\\
-Block-Level-Synthese:   1h55m06s\\
-Logik-Optimierung:      0h24m41s\\
-Logik-Placement:        1h49m50s\\
-Routing:                2h23m40s\\
-Bitstream:              0h32m46s\\
-Gesamt:                 7h06m41s\\
+\subsection{Nutzbarkeit von FPGAs}
 
-Ressourcen:\\ 
-FF: 532942 (est.) vs. 288210 (real)\\
-LUT: 415921 (est.) vs. 309710 (real)\\
-DSP: 5944 (est.) vs 5175 (real)\\
-BRAM: 18 (est.) vs 90,5 (real)\\
-URAM: 0 (est.) vs 0 (real)
+Da der Detektor mit fester Frequenz Daten produziert, würde sich ein FPGA für
+den beschriebenen Verarbeitungsalgorithmus sehr gut eignen. Durch die in
+Abschnitt~\ref{ergebnisse:nutzbarkeit:xilinx} geschilderten Schwierigkeiten
+mit der derzeit zur Verfügung stehenden Xilinx"=SYCL"=Implementierung konnte 
+das bestehende Alpaka"=Programm jedoch nicht auf Xilinx"=FPGAs zur Ausführung
+gebracht werden.
+
+\section{Box-Filter}
+\label{ergebnisse:box}
+
+Da sich die ursprünglich für den Einsatz von FPGAs vorgesehene Alpaka"=Anwendung
+aufgrund des Entwicklungsstatus der Xilinx"=SYCL"=Implementierung nicht für
+Messungen eignete, wurde ein Bildverarbeitungsprogramm in SYCL implementiert.
+Dieses wendet einen einfachen Box"=Filter auf eine Menge von Bildern an.
+
+\subsection{Algorithmus}
+
+Die Grundlage des Programms bildet ein einfacher Box"=Filter für
+zweidimensionale Bilder \cite[vgl.][]{nakamura2017}. Dieser berechnet für den
+Pixelwert $p$ an der Position $(x, y)$ den gefilterten Wert $p'$ an gleicher
+Stelle. $p'$ ist der Mittelwert des Werts $p$ sowie der direkt an der Position
+$(x, y)$ horizontal, vertikal und diagonal angrenzenden Pixelwerte:
+
+\begin{equation}
+    p'(x, y) = \frac{1}{9} \cdot \sum_{j = {-1}}^{1} \sum_{i = {-1}}^{1} p(x + i, y + j)
+\end{equation}
+
+Sofern ein Pixel am Bildrand liegt, wird der Wert der Nachbarn, die außerhalb
+des Bildes lägen, als $0$ angenommen.
+
+\subsection{Messergebnisse}
+
+Der obige Algorithmus wurde in einer Schleife nacheinander auf \num{512} Bilder
+mit jeweils $512 \times 256$ Pixeln angewendet. Außerdem wurden separate
+Messungen für die Pixel"=Datentypen \texttt{int}, \texttt{float} und
+\texttt{double} vorgenommen, um die dadurch verursachten Veränderungen des
+Ressourcenverbrauchs beobachten zu können.
+
+Der SYCL"=Quelltext des Programms wurde mit dem SYCL"=Compiler der
+Xilinx"=Implementierung (Entwicklungszweig \texttt{sycl/unified/next},
+Commit \#\texttt{dfb95af}) übersetzt. Die darauf folgende High"=Level"=Synthese
+wurde von den Werkzeugen der Entwicklungsumgebung SDAccel in der Version 2019.1
+durchgeführt.
+
+Die Ausführung der synthetisierten Schaltungen erfolgte auf dem FPGA"=Knoten
+\texttt{h002} des am Helmholtz"=Zentrum Dresden"=Rossendorf befindlichen
+HPC"=Systems \textit{Hemera}. Dieses verfügt über zwei
+Xilinx"=FPGA"=Beschleuniger des Typs \textit{Alveo U200}, wovon einer für die
+Messungen verwendet wurde. Softwareseitig kamen auf diesem Knoten die Module
+\texttt{gcc/9.1.0} und \texttt{xilinx/2.2} zum Einsatz. Die
+SYCL"=Implementierung steht nicht als Modul zu Verfügung und musste zunächst
+in der oben genannten Version lokal im Benutzerverzeichnis auf dem Knoten
+kompiliert werden.
+
+\subsubsection{Compile"=Zeiten}
+
+\subsubsection{Ressourcenverbrauch}
 
 \begin{figure}
     \centering
@@ -275,3 +433,65 @@ URAM: 0 (est.) vs 0 (real)
              repräsentieren die Zahl der Verbindungen zwischen den
              FPGA"=Komponenten.}
 \end{figure}
+
+\subsubsection{Laufzeiten}
+
+\section{Rohdaten}
+
+\subsubsection{Box-Filter-Int}
+
+Kernel-Compilation:     0h26m18s\\
+Block-Level-Synthese:   2h32m48s\\
+Logik-Optimierung:      0h28m55s\\
+Logik-Placement:        2h11m42s\\ 
+Routing:                3h12m19s\\
+Bitstream:              0h45m29s\\
+Gesamt:                 9h12m02s\\
+\\
+Ressourcen:\\
+FF:\\
+LUT:\\
+DSP:\\
+BRAM:\\
+URAM:\\
+\\
+Laufzeit:
+
+\subsubsection{Box-Filter-Float}
+
+Kernel-Compilation:     0h26m14s\\
+Block-Level-Synthese:   1h55m06s\\
+Logik-Optimierung:      0h24m41s\\
+Logik-Placement:        1h49m50s\\
+Routing:                2h23m40s\\
+Bitstream:              0h32m46s\\
+Gesamt:                 7h06m41s\\
+\\
+Ressourcen:\\ 
+FF: 532942 (est.) vs. 288210 (real)\\
+LUT: 415921 (est.) vs. 309710 (real)\\
+DSP: 5944 (est.) vs 5175 (real)\\
+BRAM: 18 (est.) vs 90,5 (real)\\
+URAM: 0 (est.) vs 0 (real)
+\\
+Laufzeit:
+
+\subsubsection{Box-Filter-Double}
+
+Kernel-Compilation:     0h26m18s\\
+Block-Level-Synthese:   \\
+Logik-Optimierung:      \\
+Logik-Placement:        \\ 
+Routing:                \\
+Bitstream:              \\
+Gesamt:                 \\
+\\
+Ressourcen:\\
+FF:\\
+LUT:\\
+DSP:\\
+BRAM:\\
+URAM:\\
+\\
+Laufzeit:
+

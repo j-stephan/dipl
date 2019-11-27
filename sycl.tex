@@ -25,11 +25,11 @@ sowohl auf einer \gls{cpu}, einer \gls{gpu}, einem \gls{dsp} oder einem
 \gls{fpga} ausführbar sein soll.
 
 SYCL unterscheidet sich von \gls{opencl} im Hinblick auf die Struktur des
-Quelltextes: bei \gls{opencl} sind die Quelltexte für das steuernde Programm
+Quelltextes: Bei \gls{opencl} sind die Quelltexte für das steuernde Programm
 (\textit{Host}) und den Programmteil, der vom Beschleuniger (\textit{Device})
 ausgeführt wird, voneinander getrennt. Diese Design"=Entscheidung des
 \gls{opencl}"=Standards ist durch das Ziel der Plattformunabhängigkeit
-begründet: ein Entwickler kennt während der Kompilierung des Hauptprogramms
+begründet: Ein Entwickler kennt während der Kompilierung des Hauptprogramms
 nicht notwendigerweise die vorhandenen Beschleuniger der Zielplattform. Dadurch
 wird der \textit{Device}"=spezifische Quelltext häufig erst zur Laufzeit des
 Programms kompiliert, da in diesem Moment der konkrete Beschleuniger bekannt
@@ -295,7 +295,7 @@ for(auto i = 0; i < 1024; ++i)
 \label{sycl:ueberblick:axpy:kernel}
 
 Im nächsten Schritt wird der eigentliche Kernel definiert und ausgeführt. Ein
-SYCL"=Kernel besteht aus zwei Teilen: der eigentlichen Kernel"=Funktion, also
+SYCL"=Kernel besteht aus zwei Teilen: Der eigentlichen Kernel"=Funktion, also
 der Abbildung des Algorithmus auf SYCL"=C++"=Quelltext, sowie den Abhängigkeiten
 (in Form von \texttt{accessor}"=Variablen). Kernel"=Funktion und Abhängigkeiten
 bilden gemeinsam eine \textit{command group} und werden in dieser Form an die
@@ -478,7 +478,7 @@ wiederum aus mindestens einer \textit{compute unit} (CU). Eine CU lässt sich au
 einen oder mehrere Teile des Beschleunigers abbilden und ist in der Lage, einen
 Kernel auszuführen. Bei einer CPU lässt sich eine CU also auf einen
 Kern abbilden oder bei einer GPU auf einen Multiprozessor. Bei FPGAs ist die
-Abbildung dynamischer: hier hängt die Zahl der verfügbaren CUs davon ab, wie
+Abbildung dynamischer: Hier hängt die Zahl der verfügbaren CUs davon ab, wie
 viele Ressourcen der Kernel verbraucht. Die Zahl der gleichzeitig platzierbaren
 Kernel entspricht damit der Zahl der möglichen CUs, sofern die Implementierung
 keine Obergrenze für die CU"=Anzahl vorgibt. Eine CU besteht aus mindestens

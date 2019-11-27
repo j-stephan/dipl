@@ -510,7 +510,7 @@ $\vec{y}$ der Formel~\ref{sycl:ueberblick:axpy:formel} durch. Die im Folgenden
 erläuterten Konzepte wurden stark durch die in CUDA und OpenCL vorhandenen
 Abstraktionen beeinflusst \cite[vgl.][17]{worpitz2015}.
 
-Die Konzepte sind hierarchisch und redundant aufgebaut: sofern eine Ebene der
+Die Konzepte sind hierarchisch und redundant aufgebaut: Sofern eine Ebene der
 Abstraktionshierarchie von der konkreten Hardware bzw. dem zugehörigen
 Programmier"=Interface nicht unterstützt wird, lässt sich die betreffende Ebene
 emulieren oder sogar ganz ignorieren. Dadurch ist es möglich, einen
@@ -691,7 +691,7 @@ besitzen.
 scalability} umsetzen. Damit lässt sich dasselbe \textit{Grid}, das aus einer
 festen Menge von \textit{Blocks} besteht, z.B. auf einer GPU mit zwei
 Multiprozessoren oder auf einer GPU mit acht Multiprozessoren zur Ausführung
-bringen: der Scheduler der GPU verteilt die Blocks auf die freien
+bringen: Der Scheduler der GPU verteilt die Blocks auf die freien
 Multiprozessoren, wodurch der Kernel selbst skalierbar wird.
 
 \begin{figure}

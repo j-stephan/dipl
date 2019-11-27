@@ -52,7 +52,7 @@ ausführen. Diese Blockzellen integrieren durch ein dediziertes Verbindungsnetz
 Logikgatter und Speicher. Dabei lassen sich vier zentrale Strukturen
 unterscheiden:
 \begin{itemize}
-    \item konfigurierbare Logikblöcke,
+    \item Konfigurierbare Logikblöcke,
     \item programmierbare Verbindungen,
     \item Puffer für die Ein- und Ausgabe (engl. \textit{input/output}, I/O) und
     \item weitere Elemente (Speicher, arithmetische Einheiten, Taktnetzwerke,
@@ -502,7 +502,7 @@ Gebrauch gemacht wurde \cite[vgl. etwa][]{ditucci2017}.
 \section{Entwicklungsprozess}\label{fpga:entwicklung}
 
 Es sind bei der Software"=Entwicklung für \gls{fpga}s zwei Vorgehensweisen
-voneinander abzugrenzen: einerseits die Entwicklung durch
+voneinander abzugrenzen: Einerseits die Entwicklung durch
 Hardware"=Beschreibungssprachen (in dieser Arbeit nur kurz skizziert) und
 andererseits die High"=Level"=Synthese, die auf in Hochsprachen implementierten
 Algorithmen basiert. Die Ansätze unterscheiden sich durch ihre Abstraktion der
@@ -652,7 +652,7 @@ Beschreibung jeder \textit{Komponente} erfolgt dann auf der
 Register"=Transfer"=Ebene, das heißt, dass zwischen speichernden (Register) und
 kombinatorischen (Transferfunktionen) Aspekten unterschieden wird. Aus der
 Digitaltechnik stammt eine Darstellungsweise als \glqq endlicher Automat\grqq\
-(siehe Abbildung~\ref{fpga:hdl:moore}): die Eingabe-Transferfunktion $f$
+(siehe Abbildung~\ref{fpga:hdl:moore}): Die Eingabe-Transferfunktion $f$
 berechnet durch die Kombination logischer Operatoren (UND, ODER, NICHT, \ldots)
 aus der Eingangsvariablen $X$ und der Zustandsvariablen $Z$ des Registers den
 neuen, im nächsten Takt zu übernehmenden Registerwert $Z+$. Durch die
@@ -765,7 +765,7 @@ Quelltext~\ref{fpga:hdl:regentity} deklarierten) Ports verbunden.
 \cite[vgl.][29]{kesel2013}
 
 Der Prozess \texttt{res} reagiert auf die Ports \texttt{clk} und \texttt{res}:
-ist \texttt{res} logisch \glqq 1\grqq\, so werden die internen Signale
+Ist \texttt{res} logisch \glqq 1\grqq\, so werden die internen Signale
 \texttt{q0\_s} und \texttt{q1\_s} auf \glqq 0\grqq\ zurückgesetzt. Ist
 \texttt{res} logisch \glqq 0\grqq\ und existiert eine steigende Taktflanke
 (\texttt{clk'event AND clk = '1'}), werden die Werte von \texttt{q0\_ns} und
@@ -1154,7 +1154,7 @@ Register lassen sich die einzelnen Schritte der Berechnung jedoch in unabhängig
 Abschnitte aufteilen, der Multiplizierer und die Addierer können also
 nebenläufig arbeiten. Die Ergebnisse $y$ und $y'$ lassen sich auf diese Weise
 (teilweise) parallel berechnen und lasten dabei die verfügbare Hardware besser
-aus: nach einem Overhead von 3 Taktzyklen zu Beginn der Berechnung (engl.
+aus: Nach einem Overhead von 3 Taktzyklen zu Beginn der Berechnung (engl.
 \textit{pipeline fill time}) berechnet die Schaltung in jedem weiteren
 Taktzyklus einen neuen Wert für $y$. Dieser Vorgang wird in
 Abbildung~\ref{fpga:pipelining:pipeline} illustriert. Je nach verwendetem
@@ -1235,7 +1235,7 @@ nur alle zwei Takte, bei $\text{II} = 4$ mit jedem vierten Takt, usw.
 \end{figure}
 
 Die Anwendung des Pipelining während der HLS unterscheidet sich zwischen den
-Herstellern: so versucht Intels OpenCL"=Umgebung grundsätzlich, Pipelining auf
+Herstellern: So versucht Intels OpenCL"=Umgebung grundsätzlich, Pipelining auf
 jede vorhandene Schleife anzuwenden und erfordert ein explizites Deaktivieren
 des Verfahrens, wenn kein Pipelining gewünscht wird. Bei Xilinx'
 OpenCL"=Umgebung verhält es sich dagegen genau umgekehrt, da hier Pipelining
