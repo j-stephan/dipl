@@ -1,9 +1,9 @@
 \chapter{Die Alpaka-Bibliothek}\label{alpaka}
 
-Dieses Kapitel führt in die Alpaka"=Bibliothek ein. Wie im vorherigen
-SYCL"=Kapitel wird der grundlegende Aufbau eines Alpaka"=Programms anhand des
-AXPY"=Beispiels dargestellt. Ein weiterer Abschnitt ist den darauf aufbauenden,
-erweiterten Konzepten, wie etwa der Hardware"=Abstraktion, gewidmet.
+Dieses Kapitel führt in die Alpaka"=Bibliothek ein. Wie im SYCL"=Kapitel wird
+der grundlegende Aufbau eines Alpaka"=Programms anhand des AXPY"=Beispiels
+dargestellt. Ein weiterer Abschnitt ist den darauf aufbauenden, erweiterten
+Konzepten, wie etwa der Hardware"=Abstraktion, gewidmet.
 
 \section{Überblick}\label{alpaka:ueberblick}
 
@@ -81,7 +81,7 @@ Abstraktions"=Overhead zur Laufzeit vermieden wird.
 Ähnlich wie SYCL bietet auch Alpaka ein beschleunigerunabhängiges Backend, das
 sich prinzipiell mit jedem modernen C++"=Compiler kompilieren lässt. Dieses
 wird in der Alpaka"=Terminologie \texttt{CpuSerial} genannt und führt jeden
-Befehl sequentiell aus. Während der Kernel"=Ausführung existiert also keinerlei
+Befehl sequentiell aus. Während der \textit{Kernel}"=Ausführung existiert also keinerlei
 Parallelität durch CPU"=Threads\footnote{Der Compiler kann den verwendeten
 Algorithmus natürlich trotzdem vektorisieren, zudem existieren noch weitere
 Möglichkeiten der Parallelisierung durch Instruktions"=Level"=Parallelität oder
@@ -111,7 +111,7 @@ auto main() -> int
 
     // Speicherreservierung und -initialisierung
 
-    // Kerneldefinition und -ausführung
+    // Kernel-Definition und -ausführung
 
     // Synchronisierung
 
@@ -144,7 +144,7 @@ using Acc = alpaka::acc::AccGpuCudaRt<Dim, Idx>;
     \label{alpaka:ueberblick:axpy:queue:acc_src}
 \end{code}
 
-In der Folge wird der definierte Typ \texttt{Acc} als Parameter für weitere
+Im Folgenden wird der definierte Typ \texttt{Acc} als Parameter für weitere
 Datentypen verwendet. Bei letzteren handelt es sich um die Klassen für die
 Verwaltung konkreter Beschleuniger. Diese sind in Alpaka als abstrakte
 Template"=Klassen mit einer aus Sicht des Programmierers einheitlichen
@@ -224,7 +224,7 @@ angelegt und initialisiert werden. Dies erfolgt in drei Stufen:
 die die reinen Zeiger kapseln. Im Gegensatz zu SYCL sind die Puffer auf dem Host
 und Device jedoch voneinander unabhängig. Es ist also nicht möglich, einen
 gemeinsamen Puffer zu erzeugen, der die notwendigen Kopien für den Programmierer
-unsichtbar im Hintergrund durchführt, wie dies in
+unsichtbar im Hintergrund durchführt, wie es in
 Abschnitt~\ref{sycl:ueberblick:axpy:buffer} für SYCL demonstriert wurde.
 
 Für die Erzeugung von Puffern ist es zunächst nötig, die gewünschte Größe des
@@ -239,8 +239,8 @@ auto extent = alpaka::vec::Vec<Dim, Idx>{numElements};
     \label{alpaka:ueberblick:axpy:buffer:extent_src}
 \end{code}
 \vspace{4mm}
-In der Folge kann die Größe verwendet werden, um den Speicher sowohl auf dem
-\textit{Host} als auch auf dem \textit{Device} zu reseriveren. Dies ist in
+Im Folgenden kann die Größe verwendet werden, um den Speicher sowohl auf dem
+\textit{Host} als auch auf dem \textit{Device} zu reservieren. Dies ist in
 Quelltext~\ref{alpaka:ueberblick:axpy:buffer:alloc} dargestellt.
 
 \begin{code}
@@ -287,15 +287,15 @@ alpaka::mem::view::copy(queue, devBufY, hostBufY, extent);
     \label{alpaka:ueberblick:axpy:buffer:copy}
 \end{code}
 
-\subsection{Kerneldefinition und -ausführung}
+\subsection{\textit{Kernel}-Definition und -ausführung}
 \label{alpaka:ueberblick:axpy:kernel}
 
 Um die parallelen Eigenschaften der Ziel"=Hardware nutzen zu können, erfordert
 Alpaka eine Information, wie das zu bearbeitende Problem auf die
 Hardware"=Ressourcen aufgeteilt werden soll. Dazu kann der Programmierer eine
-in Alpaka vorhandene Funktion nutzen, die eine valide Aufteilung vornehmen kann,
+in Alpaka vorhandene Funktion nutzen, die eine valide Aufteilung vornimmt,
 indem sie die maximal mögliche \textit{Block}"=Größe bestimmt. Der Programmierer
-kann auch selbst Definitionen für die Größe des \textit{Grids}, die Zahl der
+kann zudem selbst Definitionen für die Größe des \textit{Grids}, die Zahl der
 \textit{Threads} sowie der \textit{Elements} pro \textit{Thread} angeben. Die
 Aufteilung in \textit{Grid}, \textit{Threads} und \textit{Elements} ist ein
 Konzept der in Alpaka verwendeten Hardware"=Abstraktion und wird detailliert in
@@ -308,7 +308,7 @@ Quelltext~\ref{alpaka:ueberblick:axpy:kernel:workdiv} gezeigt wird.
 auto workDiv = alpaka::workdiv::getValidWorkDiv<Acc>(
                 devAcc,                 // für welches Device?
                 extent,                 // für welche Problemgröße?
-                static_cast<Idx>(1u));  // wie viele Elemente pro Thread?
+                static_cast<Idx>(1u));  // für wie viele Elemente pro Thread?
     \end{minted}
     \caption{Arbeitsaufteilung durch Alpaka"=Schätzfunktion}
     \label{alpaka:ueberblick:axpy:kernel:workdiv}
@@ -345,39 +345,40 @@ struct AxpyKernel
     }
 };
     \end{minted}
-    \caption{Kernel"=Definition in Alpaka}
+    \caption{\textit{Kernel}"=Definition in Alpaka}
     \label{alpaka:ueberblick:axpy:kernel:kernel_src}
 \end{code}
 \vspace{3mm}
-Alpaka"=Kernel werden in Form von C++"=Funktoren -- das heißt Strukturen mit
+Alpaka"=\textit{Kernel} werden in Form von C++"=Funktoren -- das heißt Strukturen mit
 einem überladenen \texttt{()}"=Operator -- definiert. Der \texttt{()}"=Operator
 wird mit einem speziellen Funktionsattribut versehen (\texttt{ALPAKA\_FN\_ACC}),
 der im Hintergrund dafür sorgt, dass diese Funktion für das \textit{Device}
 kompiliert wird.
 
-Als Parameter nimmt der Kernel zunächst die oben definierte
+Als Parameter nimmt der \textit{Kernel} zunächst die oben definierte
 \texttt{devAcc}"=Instanz entgegen. Dies ist nötig, um von dieser Struktur
-gekapselte \textit{device}"=seitige Funktionen im Kernel nutzen zu können.
-Daneben ist nur die Angabe der eigentlichen Funktionsparameter erforderlich,
-in diesem Fall also die für den AXPY"=Algorithmus nötige Konstante \texttt{a}
-sowie die Ein- bzw. Ausgangsvektoren. Wie auf dem \textit{Host} erfolgt auch auf
-dem \textit{Device} der Zugriff auf die Speicherbereiche durch reine Zeiger.
+gekapselte \textit{device}"=seitige Funktionen im \textit{Kernel} nutzen zu
+können. Daneben ist nur die Angabe der eigentlichen Funktionsparameter
+erforderlich. In diesem Fall also die für den AXPY"=Algorithmus nötige Konstante
+\texttt{a} sowie die Ein- bzw. Ausgangsvektoren. Wie auf dem \textit{Host}
+erfolgt auch auf dem \textit{Device} der Zugriff auf die Speicherbereiche durch
+reine Zeiger.
 
-Innerhalb des Kernels wird ein Index"=Raum aufgespannt (eine genaue Erläuterung
+Innerhalb des \textit{Kernels} wird ein Index"=Raum aufgespannt (eine genaue Erläuterung
 dieses Prinzips folgt in Abschnitt~\ref{alpaka:konzepte:abstraktion}), in dem
 jeder ausführenden Einheit des Beschleunigers ein eindeutiger Index sowie zu
 bearbeitende Elemente zugeordnet werden. Über in Alpaka vorhandene Funktionen
 ist eine Orientierung innerhalb des Index"=Raums möglich, wodurch die
 AXPY"=Funktion auf alle Vektor"=Elemente angewendet werden kann.
 
-Die gesamte Kernel"=Definition ist in
+Die gesamte \textit{Kernel}"=Definition ist in
 Quelltext~\ref{alpaka:ueberblick:axpy:kernel:kernel_src} dargestellt.
 
-Der so definierte Kernel wird im nächsten Schritt einem \textit{Task}
+Der so definierte \textit{Kernel} wird im nächsten Schritt einem \textit{Task}
 zugeordnet. Ein \textit{Task} ist prinzipiell mit einer \textit{command group}
-in SYCL vergleichbar und umfasst neben der Kernel"=Definition die gewünschte
+in SYCL vergleichbar und umfasst neben der \textit{Kernel}"=Definition die gewünschte
 Aufteilung der Arbeit sowie die konkreten Ein- und Ausgabeparameter für eine
-Kernel"=Ausführung. Ein Alpaka"=\textit{Task} wird einer Alpaka"=\textit{Queue}
+\textit{Kernel}"=Ausführung. Ein Alpaka"=\textit{Task} wird einer Alpaka"=\textit{Queue}
 übergeben und von dieser auf dem \textit{Device} zur Ausführung gebracht.
 
 Der gesamte Prozess ist in Quelltext~\ref{alpaka:ueberblick:axpy:kernel:task}
@@ -404,7 +405,7 @@ alpaka::queue::enqueue(queue, taskKernel);
 
 Nach dem Abschluss der Berechnung ist die Prüfung der Ergebnisse erforderlich.
 Dazu werden diese durch eine Kopieroperation zunächst wieder auf den
-\textit{Host} übertragen. Dies geschieht wieder in einer \textit{Queue}. Um
+\textit{Host} übertragen. Dies geschieht erneut in einer \textit{Queue}. Um
 auf den Abschluss aller ausstehenden Operationen zu warten, kann der
 \textit{Host} durch eine Wartefunktion blockiert werden. Dieser Vorgang wird in
 Quelltext~\ref{alpaka:ueberblick:axpy:sync:src} demonstriert.
@@ -426,7 +427,7 @@ alpaka::wait::wait(queue); // warte auf ausstehende Operationen
 \label{alpaka:ueberblick:axpy:zusammenfassung}
 
 Der Quelltext~\ref{alpaka:ueberblick:axpy:zusammenfassung:src} zeigt das gesamte
-Alpaka"=AXPY"=Beispiel, jedoch aus Platzgründen ohne die Kernel"=Definition.
+Alpaka"=AXPY"=Beispiel, jedoch aus Platzgründen ohne die \textit{Kernel}"=Definition.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -495,7 +496,7 @@ Zum besseren Verständnis des obigen Beispiels sowie der in den nächsten Kapite
 geschilderten Schwierigkeiten beim Entwicklungsprozess des Backends ist die
 Kenntnis weiterführender Alpaka"=Konzepte notwendig. Dazu gehören insbesondere
 die in Alpaka verwendete Hardware"=Abstraktion und die Verwaltung der
-Abhängigkeiten zwischen Kerneln. Für den Entwicklungsprozess mit Alpaka sind
+Abhängigkeiten zwischen \textit{Kerneln}. Für den Entwicklungsprozess mit Alpaka sind
 außerdem die Methoden für die Fehlerbehandlung und das Profiling relevant.
 
 \subsection{Hardware"=Abstraktion}
@@ -1145,7 +1146,7 @@ dargestellt ist.
     \caption{Vollständiges Alpaka"=Abstraktionskonzept: Mehrere
              \textit{Elements} werden von einem \textit{Thread} verarbeitet.
              Mehrere \textit{Threads} werden innerhalb eines \textit{Warps}
-             taktgenau gemeinsam ausgeführt, mehrere \textit{Warps} bilden
+             taktgenau gemeinsam ausgeführt. Mehrere \textit{Warps} bilden
              wiederum einen \textit{Block}. Die Menge aller \textit{Blocks}
              ergibt das \textit{Grid}. \cite[nach][22]{worpitz2015}}
     \label{alpaka:konzepte:abstraktion:elements:vollstaendig}
@@ -1218,7 +1219,7 @@ alpaka::queue::enqueue(queue1, /* D */);
     \caption{Einfacher Alpaka"=Aufgabengraph}
     \label{alpaka:konzepte:abhaengigkeiten:src}
 \end{code}
-
+\vspace{3mm}
 \textit{Events} können zwischen \textit{Queue}"=Operationen eingefügt werden.
 Wurde eine Operation vollständig durchgeführt, so wird das nachfolgende
 \textit{Event} entsprechend markiert. Andere \textit{Queues} sowie der
@@ -1244,7 +1245,7 @@ Im Gegensatz zu SYCL bringt Alpaka keine eigenen Werkzeuge für das Profiling
 mit. Da Alpaka zur Compile"=Zeit auf die herstellerspezifischen Schnittstellen
 abgebildet wird, ist dies auch nicht nötig -- dem Programmierer stehen so die
 vom jeweiligen Hardware"=Hersteller mitgelieferten Profiling"=Werkzeuge zur
-Verfügung. So lässt sich beispielsweise der CUDA"=Profiler \texttt{nvprof} für
+Verfügung. Zum Beispiel lässt sich der CUDA"=Profiler \texttt{nvprof} für
 das Profiling eines mit Alpaka auf NVIDIA"=Hardware portierten Programms
 verwenden. Das ist mit den für NVIDIA"=GPUs existierenden
 SYCL"=Implementierungen nicht möglich, da NVIDIA seit der CUDA"=Version 8.0 die
@@ -1374,6 +1375,7 @@ wurden.
         \draw [rounded corners, fill = HKS07!100] (5.5, 20.1) rectangle (8, 22.1)
               node [pos = 0.5, align = center] {\color{white}\textbf{Konzept}};
     \end{tikzpicture}
-    \caption{Struktureller Aufbau der Alpaka"=Bibliothek\cite[nach][40]{worpitz2015}}
+    \caption{Struktureller Aufbau der Alpaka"=Bibliothek
+             \cite[nach][40]{worpitz2015}}
     \label{alpaka:konzepte:zusammenfassung:struktur}
 \end{figure}

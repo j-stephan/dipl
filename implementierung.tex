@@ -43,9 +43,9 @@ basierende System zur Auswahl des Beschleunigers stößt hier an seine Grenzen.
 Wie im Kapitel~\ref{alpaka} beschrieben wurde, fungiert eine vom Benutzer
 gewählte \texttt{Acc}"=Datenstruktur als Template"=Parameter für viele
 abstrakte Alpaka"=Klassen, die dadurch einen konkreten Code"=Pfad wählen können.
-Die \texttt{Acc}"=Datenstrukur selbst wird jedoch nicht auf der
-\textit{Host}"=, sondern auf der \textit{Device}"=Seite instanziiert und kann
-deshalb keinen SYCL"=\texttt{device\_selector} kapseln.
+Die \texttt{Acc}"=Datenstrukur selbst wird nicht auf der \textit{Host}-, sondern
+auf der \textit{Device}"=Seite instanziiert und kann deshalb keinen
+SYCL"=\texttt{device\_selector} kapseln.
 
 Nun ließe sich einwenden, dass mehrere spezialisierte
 \texttt{Acc}"=Datenstrukturen implementiert werden könnten, die jedes denkbare
@@ -205,15 +205,15 @@ Kernel"=Tasks. Diese ist aus mehreren Teilen aufgebaut (siehe
 Quelltext~\ref{implementierung:task:kernel:struktur}):
 
 \begin{itemize}
-    \item Die Struktur wird mit den vier Template"=Parametern \texttt{TDim},
+    \item Die Struktur wird mit den Template"=Parametern \texttt{TDim},
           \texttt{TIdx}, \texttt{TKernelFnObj} und \texttt{TArgs}
           parametrisiert. \texttt{TDim} bezeichnet den Datentyp, der später die
-          Dimensionaliät des Algorithmus beschreibt, während \texttt{TIdx} den
+          Dimensionalität des Algorithmus beschreibt, während \texttt{TIdx} den
           Datentyp des bearbeiteten Indexraums angibt. Diese Parameter werden
-          innerhalb des Work=Division=Konzepts -- gekennzeichnet durch die
+          innerhalb des Work"=Division"=Konzepts -- gekennzeichnet durch die
           Elternklasse \texttt{workDivMembers} -- verwendet, um innerhalb des
           Kernels die Position des jeweiligen \textit{Blocks} oder
-          \textit{Threads} bestimmen zu können \texttt{TKernelFnObj} ist der Typ
+          \textit{Threads} bestimmen zu können. \texttt{TKernelFnObj} ist der Typ
           bzw. die Signatur der vom Nutzer implementierten Kernel"=Funktion. Der
           variadische Parameter \texttt{TArgs} umfasst die Typen der Parameter
           der Kernel"=Funktion.
@@ -274,9 +274,9 @@ diese Variante aus.
 \texttt{parallel\_for} ist für datenparallele Algorithmen gedacht. Der
 Programmierer hat die Möglichkeit, die Zahl der \textit{work"=groups} und ihrer
 \textit{work"=items} genau zu spezifizieren. Diese lassen sich einfach auf die
-Alpaka"=Äquivalente \textit{Block} und \textit{Thread} Work"=Division"=Konzept
-abbilden, weshalb \texttt{parallel\_for} eine gute Wahl für den
-SYCL"=Kernel"=Start darstellt.
+Alpaka"=Äquivalente \textit{Block} und \textit{Thread} aus dem
+Work"=Division"=Konzept abbilden, weshalb \texttt{parallel\_for} eine gute Wahl
+für den SYCL"=Kernel"=Start darstellt.
 
 \texttt{parallel\_for\_work\_group} bietet dieselbe Funktionalität wie
 \texttt{parallel\_for}, exponiert diese jedoch mit einem anderen Schwerpunkt.
@@ -302,9 +302,9 @@ Funktion \texttt{get\_global\_size()} berechnet aus der Zahl der \textit{Blocks}
 und der \textit{Threads} pro \textit{Block} die Gesamtanzahl der
 \textit{Threads} (was der Gesamtanzahl der SYCL"=\textit{work"=items}
 entspricht) und führt die Konvertierung in ein SYCL"=kompatibles Format durch.
-Die Funktion \texttt{get\_local\_size()} nimmt die Zahl der \textit{Threads} und
-konvertiert diese in eine SYCL"=Datenstruktur, die die Zahl der
-\textit{work"=items} enthält.
+Die Zahl der \textit{Threads} wird an die Funktion \texttt{get\_local\_size()}
+übergeben und von dieser in eine SYCL"=Datenstruktur umgewandelt, die die Zahl
+der \textit{work"=items} enthält.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -353,7 +353,7 @@ eingeführt, welche den Typ der Alpaka"=Kernel"=Funktion (\texttt{TKernelFnObj})
 als Template"=Parameter entgegennimmt.
 
 Im Quelltext~\ref{implementierung:task:kernel:launch:src} wird der Vorgang des
-Kernel"=Starts gezeigt, jedoch noch ohne \texttt{accessors} -- diese werden
+Kernel"=Starts gezeigt, jedoch noch ohne \texttt{accessors}; diese werden
 im nächsten Abschnitt behandelt.
 
 \subsubsection{Zeiger und \textit{accessors}}
@@ -464,8 +464,9 @@ SYCL"=kompatibles Format umgewandelt.
 Innerhalb des SYCL"=Kernels werden die \texttt{accessor}"=Typen (über SYCLs
 \texttt{multi\_ptr}) nach einem ähnlichen Prinzip in reine Zeiger transformiert.
 Die Template"=Meta"=Funktionen sind dem oben gezeigten Prinzip sehr ähnlich
-und im Anhang~\ref{anhang:source:cpp:kernelzeigeracctrans} gezeigt, deren
-Nutzung in Quelltext~\ref{implementierung:task:kernel:zeiger:acctransusage}.
+und im Anhang~\ref{anhang:source:cpp:kernelzeigeracctrans} gezeigt. Die Nutzung
+ist in Quelltext~\ref{implementierung:task:kernel:zeiger:acctransusage}
+dargestellt.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -537,8 +538,8 @@ spezialisiert werden.
 Der \texttt{memset}"=Task ähnelt in seinem Aufbau dem Kopier"=Task. Für ihn
 entfällt die Angabe der Richtung (und damit die Notwendigkeit der
 Spezialisierung), da er immer auf dem \textit{Device} ausgeführt wird. Darüber
-hinaus findet er nur auf Puffer des Typs \texttt{uint8\_t}, da es sich hier um
-eine byte"=weise Operation handelt. Puffer anderer Typen werden deshalb
+hinaus findet er nur auf Puffer des Typs \texttt{uint8\_t} Anwendung, da es sich
+hier um eine byte"=weise Operation handelt. Puffer anderer Typen werden deshalb
 als \texttt{uint8\_t}"=Puffer interpretiert. Mit dem Befehl \texttt{cgh.fill()}
 lässt sich der Puffer dann Byte für Byte beschreiben.
 
@@ -575,7 +576,7 @@ Anwendung implementiert werden. Innerhalb des Kernels kann er dann über die
 Alpaka-Funktion \texttt{block::shared::dyn::getMem()} auf den Zeiger zum so
 reservierten geteilten Speicher zugreifen.
 
-Dieses Verhalten ließ sich so auch für SYCL implementieren. Dafür musste
+Dieses Verhalten ließ sich äquivalent auch für SYCL implementieren. Dafür musste
 lediglich innerhalb der \texttt{TaskKernelSycl}"=Struktur ein
 SYCL"=\textit{accessor} für den lokalen Speicher (dem SYCL"=Äquivalent zum
 geteilten Speicher) angelegt werden, auf den die genannte Funktion zugreifen und
@@ -595,7 +596,7 @@ wurde, von jedem beliebigen modernen C++"=Compiler übersetzt werden zu können,
 auch wenn dieser keine Unterstützung für OpenCL"= und/oder SYCL"=Konzepte mit
 sich bringt. In diesem Fall generiert der Compiler wie bei jedem anderen
 C++"=Programm normalen CPU"=Maschinencode. Der Umfang des statischen geteilten
-Speichers steht zwar bereits zur Compile"=Zeit fest und kann deshalb schon vor
+Speichers steht bereits zur Compile"=Zeit fest und kann deshalb schon vor
 dem Aufruf des Kernels reserviert werden. Der Zeiger auf diesen Speicherbereich
 kann durch einen C++"=Compiler ohne SYCL"=Unterstützung dem betreffenden Kernel
 vor dessen Ausführung jedoch gar nicht zugeordnet werden, da für diese Funktion
@@ -659,11 +660,11 @@ FPGAs unterschiedlicher Hersteller kompatibel. Es stellt sich daher die Frage,
 wie diese herstellerabhängigen Erweiterungen innerhalb der Alpaka"=Bibliothek
 nutzbar gemacht werden können. Für den SYCL"=Backend"=Prototypen wurde auf
 Erweiterungen verzichtet, um die Hardware"=Unabhängigkeit nicht zu gefährden.
-Dies ist jedoch kein dauerhaft wünschenswerter Zustand, da die Erweiterungen
-ganz erhebliche Performanzgewinne zur Folge haben können. Denkbar ist ein
+Dies ist jedoch kein dauerhaft wünschenswerter Zustand, denn die Erweiterungen
+können ganz erhebliche Performanzgewinne zur Folge haben. Denkbar ist ein
 ähnliches Erweiterungskonzept für Alpaka, in welchem dem Nutzer abstrahierte
 Formen der SYCL"=Erweiterungen zur Verfügung gestellt werden, die er selbst in
-seinem Kernel nutzen kann. Diese bedarf jedoch einer vorherigen Diskussion
+seinem Kernel nutzen kann. Diese Idee bedarf jedoch einer vorherigen Diskussion
 innerhalb der Alpaka"=Entwicklergemeinde.
 
 \section{Zufallszahlen und Zeit}

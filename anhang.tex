@@ -247,8 +247,7 @@ namespace alpaka
     \caption{Implementierung des SYCL-Puffer-Wrappers}
 \end{code}
 
-\subsection{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen durch
-Template"=Meta"=Programmierung}
+\subsection{Umwandlung der Puffer in SYCL"=\texttt{accessor}"=Typen}
 \label{anhang:source:cpp:kernelzeigeracctrans}
 
 \begin{code}
@@ -424,8 +423,8 @@ queue.submit([&](cl::sycl::handler& cgh)
                                         close this now.
 \end{otherlanguage}
 
-\subsection{Why is there no way to allocate local memory inside a ND-kernel
-            (parallel\_for)?}\label{anhang:diskussionen:syclspec:staticshared}
+\subsection{Why is there no way to allocate local memory inside a ND-kernel?}
+\label{anhang:diskussionen:syclspec:staticshared}
 
 Original: \url{https://github.com/KhronosGroup/SYCL-Docs/issues/20}, zuletzt
 abgerufen am 06. November 2019.
@@ -651,4 +650,241 @@ struct pointer_traits
 \end{otherlanguage}
 
 \section{Diskussionen mit Xilinx-Angestellten}
+\label{anhang:diskussionen:xilinx}
 
+\subsection{[SYCL][XilinxFPGA] Known Issues}
+\label{anhang:diskussionen:xilinx:knownissues}
+
+Original: \url{https://github.com/triSYCL/sycl/issues/40}, zuletzt abgerufen am
+27. November 2019.
+
+\begin{otherlanguage}{english}
+    \paragraph{Andrew Gozillon (Xilinx)} This is a non-exhaustive list of some
+                                         larger problems relating to XIlinx FPGA
+                                         compilation and runtime execution (some
+                                         with more information than others) that
+                                         need some thought long term:\\
+                                         \\
+                                         \textbf{Problem:} If you create buffers
+                                         and try to use some SYCL functionality
+                                         that makes use of some underlying
+                                         OpenCL functionality to modify the
+                                         buffers as cl\_mem objects before a
+                                         kernel is invoked
+                                         (single\_task/parallel\_for etc.)
+                                         you'll incur XRT runtime errors e.g.:
+                                         \\
+                                         \textbf{[XRT] ERROR: Internal error.
+                                         cl\_mem doesn't map to buffer object}
+                                         \\
+                                         You should be able to see this in
+                                         action if you comment out the "noop"
+                                         SYCL kernel in the accessor\_copy.cpp
+                                         test.
+                                         \\
+                                         \textbf{Reason:} XRT will not consider
+                                         a device as ``active'' and use-able
+                                         until you've loaded a binary as it
+                                         can't query most of the information it
+                                         needs, one unfortunate side affect of
+                                         this is that cl\_mem buffers are not
+                                         appropriately assigned to a device and
+                                         whenever you try to use something like
+                                         a handler copy with a sycl
+                                         accessor/buffer the underlying XRT
+                                         OpenCL call will not be able to find
+                                         the buffer in relation to a device (it
+                                         queries devices for buffers, if they're
+                                         not found, XRT is not pleased).
+                                         \\
+                                         \textbf{Possible fix Ideas:}
+                                         \begin{itemize}
+                                             \item Eager binary program loading
+                                                   as we know we'll only use
+                                                   pre"=compiled binaries with
+                                                   our FPGAs
+                                             \item Lazy OpenCL buffer
+                                                   creation/operations, only do
+                                                   this after we know XRT will
+                                                   be happy i.e. binary loaded
+                                                   and good to go
+                                         \end{itemize}
+                                         \textbf{Work around:} Force start the
+                                         device by using a noop kernel, not
+                                         ideal and while it works around the
+                                         issue on hw/sw emu I'm not too sure how
+                                         real hardware will appreciate this.
+                                         \\
+                                         \\
+                                         \textbf{Problem:} Only 1 queue to a
+                                         Xilinx FPGA device can exist at once,
+                                         if you accidentally generate more than
+                                         one XRT will not be happy.
+                                         \\
+                                         \\
+                                         \textbf{Problem:} All kernels require
+                                         at least 1 accessor, 0 accessors will
+                                         cause a compile error in xocc relating
+                                         to no argument being bound to
+                                         AXI\_GMEM. Not too sure how many use
+                                         cases there are for no accessors in a
+                                         kernel but perhaps it shouldn't emit an
+                                         error like this.
+                                         \\
+                                         \\
+                                         \textbf{Problem:} Cannot compile for
+                                         Xilinx FPGA with -g, this prevents
+                                         users using debug mode on the SYCL
+                                         runtime not just the kernel.
+                                         \\
+                                         \textbf{Reason:} I believe this is 
+                                         because we're generating a kernel file
+                                         with a lot of debug code and trying to
+                                         pipe that through xocc which doesn't
+                                         really know how to handle all of the
+                                         debug information.
+                                         \\
+                                         \textbf{Possible fix Ideas:}
+                                         \begin{itemize}
+                                             \item A long shot, but quick fix if
+                                                   it worked, add -g to the xocc
+                                                   compilation components of the
+                                                   sycl-xocc script. Perhaps it
+                                                   will realize that the kernel
+                                                   may come attached with some
+                                                   debug information in this
+                                                   case and handle it better. I
+                                                   find this unlikely to work,
+                                                   but it's low hanging fruit if
+                                                   it does\ldots
+                                             \item More surefire fix: Do not
+                                                   compile the device
+                                                   compilation component of SYCL
+                                                   with -g, only compile the
+                                                   host component with -g and
+                                                   remove the -g from being
+                                                   pushed onto the device
+                                                   compilation. This will create
+                                                   a much simpler SPIR-df kernel
+                                                   to pass to xocc. Instead -g
+                                                   should be applied to the
+                                                   xocc compilation and linker
+                                                   commands to get the debug
+                                                   kernel information. This
+                                                   should circumvent any issues
+                                                   with debug information
+                                                   breaking xocc kernel
+                                                   compilation whilst still
+                                                   giving kernel debug
+                                                   information and SYCL runtime
+                                                   debug information. Shouldn't
+                                                   be too hard, just requires
+                                                   some driver tweaks.
+                                         \end{itemize}
+                                         \textbf{Problem:} Related to issue:
+                                         \#32 mixing structures inside of
+                                         kernels can cause ICE's\footnote{
+                                         Internal Compiler Error} in one of
+                                         xocc's passes: aggressive dead code
+                                         elimination (AGDCE). The relevant
+                                         minimal triggering SYCL test case for
+                                         this is issue\_related/agdce\_ice.cpp.
+                                         \\
+                                         \textbf{Reason:} Seems to be a problem
+                                         relating to address space casting from
+                                         a structure that is implemented outside
+                                         of a kernel (ergo no address space) and
+                                         when you try to index an accessor
+                                         containing several passed in
+                                         instantiations of the class/struct it
+                                         will explode the AGDCE pass inside of
+                                         the compiler as it will try to address
+                                         space cast.
+                                         \\
+                                         \textbf{Status:} I am led to believe
+                                         it's a bug with xocc/Vivado HLS, so it
+                                         appears to be outside of our
+                                         jurisdiction, I have forwarded this
+                                         issue onto someone on their team but
+                                         it's low priority. May take a while for
+                                         a fix without some follow up.
+                                         \\
+                                         \\
+                                         \textbf{Problem:} Boost Hana's
+                                         times::with\_index in conjunction with
+                                         it's overloaded + operator will kill
+                                         hw\_emu and very likely hw as it will
+                                         not completely optimize and inline with
+                                         -03 as you would expect (and as it does
+                                         in a non-SYCL -O3 pass). This leaves
+                                         some external declarations and calls to
+                                         functions but no definitions of the
+                                         functions, so partial
+                                         optimization/in-lining. Which is a
+                                         little odd as the definitions exist
+                                         prior to the -O3 pass and other boost
+                                         hana functionality is appropriately
+                                         inlined.\\
+                                         \textbf{Reason:} Current best guess is
+                                         that the required index argument passed
+                                         into the lambda passed to and invoked
+                                         by with\_index is the probable cause.
+                                         It seems like it could be another
+                                         address space cast related issue. The
+                                         minimal test case for this issue is
+                                         the example:
+                                         boost\_hana\_functor\_arg.cpp inside of
+                                         the issue\_related directory.
+                                         \begin{code}
+                                             \begin{minted}[fontsize=\small]{c++}
+cgh.single_task<class array_add>([=]() {
+    boost::hana::int_<5>::times.with_index([&](const auto i) {
+        a_rw[i+1] = 6;
+    });
+});
+                                             \end{minted}
+                                         \end{code}
+                                         So to highlight the issue, In the
+                                         example there is an variable passed
+                                         into the lambda from an externally
+                                         defined function, this then gets used
+                                         with the + operator. This + operator is
+                                         overloaded inside of Boost Hana to
+                                         support compile time usage. This
+                                         snippet of code should be unrolled and
+                                         inlined removing all of the Boost Hana
+                                         related functionality. This doesn't
+                                         happen and it seems to be because the
+                                         argument passed into the function and
+                                         being incremented and used with the
+                                         value 1 will trigger an address space
+                                         cast which I think will prevent the
+                                         appropriate and required optimizations.
+                                         \\
+                                         This is an an assumption though, based
+                                         on the fact that the below code works
+                                         fine:
+                                         \begin{code}
+                                             \begin{minted}[fontsize=\small]{c++}
+cgh.single_task<class array_add>([=]() {
+    int i = 0;
+    boost::hana::int_<N>::times([&] {
+        a_rw[i+0] = 6;
+        ++i;
+    });
+});
+                                             \end{minted}
+                                         \end{code}
+                                         The index variable and the random
+                                         constant variable now exist in the same
+                                         address space and the world all seems
+                                         to be fine as far as the compiler is
+                                         concerned.
+                                         \\
+                                         \\
+                                         Some of these ``problems'' are
+                                         peculiarities in our FPGA compilation
+                                         pipeline and non-standard OpenCL
+                                         implementation and may not necessarily
+                                         be ``problems''.
+\end{otherlanguage}

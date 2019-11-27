@@ -10,9 +10,9 @@ Parallelisierungskonzepte.
 
 Für das Verständnis der Funktionsweise eines \gls{fpga}s ist es notwendig, die
 zugrunde liegenden Konzepte in Abgrenzung zu herkömmlicher Hardware
-darzustellen. Dieser Abschnitt definiert zunächst den \gls{fpga}-Begriff und
-erläutert im Anschluss daran den Aufbau moderner \gls{fpga}-Architekturen sowie
-traditionelle und neuartige Nutzungsmöglichkeiten dieses Hardware-Typus.
+darzustellen. Dieser Abschnitt definiert zunächst den \gls{fpga}"=Begriff und
+erläutert im Anschluss daran den Aufbau moderner \gls{fpga}"=Architekturen sowie
+traditionelle und neuartige Nutzungsmöglichkeiten dieses Hardware"=Typs.
 
 \subsection{Definition}\label{fpga:ueberblick:definition}
 
@@ -52,7 +52,7 @@ ausführen. Diese Blockzellen integrieren durch ein dediziertes Verbindungsnetz
 Logikgatter und Speicher. Dabei lassen sich vier zentrale Strukturen
 unterscheiden:
 \begin{itemize}
-    \item Konfigurierbare Logikblöcke,
+    \item konfigurierbare Logikblöcke,
     \item programmierbare Verbindungen,
     \item Puffer für die Ein- und Ausgabe (engl. \textit{input/output}, I/O) und
     \item weitere Elemente (Speicher, arithmetische Einheiten, Taktnetzwerke,
@@ -307,18 +307,18 @@ Aufbau eines modernen \gls{fpga} verdeutlicht werden. \gls{fpga}s dieser
 Architektur bestehen aus sechs fundamentalen programmierbaren Elementen:
 \begin{itemize}
     \item Konfigurierbare Logikblöcke (engl. \gls{clb}) bestehen aus acht
-          Logikeinheiten, die man als \gls{lut} bezeichnet und zur
+          Logikeinheiten, die man als \gls{lut} bezeichnet und die zur
           Generierung von Logikfunktionen verwendet werden können. Daneben sind
           in einem \gls{clb} Speicherelemente enthalten, die als Flip"=Flop oder
-          Latch verwendet werden können, sowie weitere Elemente wie Multiplexer
+          Latch verwendbar sind, sowie weitere Elemente wie Multiplexer
           oder Einheiten für den arithmetischen Übertrag.
           \cite[vgl.][6]{ultrascaleclb2017}
     \item Eingabe/Ausgabe-Blöcke (engl. \gls{iob}) werden zur Steuerung des
-          Datenflusses zwischen den E/A-Pins und der internen Schaltkreise
+          Datenflusses zwischen den I/O"=Pins und den internen Schaltkreisen
           benutzt. Die UltraScale+-Architektur bietet verschiedene
-          \gls{iob}-Typen, die z.B. verschiedene E/A-Standards oder uni- oder
+          \gls{iob}-Typen, die z.B. verschiedene I/O"=Standards oder uni- oder
           bidirektionale Kommunikation unterstützen. \cite[vgl. die
-          ausführliche E/A"=Beschreibung in][Kapitel 1 und 2]{ultrascaleio2019}
+          ausführliche I/O"=Beschreibung in][Kapitel 1 und 2]{ultrascaleio2019}
     \item \glqq Block RAM\grqq\ kann bis zu \SI{36}{\kilo\bit} speichern. Dabei
           lässt sich ein Block bei Bedarf auch in zwei unabhängige RAMs mit
           jeweils \SI{18}{\kilo\bit} zerlegen. Zusätzlich sind in einem
@@ -426,19 +426,19 @@ Abbildung~\ref{fpga:aufbau:clockregions} zu sehen ist.
     \centering
     \begin{tikzpicture}
         \draw [fill = HKS92!90] (0.0, 0.0) rectangle (1.0, 8.0)
-            node [pos = 0.5, rotate = 90, color = white] {externe E/A};
+            node [pos = 0.5, rotate = 90, color = white] {externe I/O};
         \draw (1.0, 0.0) rectangle (2.5, 8.0)
             node [pos = 0.5, rotate = 90] {CLB, DSP, Block RAM, UltraRAM};
         \draw [fill = HKS92!70] (2.5, 0.0) rectangle (3.5, 8.0)
-            node [pos = 0.5, rotate = 90, color = white] {E/A, Takt, Speicherschnittstelle};
+            node [pos = 0.5, rotate = 90, color = white] {I/O, Takt, Speicherschnittstelle};
         \draw (3.5, 0.0) rectangle (5.0, 8.0)
             node [pos = 0.5, rotate = 90] {CLB, DSP, Block RAM, UltraRAM};
         \draw [fill = HKS92!70] (5.0, 0.0) rectangle (6.0, 8.0)
-            node [pos = 0.5, rotate = 90, color = white] {E/A, Takt, Speicherschnittstelle};
+            node [pos = 0.5, rotate = 90, color = white] {I/O, Takt, Speicherschnittstelle};
         \draw (6.0, 0.0) rectangle (7.5, 8.0)
             node [pos = 0.5, rotate = 90] {CLB, DSP, Block RAM, UltraRAM};
         \draw [fill = HKS92!90] (7.5, 0.0) rectangle (8.5, 8.0)
-            node [pos = 0.5, rotate = 90, color = white] {externe E/A};
+            node [pos = 0.5, rotate = 90, color = white] {externe I/O};
     \end{tikzpicture}
     \caption{spaltenweise Verteilung der FPGA-Ressourcen
              \cite[nach][22]{ultrascale2019}}
@@ -497,7 +497,7 @@ Schaltkreisentwurfs eingesetzt. So setzt die Firma Microsoft beispielsweise
 Netzwerkkarten ein \cite[vgl.][]{firestone2018}. Der Cloud"=Anbieter Amazon
 bietet spezielle FPGA"=Instanzen an, in denen Xilinx"=FPGAs als Beschleuniger
 genutzt werden können \cite[vgl.][]{amazonec2f1}, wovon in der Literatur bereits
-Gebrauch gemacht wurde \cite[vgl. etwa][]{ditucci2017}.
+Gebrauch gemacht wurde \cite[vgl. z.B.][]{ditucci2017}.
 
 \section{Entwicklungsprozess}\label{fpga:entwicklung}
 
@@ -624,11 +624,11 @@ oder der Systemebene anzusiedeln sind. \cite[vgl.][10--11]{kesel2013}
 \subsection{Hardware-Beschreibungssprachen}\label{fpga:entwicklung:hdl}
 
 Eine häufig verwendete Hardware"=Beschreibungssprache ist VHDL, was für
-\textit{VHSIC Hardware Description Language} steht, wobei VHSIC eine Abkürzung
-für \textit{Very High Speed Integrated Circuit} ist. Die Sprache geht auf ein
-Programm des US"=amerikanischen Verteidigungsministerium zurück, das in den
+\textit{VHSIC Hardware Description Language} steht. VHSIC ist eine Abkürzung
+für \textit{Very High Speed Integrated Circuit}. Die Sprache geht auf ein
+Programm des US"=amerikanischen Verteidigungsministeriums zurück, das in den
 1980er Jahren eine einheitliche Beschreibungs- bzw.\ Dokumentationssprache für
-komplexe Schaltungen wünschte, und ist an die Programmiersprache Ada angelehnt.
+komplexe Schaltungen wünschte und ist an die Programmiersprache Ada angelehnt.
 \cite[vgl.][22]{kesel2013}
 
 Eine weitere bekannte Beschreibungssprache ist Verilog
@@ -637,9 +637,11 @@ und an der Programmiersprache C orientiert ist. Sie wurde als ursprünglich
 proprietäre Sprache von der Firma \textit{Gateway Design Automation} geschaffen
 und lässt sich in ihrem Umfang mit VHDL vergleichen. Verilog ist vor allem in
 den Vereinigten Staaten verbreitet, während europäische Entwickler eher auf VHDL
-setzen. In den folgenden Abschnitten werden die Konzepte der
-Beschreibungssprachen daher am Beispiel von VHDL erläutert.
-\cite[vgl.][24--25]{kesel2013}
+setzen. \cite[vgl.][24--25]{kesel2013}
+
+In den folgenden Abschnitten werden die Konzepte der Beschreibungssprachen daher
+am Beispiel von VHDL erläutert.
+
 
 \subsubsection{Konzepte}
 
@@ -741,7 +743,7 @@ END reg2 ;
 Jeder \textit{Entity} wird mindestens eine \textit{Architecture} zugeordnet.
 Diese beschreibt entweder die innere Funktion, also das Verhalten, oder die
 Struktur, das heißt die Verschaltung von Teil-Komponenten. Eine
-\textit{Architecture} ist also entweder eine Verhaltensbeschreibung oder eine
+\textit{Architecture} ist somit entweder eine Verhaltensbeschreibung oder eine
 Strukturbeschreibung. Strukturbeschreibungen können sowohl in Text- als auch
 in grafischer Form (mittels spezieller Schema-Editoren) angelegt werden, während
 Verhaltensbeschreibungen üblicherweise nur in Textform verfasst werden.
@@ -780,7 +782,7 @@ Abbildung~\ref{fpga:hdl:moore} dargestellten Moore"=Schaltwerks.
     \includegraphics[width=\textwidth]{reg2_waveform.png}
     \caption[Verhalten des 2-Bit-Registers]{Zu Beginn wird das Register über
              das \texttt{res}"=Signal zurückgesetzt. Dadurch werden zunächst die
-             internen Signale\texttt{q0\_s} und \texttt{q1\_s}, sowie
+             internen Signale \texttt{q0\_s} und \texttt{q1\_s}, sowie
              \SI{2}{\nano\second} später die Ausgangssignale \texttt{q0} und
              \texttt{q1} von ihrem undefinierten Zustand auf den Wert
              \glqq 0\grqq\ gesetzt. Dann wird \texttt{res} auf \glqq 0\grqq\
@@ -859,7 +861,7 @@ END beh;
 
 Eine Strukturbeschreibung (auch Netzliste genannt) besteht aus mehreren
 Teil-Komponenten, die zu einer größeren, komplexeren Komponente 
-zusammengeschaltet werden. So lässt sich für die aus den vorherigen Abschnitten
+zusammengeschaltet werden. So lässt sich die aus den vorherigen Abschnitten
 bekannte \texttt{reg2}"=\textit{Entity} aus einem Modell eines Multiplexers
 sowie einem Modell eines Flip"=Flops zusammensetzen (siehe
 Quelltext~\ref{fpga:hdl:regstruct}\footnote{Die Verhaltensbeschreibungen der
@@ -970,7 +972,7 @@ Assemblersprache.
 Während des algorithmischen Entwurfs kann der Nutzer zudem Randbedingungen
 festlegen, die die HLS steuern, wie z.B. den angestrebten Ressourcenbedarf,
 den gewünschten Datendurchsatz, \textit{Pipelining} oder die
-Konfiguration des BlockRAMs. Bei der Erzeugung des Register"=Transfer"=Modells
+Konfiguration des Block RAMs. Bei der Erzeugung des Register"=Transfer"=Modells
 werden diese Randbedingungen dann von den HLS"=Werkzeugen berücksichtigt.
 \cite[vgl.][482]{kesel2013}
 
@@ -1234,13 +1236,6 @@ nur alle zwei Takte, bei $\text{II} = 4$ mit jedem vierten Takt, usw.
     \label{fpga:pipelining:pipeline}
 \end{figure}
 
-Die Anwendung des Pipelining während der HLS unterscheidet sich zwischen den
-Herstellern: So versucht Intels OpenCL"=Umgebung grundsätzlich, Pipelining auf
-jede vorhandene Schleife anzuwenden und erfordert ein explizites Deaktivieren
-des Verfahrens, wenn kein Pipelining gewünscht wird. Bei Xilinx'
-OpenCL"=Umgebung verhält es sich dagegen genau umgekehrt, da hier Pipelining
-explizit angeschaltet werden muss.
-
 \subsubsection{Producer-Consumer-Prinzip}
 
 Neben dem Pipelining gibt es auf \gls{fpga}s eine weitere Möglichkeit,
@@ -1249,8 +1244,8 @@ auf einer groberen Ebene. Dahinter steht das Ziel, diese Funktionen
 weitestgehend parallel auszuführen. Dazu analysieren die HLS"=Werkzeuge die Ein- 
 und Ausgangsparameter der im Algorithmus vorhandenen Funktionen. Im einfachsten
 Fall gibt es keine gemeinsam bearbeiteten Daten, wodurch alle Funktionen
-parallel ausgeführt werden können. Naturgemäß ist dieser Fall recht selten,
-üblicherweise werden die Ergebnisse einer Funktion von einer oder mehreren
+parallel ausgeführt werden können. Naturgemäß ist dieser Fall recht selten.
+Üblicherweise werden die Ergebnisse einer Funktion von einer oder mehreren
 nachfolgenden Funktionen verarbeitet. Dieses als
 \textit{Producer"=Consumer}"=Prinzip bekannte Verfahren kann durch die
 Nebenläufigkeit der FPGA"=Hardware parallelisiert werden. Durch den Einsatz von
@@ -1261,7 +1256,3 @@ kann diese Teilergebnisse nach der initialen Wartezeit, die ebenfalls als
 \gls{ii} bezeichnet wird, direkt weiter verarbeiten, ohne auf das Ende der
 produzierenden Funktion bzw.\ das resultierende Gesamtergebnis warten zu müssen.
 \cite[vgl.][22--23]{hlsintro2019}
-
-Das Producer"=Consumer"=Prinzip wird je nach Hersteller unterschiedlich benannt.
-So nennt sich dieses Verfahren bei Xilinx \textit{Dataflow}, während es bei
-Intel \textit{Channel} heißt.

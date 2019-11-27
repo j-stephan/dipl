@@ -8,7 +8,7 @@ SYCL"=Implementierungen dargelegt. Dabei handelt es sich um ComputeCpp sowie
 die Implementierungen der Firmen Intel und Xilinx. Die im Kapitel~\ref{sycl}
 erwähnten Implementierungen hipSYCL und sycl-gtx wurden während dieser Arbeit
 nicht in Betracht gezogen, da ihnen zu viele kritische Features fehlen und sie
-daher nicht für eine Nutzung von Alpaka geeignet sind.
+daher nicht für eine Nutzung mit Alpaka geeignet sind.
 
 \subsection{ComputeCpp}
 
@@ -19,7 +19,7 @@ Von den derzeit der Öffentlichkeit zugänglichen SYCL"=Implementierungen ist
 ComputeCpp die einzige, die nicht quelloffen ist. Sie wird vom schottischen
 Unternehmen Codeplay entwickelt, welches ebenfalls federführend an der
 Entwicklung des SYCL"=Standards beteiligt ist. ComputeCpp unterstützt mehr
-Hardware"=Plattformen als die anderen SYCL"=Implementierungen
+Hardware"=Plattformen als die anderen SYCL"=Implementierungen.
 
 Im Laufe der Implementierung des SYCL"=Backends stellte sich schnell heraus,
 dass ComputeCpp nicht in der Lage sein würde, das SYCL"=Alpaka"=Backend zu
@@ -36,13 +36,13 @@ durch spezielle Zeiger"=Attribute nachzuliefern. Ein Zeiger des Typs
 \texttt{int*}, der auf den globalen Adressraum zeigt, wird vom
 ComputeCpp"=Compiler zu \texttt{\_\_global int*} transformiert. Das Ergebnis der
 Transformation wird vom selben Compiler jedoch als ein eigener Typ betrachtet,
-der nichts mehr \texttt{int*} zu tun hat. Dadurch kommt es zu Problemen mit den
-\textit{type traits} der C++"=Standardbibliothek, die einen Zeiger vom Typ
+der nichts mehr mit \texttt{int*} zu tun hat. Dadurch kommt es zu Problemen mit
+den \textit{type traits} der C++"=Standardbibliothek, die einen Zeiger vom Typ
 \texttt{\_\_global int*} nicht mehr als \texttt{int}"=Zeiger erkennen.
 
 Da es dem Programmierer ebenfalls verboten ist, diese Attribute selbst zu
 verwenden (ComputeCpp generiert einen Syntax"=Fehler), kann eine manuelle
-Auswahl entsprechender Code"=Pfade auch nicht vorgenommen werden.
+Auswahl entsprechender Code"=Pfade nicht vorgenommen werden.
 
 Darüber hinaus sind diese Zeigertypen nicht mit den SYCL"=Klassen kompatibel.
 So führt die Umwandlung eines entsprechenden Zeigers in einen
@@ -76,21 +76,20 @@ Verfizierung zum Einsatz.
 \subsection{Xilinx}
 \label{ergebnisse:nutzbarkeit:xilinx}
 
-Während der Niederschrift dieser Arbeit wurde der Entwicklungszweig der
-Xilinx"=SYCL"=Implementierung verwendet, der dem Hauptzweig einige Wochen voraus
-und näher an der zugrunde liegenden Intel"=Implementierung ist. Die folgenden
-Ausführungen beziehen sich auf:
+In dieser Arbeit wurde der Entwicklungszweig der Xilinx"=SYCL"=Implementierung
+verwendet, der dem Hauptzweig einige Wochen voraus und näher an der zugrunde
+liegenden Intel"=Implementierung ist. Die folgenden Ausführungen beziehen sich
+auf:
 
 \begin{itemize}
     \item den Commit \#\texttt{dfb95af} des Zweiges \texttt{sycl/unified/next}
           der Xilinx"=Implementierung,
     \item die Entwicklungsumgebung SDAccel 2019.1,
     \item die OpenCL"=Umgebung XRT 2.2 und
-    \item die Deployment"=Plattform \texttt{xilinx-u200-xdma} für den
-          Beschleuniger Alveo U200 in der Version \texttt{201830.2-2580015} für
-          Ubuntu 18.04 und
-    \item die zugehörigen Entwicklungs"=Plattform \texttt{xilinx-u200-xdma-dev}
-          in der Version \texttt{201830.2-2580015} für Ubuntu 18.04.
+    \item die Deployment"=Plattform \texttt{xilinx-u200-xdma} für Ubuntu 18.04
+          samt der zugehörigen Entwicklungs"=Plattform
+          \texttt{xilinx-u200-xdma-dev} (beide in Version
+          \texttt{201830.2-2580015}) für den Beschleuniger Alveo U200.
 \end{itemize}
 
 Die SYCL"=Implementierung der Firma Xilinx hängt eng mit der Entwicklung des
@@ -101,7 +100,7 @@ erst mit einiger Verzögerung in die Xilinx"=Implementierung Eingang finden.
 
 Darüber hinaus erwies sich die Schnittstelle des SYCL"=Compilers zu Xilinx'
 SDAccel"=Plattform, welche die eigentliche Synthese durchführt, sowie zu Xilinx'
-OpenCL"=Treibern im Laufe dieser Arbeit als fehleranfällig oder unvollständig.
+OpenCL"=Treibern im Laufe dieser Arbeit als fehleranfällig und unvollständig.
 Aufgrund dieser Probleme war eine Nutzung des Alpaka"=SYCL"=Backends für
 Xilinx"=FPGAs nicht möglich.
 
@@ -111,21 +110,23 @@ Der Compiler generiert aus einigen mathematischen SYCL"=Funktionen
 Instruktionen, die in Xilinx' OpenCL"=Treiber nicht vorhanden sind. Dies ist
 zwar auf ein falsches Benennungsschema innerhalb der OpenCL"=Implementierung
 zurückzuführen, steht einer Nutzbarkeit im Zusammenhang mit Alpaka aber trotzdem
-im Wege. Andere mathematische Funktionen führen unter ungünstigen Umständen
-durch ihre Nutzung dazu, dass der Compiler selbst abstürzt.  
+im Wege. Andere mathematische Funktionen (z.B. \texttt{rsqrt(double)}) führen
+unter ungünstigen Umständen durch ihre Nutzung dazu, dass der Compiler selbst
+abstürzt.  
 
 \subsubsection{Strukturen}
 
 Zu einem gravierenden Problem kommt es bei der Nutzung von benutzerdefinierten
-Strukturen. Sofern diese außerhalb eines Kernels definiert und dann innerhalb
-eines Kernels verwendet werden, kommt es zu einem Absturz des Compilers. Der
-Grund dafür liegt in einem Fehler des im Hintergrund verwendeten
+Strukturen. Werden diese außerhalb eines Kernels definiert und dann innerhalb
+eines Kernels verwendet, kommt es zu einem Absturz des Compilers. Der Grund
+dafür liegt in einem Fehler des im Hintergrund verwendeten
 Xilinx"=OpenCL"=Compilers \texttt{xocc}, welcher die Synthese steuert. Nach
 Aussage der an der SYCL"=Implementierung beteiligten Xilinx"=Mitarbeiter genießt
 die Behebung dieses Fehlers niedrige Priorität, weshalb in nächster Zeit nicht
-mit Besserung zu rechnen ist. Dieser Fehler ist der hauptsächliche Grund, warum
-das aus vielen Strukturen bestehende Alpaka nicht mit Xilinx'
-SYCL"=Implementierung verwendet werden kann.
+mit Besserung zu rechnen ist (siehe
+Anhang~\ref{anhang:diskussionen:xilinx:knownissues}). Dieser Fehler ist der
+hauptsächliche Grund, warum das aus vielen Strukturen bestehende Alpaka nicht
+mit Xilinx' SYCL"=Implementierung verwendet werden kann.
 
 \subsection{Block RAM und Pipelining}
 
@@ -137,7 +138,7 @@ Klassen und Strukturen, um \textit{local memory} innerhalb eines
 diese jedoch nicht als solche erkannt, wodurch Felder im \textit{local memory}
 tatsächlich im \textit{global memory} angelegt werden.
 
-Alternativ ließe sich BlockRAM über die in
+Alternativ ließe sich Block RAM über die in
 Abschnitt~\ref{sycl:erweiterungen:xilinx:partitioning} erwähnten
 SYCL"=Erweiterungen für die Feldpartitionierung verwenden. Diese sind jedoch
 ebenfalls vom oben genannten Problem mit \textit{kernel}"=fremden Strukturen
@@ -174,14 +175,14 @@ Xilinx' OpenCL"=Treiber, auf dem die SYCL"=Implementierung aufsetzt, erwies sich
 im Zusammenspiel mit SYCL als äußerst instabil. Aufgrund seiner internen
 Struktur ist er nicht in der Lage, einmal reservierten Speicher wieder
 freizugeben, wenn das reservierende Programm abstürzt. Der Speicher bleibt so
-lange unzugänglich, bis er neugestartet wird. Da dies nur mit
+lange unzugänglich, bis der Treiber neu gestartet wird. Da dies nur mit
 Administrationsrechten funktioniert, ist dies de facto ein Ausschlusskriterium
 für den Einsatz in Rechenzentren oder Hochleistungs"=Clustern.
 
 Sofern der Treiber nicht das oben beschriebene Verhalten zeigt, kann ein
 fehlerhaftes Programm auch zum Komplettabsturz des Gesamtsystems führen. In
 diesem Fall ist das System per Fernzugriff nicht mehr erreichbar und muss
-vom Administrator (oder physisch per Reset"=Taste) neugestartet werden. Für den
+vom Administrator (oder physisch per Reset"=Taste) neu gestartet werden. Für den
 Einsatz in Rechenzentren und vergleichbaren Einrichtungen ist dieses
 Fehlerverhalten denkbar ungeeignet.
 
@@ -191,7 +192,7 @@ Von den beschriebenen SYCL"=Implementierungen konnte nur der Intel"=Compiler im
 Zusammenhang mit Alpaka genutzt werden, was als Ziel"=Hardware für das
 SYCL"=Backend nur Intel"=CPUs und -GPUs zulässt. Insbesondere Xilinx"=FPGAs
 können zum aktuellen Zeitpunkt aufgrund zahlreicher Probleme der
-SYCL"=Implementierung derzeit nicht vom Alpaka"=SYCL"=Backend verwendet werden.
+SYCL"=Implementierung nicht vom Alpaka"=SYCL"=Backend verwendet werden.
 
 \section{Vergleich zwischen Alpaka und SYCL}
 
@@ -199,17 +200,17 @@ Im direkten Vergleich erwies sich SYCL gegenüber Alpaka als die modernere,
 intuitivere und angenehmer zu benutzende Schnittstelle.
 
 Dazu tragen SYCLs Orientierung an modernen C++"=Standards (alle untersuchten
-Implementierungen unterstützen den C++17"=Standard, Intel und Xilinx den in
-Entwicklung befindlichen C++20"=Standard) sowie die stilistische Nähe zur
-C++"=Standardbibliothek bei. Dem gegenüber stehen Alpakas Stil"=Konventionen,
-die vom in der C++"=Standardbibliothek verwendeten \textit{snake case}
-(\texttt{eine\_kleine\_funktion()}) zugunsten des
+Implementierungen unterstützen den C++17"=Standard, Intel und Xilinx darüber
+hinaus den in Entwicklung befindlichen C++20"=Standard) sowie die stilistische
+Nähe zur C++"=Standardbibliothek bei. Dem gegenüber stehen Alpakas
+Stil"=Konventionen, die vom in der C++"=Standardbibliothek verwendeten
+\textit{snake case} (\texttt{eine\_kleine\_funktion()}) zugunsten des
 \textit{lower camel case} (\texttt{eineKleineFunktion()}) abweichen. Darüber
 hinaus finden sich in Alpaka stilistische Eigentümlichkeiten, die in den meisten
 C++"=Projekten unüblich sind, z.B. die Schreibweise als \texttt{char const *}
-anstelle des weiter verbreiteten \texttt{const char *}. Damit steht das
-C++"=Projekt Alpaka auch im Gegensatz zu den vom C++"=Standardisierungskomitee
-veröffentlichen Stilrichtlinien, den \textit{C++ Core Guidelines}.
+anstelle des weiter verbreiteten \texttt{const char *}. Damit weicht das
+C++"=Projekt Alpaka auch von den vom C++"=Standardisierungskomitee
+veröffentlichen Stilrichtlinien ab, den \textit{C++ Core Guidelines}.
 
 Die Modellierung von Aufgabengraphen bzw.\ der Abhängigkeiten zwischen Kerneln
 ist in SYCL deutlich einfacher als in Alpaka. Während dies in SYCL automatisch
@@ -223,7 +224,7 @@ Während SYCL zur Zeit nur mit Intel"=CPUs und -GPUs zufriedenstellend
 funktioniert (und möglicherweise nicht getesteter Automotive"= und
 Embedded"=Hardware), ist Alpaka auf NVIDIA"= und AMD"=GPUs sowie über OpenMP auf
 allen CPUs lauffähig. Daher ist Alpaka bereits in einigen produktiven
-Anwendungen im Einsatz, während sich SYCLs Ökosystem bislang auf die diversen
+Anwendungen im Einsatz, während sich SYCLs Ökosystem bislang auf diverse
 Implementierungen sowie einige von der Firma Codeplay entwickelte Bibliotheken
 für Mathematik und neuronale Netzwerke beschränkt. 
 
@@ -268,15 +269,14 @@ Dabei bezeichnet $N_\gamma$ die Zahl der erkannten Photonen, \textit{ADC} das
 vom Analogen ins Digitale konvertierte Messergebnis des Pixels, \textit{Sockel}
 das von Mess- und Umweltbedingungen abhängige Grundrauschen des jeweiligen
 Pixels (engl. \textit{pedestal}), \textit{Verstärkung} die Signalverstärkung
-des Pixels (engl. \textit{gain}) und $E_\gamma$ die Konstante der
-Photonenenergie.
+des Pixels (engl. \textit{gain}) und $E_\gamma$ die Photonenenergie.
 
 Um -- im Vergleich zur Multiplikation -- langsame Divisionen bei der Berechnung
 zu vermeiden, werden für \textit{Verstärkung} und $E_\gamma$ vor der Ausführung
 des Algorithmus die Kehrwerte gebildet. Für $E_\gamma$ kann dies global
 erfolgen. Für \textit{Verstärkung} erfolgt die Invertierung mittels eines
-eigenen \textit{Kernels} (\texttt{GainmapInversionKernel}), der den Kehrwert für
-jedes Pixel bildet.
+eigenen \textit{Kernels} (\texttt{GainmapInversionKernel}), der für jedes Pixel
+den Kehrwert bildet.
 
 Der \textit{Sockel}"=Wert wird ebenfalls für jedes Pixel bestimmt. Je nach
 Messbedingungen kann er entweder im Abstand einiger Stunden gemessen (z.B. beim
@@ -324,9 +324,9 @@ Ergebnis des oben beschriebenen Algorithmus für den reduzierten Datensatz. Die
 weißen Pixel zeigen ungültige Messergebnisse an. Diese werden im
 \textit{jungfrau"=photoncounter} durch eine separate Maske eigentlich
 abgeschaltet. Durch einen Fehler unbekannter Herkunft funktionierte dieser Teil
-des Programms jedoch nicht mit dem Alpaka"=SYCL"=Backend. Stattdessen wurden
-alle Pixel maskiert, was zu einem leeren Ergebnis führte. Aus diesem Grund wurde
-auf den Einsatz der Maske verzichtet.
+des Programms jedoch nicht mit dem Alpaka"=SYCL"=Backend. Der Fehler führt dazu,
+dass alle Pixel maskiert werden, was zu einem leeren Ergebnis führt. Aus diesem
+Grund wurde auf den Einsatz der Maske verzichtet.
 
 Nach mündlicher Aussage der Entwickler des \textit{jungfrau"=photoncounter} ist
 es nicht möglich, die Ergebnisse des im vorigen Abschnitt beschriebenen
@@ -585,10 +585,10 @@ Das entspricht einer Verarbeitungsfrequenz von rund 23 Bildern pro Sekunde,
 womit ungefähr die Geschwindigkeit der Intel"=GPU bei der Ausführung des
 \textit{jungfrau"=photoncounter} im vorigen Abschnitt erreicht ist. Für einen
 Beschleuniger, der für den Einsatz in Rechenzentren ausgelegt wurde, ist das
-deutlich zu wenig. Es ist allerdings zu bedenken, dass die Synthesewerkzeuge
+deutlich zu wenig. Es gilt allerdings zu bedenken, dass die Synthesewerkzeuge
 aufgrund des Entwicklungsstandes der Xilinx"=SYCL"=Implementierung keinerlei
 Optimierungen -- wie z.B. die Nutzung des Block RAM oder Pipelining -- vornehmen
-konnte, obwohl diese im Kernel"=Quelltext selbst eingefügt wurden. Mit
+konnten, obwohl diese im Kernel"=Quelltext selbst eingefügt wurden. Mit
 zunehmendem Reifegrad der Xilinx"=SYCL"=Implementierung dürfte derselbe
 Quelltext zukünftig deutlich bessere Ergebnisse liefern.
 

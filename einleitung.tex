@@ -12,23 +12,23 @@ Anwendungen abdecken und diese parallel ausführen können (Taskparallelität),
 wurden GPUs vornehmlich für die möglichst schnelle und parallele Berechnung
 einer hohen Zahl von Bildpunkten konzipiert. Datenparallele Algorithmen -- also
 Algorithmen, die parallel auf viele gleichartige Daten angewendet werden -- sind
-also gut dafür geeignet, auf GPUs ausgelagert und von diesen berechnet zu
+deshalb gut dafür geeignet, auf GPUs ausgelagert und von diesen berechnet zu
 werden. Anders ausgedrückt lassen sich GPUs als \textit{Beschleuniger} für
 datenparallele Algorithmen verwenden. Im Bereich des \gls{hpc} sind verschiedene
 Beschleunigertypen seit jeher im Einsatz, seien es CPUs mit besonders vielen
 Rechenkernen, von den GPUs abstammende Beschleuniger ohne grafische Ausgabe wie
-NVIDIAs Tesla"=Reihe, oder Hybride wie Intels Xeon"=Phi"=Produkte.
+NVIDIAs Tesla"=Reihe oder Hybride wie Intels Xeon"=Phi"=Produkte.
 
 Allen gemeinsam ist die Idee der Beschleunigung eines Algorithmus durch dessen
 Parallelisierung, also die in der Regel parallele Ausführung einzelner
 Schleifeniterationen auf den in den Beschleunigern vorhandenen Rechenkernen.
 Wie eine CPU sind die Beschleuniger allerdings darauf ausgelegt, von
-verschiedenen Algorithmen genutzt werden zu können, und entsprechend allgemein
+verschiedenen Algorithmen genutzt werden zu können und entsprechend allgemein
 aufgebaut. Der Programmierer findet also möglicherweise eine Hardware"=Plattform
 vor, die für seinen Algorithmus nicht ideal geeignet ist.
 
 Einen Chip, der für einen speziellen Algorithmus entworfen wurde, bezeichnet man
-als \gls{asic}. ASICs erfordern durch ihre Produktionskosten einen hohen
+als \gls{asic}. ASICs erfordern wegen ihrer Produktionskosten einen hohen
 finanziellen Aufwand und sind daher erst ab hohen Stückzahlen interessant.
 Darüber hinaus bergen sie das Risiko, geänderten Einsatzzwecken -- z.B. durch
 beim Schaltungsentwurf nicht bedachte Aspekte oder später geänderte
@@ -68,7 +68,7 @@ geringere Störanfälligkeit gegenüber Strahlung, was FPGAs z.B. für den Einsa
 in Experimenten der Teilchenphysik interessant macht. Auch der bei GPUs durch
 das Betriebssystem und die Hardware"=Treiber vorhandene Overhead lässt sich bei
 FPGAs vermeiden -- sofern keine Abhängigkeit des Algorithmus oder weiterer
-Hardware"=Komponenten zu Software besteht -- da die Schaltung selbst von
+Hardware"=Komponenten zu Software besteht --, da die Schaltung selbst von
 Software unabhängig ist.
 
 Da die Synthese einer Schaltung je nach Komplexität des Algorithmus einige
@@ -87,9 +87,9 @@ schnell die seit 1997 entwickelte Schnittstelle \textit{Open Multi-Processing}
 Vektorisierung erfordert dagegen entweder befehlssatzspezifische Erweiterungen
 -- die auch innerhalb derselben Befehlssatzfamilie mitunter inkompatibel sind --
 oder sehr gut optimierende Compiler. Die seit 2011 verfügbaren HLS"=Werkzeuge
-des FPGA"=Herstellers Xilinx ermöglichten zwar die Nutzung der Hochsprachen,
-reicherten diese aber mit zahlreichen Erweiterungen an, was die Übertragung
- zwischen den Plattformen erschwert.
+des FPGA"=Herstellers Xilinx ermöglichen zwar die Nutzung der Hochsprachen,
+reichern diese aber mit zahlreichen Erweiterungen an, was die Übertragung
+zwischen den Plattformen erschwert.
 
 Um die Entwicklung portabler Programme zu ermöglichen, wurden früh verschiedene
 Ansätze entwickelt. Das Khronos"=Industriekonsortium gab 2008 die Spezifikation
@@ -108,9 +108,9 @@ solches Interface transformiert einen vom Programmierer entwickelten Quelltext
 z.B. in einen äquivalenten CUDA"=Quelltext, ohne dass der Programmierer selbst
 weitere Anstrengungen in dieser Richtung unternehmen muss. So genügt ein
 einfacher Austausch der Zielplattform und eine erneute Kompilierung für die
-Nutzung eines anderen Hardware"=Typs. Dieses Prinzip wird von mehreren
-parallelen Projekten verfolgt, wie etwa der vom Helmholtz"=Zentrum
-Dresden"=Rossendorf entwickelten Alpaka"=Bibliothek oder der Kokkos"=Bibliothek,
+Nutzung eines anderen Hardware"=Typs. Dieses Prinzip wird parallel von mehreren
+Projekten verfolgt, wie etwa von der vom Helmholtz"=Zentrum Dresden"=Rossendorf
+entwickelten Alpaka"=Bibliothek oder der Kokkos"=Bibliothek,
 die von einer Forschungseinrichtung des US"=amerikanischen Energieministeriums
 stammt. Bisher bieten jedoch weder Alpaka noch Kokkos ein Backend für FPGAs an.
 
@@ -125,7 +125,7 @@ Abstraktionsbibliotheken.
 \section{Forschungsstand}\label{einleitung:forschung}
 
 In den letzten Jahren befassten sich mehrere Forschungsgruppen mit der
-automatischen \mbox{FPGA}"=Synthese für hochparallele Programme.
+automatisierten \mbox{FPGA}"=Synthese für hochparallele Programme.
 
 Schon 2009 veröffentlichten Papakonstantinou \textit{et al.} einen Ansatz, der
 die Synthese einer Schaltung auf Basis der eigentlich für NVIDIA"=GPUs gedachten
@@ -212,5 +212,7 @@ Verbindung mit einer modernen C++"=Programmierschnittstelle eine
 vielversprechende Hardware"=Plattform darstellen. Dabei wird ein
 experimentelles SYCL"=Backend für die Alpaka-Bibliothek implementiert. Die
 während des Entwicklungsprozesses aufgetretenen Schwierigkeiten und
-Unzulänglichkeiten werden analysiert, sowie erste Einschätzungen der
-Leistungsfähigkeit vorgenommen.
+Unzulänglichkeiten werden analysiert sowie erste Einschätzungen der
+Leistungsfähigkeit vorgenommen. Die Verifizierung des SYCL"=Backends erfolgt
+anhand einer bereits existierenden und mit Alpaka parallelisierten Anwendung aus
+dem Umfeld der Laser"=Teilchenbeschleunigung.

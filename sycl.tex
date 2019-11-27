@@ -17,7 +17,7 @@ moderner C++"=Standards bieten soll, während gleichzeitig Konzeption und
 Portabilität des \gls{opencl}"=1.2"=Standards \cite[vgl.][]{opencl2012}
 beibehalten werden.
 
-Von \gls{opencl} erbt SYCL damit den Anspruch, ein einheitliche
+Von \gls{opencl} erbt SYCL damit den Anspruch, eine einheitliche
 Programmierschnittstelle für verschiedene Beschleunigertypen unterschiedlicher
 Hersteller zu bieten. Das heißt, dass ein einmal geschriebener Quelltext, der
 auf einem Beschleuniger ausgeführt werden soll, möglichst ohne große Änderungen
@@ -35,10 +35,10 @@ wird der \textit{Device}"=spezifische Quelltext häufig erst zur Laufzeit des
 Programms kompiliert, da in diesem Moment der konkrete Beschleuniger bekannt
 ist. Dieser Ansatz hat jedoch den Nachteil, dass der Compiler des
 \textit{Device}"=Quelltexts (im Folgenden als \textit{Kernel} bezeichnet) keine
-Annahmen mehr über das \textit{Host}"=Programm bzw. den den \textit{Kernel}
+Annahmen über das \textit{Host}"=Programm bzw. den den \textit{Kernel}
 umgebenden Quelltext mehr treffen kann, was zu einem geringeren
-Optimierungspotential führt. \gls{opencl}"=Kernel lassen sich zwar auch vor
-der Laufzeit des Programms für eine konkrete Zielplattform kompilieren (dies
+Optimierungspotential führt. \gls{opencl}"=\textit{Kernel} lassen sich zwar auch
+vor der Laufzeit des Programms für eine konkrete Zielplattform kompilieren (dies
 geschieht aufgrund der langen Kompilierungszeiten bei \gls{fpga}s), büßen
 dadurch aber ihre Plattformunabhängigkeit ein.
 
@@ -77,8 +77,8 @@ befasst sich mit allen verfügbaren Implementierungen).
 
 Ein im Bereich der parallelen Programmierung häufig verwendetes einführendes
 Beispiel ist der sogenannte AXPY"=Algorithmus, der ursprünglich aus der
-Bibliothek \gls{blas} stammt \cite[vgl.][]{lawson1979}. Dieser führt die
-Berechnung
+Bibliothek \textit{Basic Linear Algebra Subprograms} (\gls{blas}) stammt
+\cite[vgl.][]{lawson1979}. Dieser führt die Berechnung
 
 \begin{equation}\label{sycl:ueberblick:axpy:formel}
     \vec{y} = a \cdot \vec{x} + \vec{y}
@@ -108,7 +108,7 @@ auto main() -> int
 
     // Speicherreservierung und -initialisierung
 
-    // Kerneldefinition und -ausführung
+    // Kernel-Definition und -ausführung
 
     // Synchronisierung
 
@@ -147,8 +147,8 @@ Eine \textit{Queue} kann durch das Übergeben eines Auswahlkriteriums für das
 gewünschte \textit{Device} konstruiert werden. Die Auswahlkriterien werden in
 der SYCL"=Spezifikation \texttt{device\_selector} genannt. Neben den in der
 Spezifikation vorhandenen Kriterien (beispielsweise \texttt{cpu\_selector},
-\texttt{gpu\_selector} oder \texttt{host\_selector}) ist es Herstellern oder dem
-Programmierer selbst möglich, durch das Erben von der Elternklasse
+\texttt{gpu\_selector} oder \texttt{host\_selector}) ist es Herstellern oder
+Programmierern selbst möglich, durch das Erben von der Elternklasse
 \texttt{device\_selector} eigene Kriterien zu definieren. Beispielsweise findet
 sich in den Testfällen der von Xilinx entwickelten SYCL"=Implementierung ein
 \texttt{device\_selector} für die eigenen Geräte, der die \gls{fpga}s über den
@@ -193,7 +193,7 @@ Beschleunigers, Hardware"=Eigenschaften, verfügbare Erweiterungen, usw.), die
 eine Verfeinerung der Auswahl erlauben.
 
 Der Quelltext~\ref{sycl:ueberblick:axpy:queue:ausfuehrlich} zeigt das
-ausführliche Schema, in den folgenden Abschnitten wird jedoch die oben gezeigte,
+ausführliche Schema. In den folgenden Abschnitten wird jedoch die oben gezeigte,
 einfachere und kürzere Variante verwendet.
 
 \begin{code}
@@ -265,8 +265,8 @@ SYCL unterscheidet sechs verschiedene Zugriffstypen:
           Puffers.
 \end{itemize}
 
-Für das AXPY"=Beispiel lassen sich die benötigten Felder wie in
-Quelltext~\ref{sycl:ueberblick:axpy:buffer:src} dargestellt anlegen und
+Für das AXPY"=Beispiel lassen sich die benötigten Felder -- wie in
+Quelltext~\ref{sycl:ueberblick:axpy:buffer:src} dargestellt -- anlegen und
 initialisieren.
 %
 \begin{code}
@@ -293,17 +293,18 @@ for(auto i = 0; i < 1024; ++i)
     \label{sycl:ueberblick:axpy:buffer:src}
 \end{code}
 
-\subsection{Kerneldefinition und -ausführung}
+\subsection{\textit{Kernel}-Definition und -ausführung}
 \label{sycl:ueberblick:axpy:kernel}
 
-Im nächsten Schritt wird der eigentliche Kernel definiert und ausgeführt. Ein
-SYCL"=Kernel besteht aus zwei Teilen: Der eigentlichen Kernel"=Funktion, also
-der Abbildung des Algorithmus auf SYCL"=C++"=Quelltext, sowie den Abhängigkeiten
-(in Form von \texttt{accessor}"=Variablen). Kernel"=Funktion und Abhängigkeiten
+Im nächsten Schritt wird der eigentliche \textit{Kernel} definiert und
+ausgeführt. Ein SYCL"=\textit{Kernel} besteht aus zwei Teilen: Der eigentlichen
+\textit{Kernel}"=Funktion, also der Abbildung des Algorithmus auf
+SYCL"=C++"=Quelltext, sowie den Abhängigkeiten (in Form von
+\texttt{accessor}"=Variablen). \textit{Kernel}"=Funktion und Abhängigkeiten
 bilden gemeinsam eine \textit{command group} und werden in dieser Form an die
 \textit{Queue} zur Ausführung übergeben. Dabei kann jede \textit{command group}
-nur genau eine Kernel"=Funktion (oder explizite Kopieroperation) enthalten. Es
-bildet sich damit für das AXPY"=Beispiel das in
+nur genau eine \textit{Kernel}"=Funktion (oder explizite Kopieroperation)
+enthalten. Es bildet sich damit für das AXPY"=Beispiel das in
 Quelltext~\ref{sycl:ueberblick:axpy:kernel:cg} gezeigte Grundgerüst einer
 \textit{command group}, welche in diesem Fall als C++"=Lambdafunktion notiert
 wird.
@@ -322,32 +323,32 @@ wird.
     \label{sycl:ueberblick:axpy:kernel:cg}
 \end{code}
 \vspace{5mm}
-SYCL bietet für verschiedene Anwendungsfälle unterschiedliche Methoden für den
-Aufruf der Kernel"=Funktion. Für datenparallele Algorithmen bietet sich vor
-allem der Aufruf mittels der Methode \texttt{parallel\_for} an. Diese
-entspricht dem aus \gls{opencl} bekannten \textit{NDRange}"=Kernel und nutzt die
-SIMD\footnote{Das ist \gls{simd}, eine von Flynn definierte Klasse innerhalb
-seiner Taxonomie \cite[vgl.][]{flynn1966}.}"=Eigenschaften der zur Verfügung
-stehenden Beschleuniger. Auf CPUs können so durch einen Aufruf mehrere Kerne und
-deren SIMD"=Register genutzt werden oder auf einer GPU die Multiprozessoren und
-SIMD"=Einheiten. Durch \texttt{parallel\_for} kann auf einem FPGA ebenfalls eine
-SIMD"=Schaltung synthetisiert werden. 
+SYCL bietet für verschiedene Anwendungsfälle unterschiedliche Methoden zum
+Aufrufen der \textit{Kernel}"=Funktion. Für datenparallele Algorithmen bietet sich
+vor allem der Aufruf mittels der Methode \texttt{parallel\_for} an. Diese
+entspricht dem aus \gls{opencl} bekannten \textit{NDRange}"=\textit{Kernel} und
+nutzt die SIMD\footnote{Das ist \gls{simd}, eine von Flynn definierte Klasse
+innerhalb seiner Taxonomie \cite[vgl.][]{flynn1966}.}"=Eigenschaften der zur
+Verfügung stehenden Beschleuniger. Auf CPUs können so durch einen Aufruf mehrere
+Kerne und deren SIMD"=Register genutzt werden oder auf einer GPU die
+Multiprozessoren und SIMD"=Einheiten. Durch \texttt{parallel\_for} kann auf
+einem FPGA ebenfalls eine SIMD"=Schaltung synthetisiert werden. 
 
 Für aufgabenparallele Algorithmen steht in SYCL der Aufruf \texttt{single\_task}
-zur Verfügung, was einem \textit{Task}"=Kernel in \gls{opencl} entspricht.
-Dieser wird z.B. auf einer CPU nur auf einem einzelnen Kern ausgeführt. Mehrere
-Kernel dieses Typs lassen sich dann parallel auf den vorhandenen Kernen
-ausführen.
+zur Verfügung, was einem \textit{Task}"=\textit{Kernel} in \gls{opencl}
+entspricht. Dieser wird z.B. auf einer CPU nur auf einem einzelnen Kern
+ausgeführt. Mehrere \textit{Kernel} dieses Typs lassen sich dann parallel auf
+den vorhandenen Kernen ausführen.
 
 Für das AXPY"=Beispiel bietet sich der datenparallele Fall an, weshalb die
-Kernel"=Funktion mittels \texttt{parallel\_for} aufgerufen wird (siehe
+\textit{Kernel}"=Funktion mittels \texttt{parallel\_for} aufgerufen wird (siehe
 Quelltext~\ref{sycl:ueberblick:axpy:kernel:call}). Die \num{1024} Elemente der
 Vektoren werden dabei als Arbeitsgröße mit übergeben. Die SYCL"=Laufzeitumgebung
 generiert daraus einen Ausführungsraum mit \num{1024} \textit{work-items}, einer
 Abstraktion der zugrundeliegenden Hardware"=Features (SIMD"=Register, Threads,
 usw.). Das jeweilige \textit{work-item} wird als Parameter an die
-Kernel"=Funktion übergeben. Es kapselt unter anderem einen Index, der für den
-Zugriff auf ein Element im Speicher verwendet werden kann. 
+\textit{Kernel}"=Funktion übergeben. Es kapselt unter anderem einen Index, der
+für den Zugriff auf ein Element im Speicher verwendet werden kann. 
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -364,15 +365,15 @@ Zugriff auf ein Element im Speicher verwendet werden kann.
     });
 }
     \end{minted}
-    \caption{Struktur einer \textit{command group} mit Kernel"=Aufruf}
+    \caption{Struktur einer \textit{command group} mit \textit{Kernel}"=Aufruf}
     \label{sycl:ueberblick:axpy:kernel:call}
 \end{code}
 
 \subsection{Synchronisierung}
 \label{sycl:ueberblick:axpy:sync}
 
-Nachdem der Kernel an die \textit{Queue} übergeben wurde, muss das Ergebnis
-berprüft werden. Um darauf zugreifen zu können, ist zunächst die
+Nachdem der \textit{Kernel} an die \textit{Queue} übergeben wurde, muss das
+Ergebnis überprüft werden. Um darauf zugreifen zu können, ist zunächst die
 Synchronisierung von \textit{Host} und \textit{Device} erforderlich, da beide
 asynchron zueinander arbeiten. Die \textit{Queue} verfügt jedoch über die
 Methode \texttt{wait}, die den \textit{Host} so lange warten lässt, bis alle bis
@@ -386,7 +387,7 @@ lassen sich die Elemente des Vektors $\vec{y}$ auf der \textit{Host}"=Seite
     \begin{minted}[fontsize=\small]{c++}
 queue.wait();
     \end{minted}
-    \caption{Struktur einer \textit{command group} mit Kernel"=Aufruf}
+    \caption{Synchronisierung einer SYCL-\textit{Queue}}
     \label{sycl:ueberblick:axpy:sync:wait}
 \end{code}
 
@@ -463,8 +464,9 @@ auto main() -> int {
 Die Entwicklung komplexerer Programme mit SYCL erfordert die Kenntnis einiger
 weiterer Konzepte, die in der obigen Einführung nicht berücksichtigt wurden.
 Dazu zählen die in SYCL vorhandene Hardware"=Abstraktion sowie die
-Abhängigkeiten zwischen Kerneln. Für die Analyse des entwickelten Programms
-sind außerdem SYCLs Fähigkeiten zur Fehlerbehandlung und zum Profiling relevant.
+Abhängigkeiten zwischen \textit{Kerneln}. Für die Analyse des entwickelten
+Programms sind außerdem SYCLs Fähigkeiten zur Fehlerbehandlung und zum Profiling
+relevant.
 
 \subsection{Hardware"=Abstraktion}
 
@@ -478,15 +480,15 @@ Eine \textit{Plattform} ist in OpenCL und SYCL aus dem \textit{Host} und
 mindestens einem \textit{Device} zusammengesetzt. Jedes \textit{Device} besteht
 wiederum aus mindestens einer \textit{compute unit} (CU). Eine CU lässt sich auf
 einen oder mehrere Teile des Beschleunigers abbilden und ist in der Lage, einen
-Kernel auszuführen. Bei einer CPU lässt sich eine CU also auf einen
+\textit{Kernel} auszuführen. Bei einer CPU lässt sich eine CU also auf einen
 Kern abbilden oder bei einer GPU auf einen Multiprozessor. Bei FPGAs ist die
 Abbildung dynamischer: Hier hängt die Zahl der verfügbaren CUs davon ab, wie
-viele Ressourcen der Kernel verbraucht. Die Zahl der gleichzeitig platzierbaren
-Kernel entspricht damit der Zahl der möglichen CUs, sofern die Implementierung
-keine Obergrenze für die CU"=Anzahl vorgibt. Eine CU besteht aus mindestens
-einem \textit{processing element} (PE). Ein PE lässt sich dabei als Abstraktion
-der SIMD"=Fähigkeiten einer CU verstehen, also z.B. als ein Element innerhalb
-eines SIMD"=Vektorregisters.
+viele Ressourcen der \textit{Kernel} verbraucht. Die Zahl der gleichzeitig
+platzierbaren \textit{Kernel} entspricht damit der Zahl der möglichen CUs,
+sofern die Implementierung keine Obergrenze für die CU"=Anzahl vorgibt. Eine CU
+besteht aus mindestens einem \textit{processing element} (PE). Ein PE lässt sich
+dabei als Abstraktion der SIMD"=Fähigkeiten einer CU verstehen, also z.B. als
+ein Element innerhalb eines SIMD"=Vektorregisters.
 Die Abbildung~\ref{sycl:konzepte:abstraktion:plattform} veranschaulicht dieses
 Modell.
 
@@ -592,7 +594,7 @@ Modell.
 \end{figure}
 
 Um die Parallelität mehrerer CUs nutzen zu können, ist es erforderlich, die
-Arbeit des Kernels aufzuteilen. Bei acht verfügbaren CUs wäre es daher
+Arbeit des \textit{Kernels} aufzuteilen. Bei acht verfügbaren CUs wäre es daher
 wünschenswert, die Berechnungen in mindestens acht Blöcken (oder einem
 Vielfachen davon) parallel durchzuführen. Diese Aufteilung wird in \gls{opencl}
 und SYCL \textit{work"=group} genannt. \textit{Work"=groups} werden durch ihre
@@ -609,7 +611,7 @@ synchronisieren. Es ist jedoch nicht möglich, \textit{work"=items} verschiedene
 können nur über den globalen Speicher oder über atomare Funktionen miteinander
 kommunizieren.
 
-Durch diese Hardware"=Abstraktion wird aus Sicht der Programmierers ein
+Durch diese Hardware"=Abstraktion wird aus Sicht des Programmierers ein
 Indexraum aufgespannt -- in OpenCL und SYCL \textit{NDRange} genannt --, in dem
 jedem \textit{work"=item} ein eindeutiger Index innerhalb der
 \textit{work"=group} sowie der Menge aller \textit{work"=items} zugewiesen wird.
@@ -783,58 +785,58 @@ lässt sich ebenfalls bestimmen \cite[vgl.][25]{opencl2012}:
 Da eine \textit{NDRange} bis zu drei Dimensionen umfassen kann, lassen sich
 mehrdimensionale Algorithmen auf diese Weise einfach implementieren.
 
-\subsection{Kernel"=Start}
+\subsection{\textit{Kernel}-Start}
 \label{sycl:konzepte:kernelstart}
 
-SYCL unterstützt verschiedene Möglichkeiten, den Kernel unter Einbeziehung der
-im vorigen Abschnitt geschilderten Hierarchie aus \textit{NDRange},
-\textit{work"=groups} und \textit{work"=items} zu starten.
+SYCL unterstützt verschiedene Möglichkeiten, den \textit{Kernel} unter
+Einbeziehung der im vorigen Abschnitt geschilderten Hierarchie aus
+\textit{NDRange}, \textit{work"=groups} und \textit{work"=items} zu starten.
 
-Der Aufruf eines Kernels über die Funktion \texttt{parallel\_for()} erzeugt
-eine \textit{NDRange} nach dem oben beschriebenen Muster. Der Programmierer muss
-immer die Anzahl der \textit{work"=items} innerhalb der \textit{NDRange}
-angeben, während die Angabe der Zahl der \textit{work"=items} pro
-\textit{work"=group} optional ist. Sofern der Programmierer darauf verzichtet,
-die Größe der \textit{work"=groups} selbst festzulegen, ist es Aufgabe der
-SYCL"=Implementierung, die Zahl der nötigen \textit{work"=groups} zu bestimmen
-und die Zuordnung der \textit{work"=items} durchzuführen. Mit dieser
-Entscheidung verliert der Programmierer jedoch die Möglichkeit, gruppenweite
+Der Aufruf eines \textit{Kernels} über die Funktion \texttt{parallel\_for()}
+erzeugt eine \textit{NDRange} nach dem oben beschriebenen Muster. Der
+Programmierer muss immer die Anzahl der \textit{work"=items} innerhalb der
+\textit{NDRange} angeben, während die Angabe der Zahl der \textit{work"=items}
+pro \textit{work"=group} optional ist. Sofern der Programmierer darauf
+verzichtet die Größe der \textit{work"=groups} selbst festzulegen, ist es
+Aufgabe der SYCL"=Implementierung, die Zahl der nötigen \textit{work"=groups} zu
+bestimmen und die Zuordnung der \textit{work"=items} durchzuführen. Mit dieser
+Entscheidung verliert der Programmierer jedoch die Möglichkeit gruppenweite
 Operationen durchzuführen, wie z.B. die Synchronisierung innerhalb der
 \textit{work"=group}.
 
 Durch den Aufruf über die Funktion \texttt{parallel\_for\_work\_group()} hat der
-Programmierer die Möglichkeit, seinen Kernel hierarchisch zu gliedern. Der
-Kernel führt seine Anweisungen zunächst auf der Ebene der \textit{work"=group}
+Programmierer die Möglichkeit, seinen \textit{Kernel} hierarchisch zu gliedern. Der
+\textit{Kernel} führt seine Anweisungen zunächst auf der Ebene der \textit{work"=group}
 aus, das heißt, dass jede Anweisung von einem einzigen \textit{work"=item}
 durchgeführt und das Ergebnis der gesamten \textit{work"=group} bekannt gemacht
-wird. Innerhalb des Kernels kann durch die Funktion
+wird. Innerhalb des \textit{Kernels} kann durch die Funktion
 \texttt{parallel\_for\_work\_item()} die Parallelität auf der
 \textit{work"=item}"=Ebene ausgedrückt werden: Anweisungen innerhalb dieses
-Kernel"=Teils werden individuell von einer Menge von \textit{work"=items}
+\textit{Kernel}"=Teils werden individuell von einer Menge von \textit{work"=items}
 ausgeführt. Diese kann alle \textit{work"=items} der \textit{work"=group}
 umfassen oder nur einen Teil der \textit{work"=group}. Am Ende des
 \textit{work"=item}"=Teils erfolgt eine implizite Synchronisierung der
 \textit{work"=items}.
 
-Sequentielle Kernel lassen sich über die Funktion \texttt{single\_task()}
+Sequentielle \textit{Kernel} lassen sich über die Funktion \texttt{single\_task()}
 starten. Die aufgespannte \textit{NDRange} umfasst dann genau eine
 \textit{work"=group} mit genau einem \textit{work"=item}. Durch den wiederholten
 Aufruf von \texttt{single\_task()} lassen sich komplexe Ketten aufeinander
 folgender sequentieller Aufgaben einfach modellieren.
 
-\subsection{Abhängigkeiten zwischen Kerneln}
+\subsection{Abhängigkeiten zwischen \textit{Kerneln}}
 \label{sycl:konzepte:abhaengigkeiten}
 
 Alle \textit{command groups}, die der Programmierer in eine
 SYCL"=\textit{Queue} einreiht, werden grundsätzlich asynchron ausgeführt, sofern
 keine Abhängigkeiten zueinander bestehen. Vorhandene Abhängigkeiten werden über
-die von den Kerneln verwendeten Puffer durch die SYCL"=Laufzeitumgebung
-automatisch erkannt und die Kernel in der richtigen Reihenfolge ausgeführt
+die von den \textit{Kerneln} verwendeten Puffer durch die SYCL"=Laufzeitumgebung
+automatisch erkannt und die \textit{Kernel} in der richtigen Reihenfolge ausgeführt
 \cite[vgl.][21--23]{sycl2019}. In diesem Aspekt unterscheidet sich SYCL von
 \gls{opencl}, das neben vollständig seriellen \textit{Queues} nur asynchrone
-\textit{Queues} kennt, bei denen die richtige Sortierung der Kernel Aufgabe des
+\textit{Queues} kennt, bei denen die richtige Sortierung der \textit{Kernel} Aufgabe des
 Programmierers ist. Wichtig ist außerdem, dass die Abhängigkeiten über die
-Puffer"=Verfügbarkeit ermittelt werden -- und nicht über das Ende der Kernel
+Puffer"=Verfügbarkeit ermittelt werden -- und nicht über das Ende der \textit{Kernel}
 \cite[vgl.][166]{sycl2019}.
 
 Graphisch lässt sich dies in Form eines gerichteten Graphen veranschaulichen,
@@ -894,8 +896,8 @@ verarbeitet werden können (siehe Anhang~\ref{anhang:source:cpp:syclexceptions})
 
 SYCL ermöglicht über die \textit{Queue} ein rudimentäres Profiling. Dieses
 bietet dem Programmierer die Möglichkeit, über von der \textit{Queue} generierte
-\textit{Events} Informationen über Start- und Endzeitpunkt der Kernel sowie den
-gegenwärtigen Ausführungsstand eines Kernels zu erhalten. Dazu muss der
+\textit{Events} Informationen über Start- und Endzeitpunkt der \textit{Kernel} sowie den
+gegenwärtigen Ausführungsstand eines \textit{Kernels} zu erhalten. Dazu muss der
 \textit{Queue} ein besonderer Parameter während der Konstruktion übergeben
 werden (siehe Anhang~\ref{anhang:source:cpp:syclprofiling}).
 
@@ -1051,11 +1053,11 @@ datenflussbasierte Erweiterung. Diese Erweiterung ermöglicht die
 aufgabenparallele Ausführung aufeinanderfolgender Funktionen und Schleifen. Mit
 ihr wird der Compiler angewiesen, die Abhängigkeiten zwischen den einzelnen
 Schritten zu analysieren und für diese Schritte das
-\textit{Producer}/\textit{Consumer}-Prinzip durch eine Zwischenschaltung von
+\textit{Pro\-du\-cer}/\textit{Con\-sumer}"=Prin\-zip durch eine Zwischenschaltung von
 Puffern durchzusetzen. \cite[siehe][70\psqq]{sdaccelopt2019}
 
 In OpenCL ist diese Erweiterung als \texttt{xcl\_dataflow} verfügbar und wird
-im OpenCL"=C"=Dialekt einem Kernel, einer Funktion oder einer Schleife als
+im OpenCL"=C"=Dialekt einem \textit{Kernel}, einer Funktion oder einer Schleife als
 Attribut zugewiesen. Der SYCL"=Implementierung steht diese Erweiterung unter dem
 Namen \texttt{dataflow} zur Verfügung. Mit ihr werden Funktionen markiert, auf
 deren innere Funktionen und Schleifen die entsprechenden Optimierungen angewandt
@@ -1090,7 +1092,7 @@ bestimmte Ressourcen zeitgleich nutzen, wodurch sich der Ressourcenverbrauch
 insgesamt sowie die Latenz verringern können.
 \cite[siehe][67\psqq]{sdaccelopt2019}
 
-In der von Xilinx ausgelieferte OpenCL-Implementierung handelt es sich bei
+In der von Xilinx ausgelieferten OpenCL"=Implementierung handelt es sich bei
 dieser Erweiterung um das Attribut \texttt{xcl\_pipeline\_loop}, mit dem
 Schleifen markiert werden. In SYCL ist sie unter dem Namen \texttt{pipeline}
 verfügbar und wird auf Funktionen angewendet, deren innere Schleifen dieser
