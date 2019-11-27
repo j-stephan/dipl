@@ -139,7 +139,7 @@ sehr einfach. Die Klassen \texttt{QueueSyclBlocking} und
 Verfügung. Lediglich die Implementierung des Event"=Systems bereitete größere
 Schwierigkeiten.
 
-\subsection{Event"=Inkompatibilitäten}
+\subsubsection{Event"=Inkompatibilitäten}
 
 Alpaka übernimmt viele CUDA"=Konzepte, darunter auch das Event"=System.
 Alpaka"=Events werden wie Tasks in eine Queue eingereiht. Beendet die Queue
@@ -341,9 +341,9 @@ class TaskKernelSycl final : public workdiv::WorkDivMembers<TDim, TIdx>
 }
     \end{minted}
     \caption{Aufruf der Alpaka-Kernel-Funktion im SYCL-Kernel}
-    \label{implementierung:task:kernel:launch}
+    \label{implementierung:task:kernel:launch:src}
 \end{code}
-
+\vspace{3mm}
 Wichtig ist ferner der Name des SYCL"=Kernels, der allen
 Kernel"=Start"=Varianten übergeben werden muss. In SYCL ist der Kernel"=Name ein
 eigener Datentyp, der der Startfunktion als Template"=Parameter übergeben wird,
@@ -352,7 +352,7 @@ Daher wurde für das SYCL"=Backend die Klasse \texttt{sycl::detail::kernel}
 eingeführt, welche den Typ der Alpaka"=Kernel"=Funktion (\texttt{TKernelFnObj})
 als Template"=Parameter entgegennimmt.
 
-Im Quelltext~\ref{implementierung:task:kernel:launch} wird der Vorgang des
+Im Quelltext~\ref{implementierung:task:kernel:launch:src} wird der Vorgang des
 Kernel"=Starts gezeigt, jedoch noch ohne \texttt{accessors} -- diese werden
 im nächsten Abschnitt behandelt.
 
@@ -417,7 +417,7 @@ constexpr auto bind_buffers(cl::sycl::handler& cgh,
              Template"=Meta"=Programmierung}
     \label{implementierung:task:kernel:zeiger:wrappertrans}
 \end{code}
-
+\vspace{3mm}
 Innerhalb eines Kernels lassen sich die \texttt{accessor}"=Typen in spezielle
 SYCL"=eigene Zeigertypen (\texttt{multi\_ptr}) umwandeln, die wiederum in
 \glqq reine\grqq\ Zeiger konvertierbar sind. Dadurch lässt sich die geschilderte
@@ -517,7 +517,7 @@ struct TaskCopySycl<TElem, TDim, copy_type::host_to_device>
     \caption{Aufbau eines SYCL"=Kopier"=Tasks}
     \label{implementierung:task:copy:struktur}
 \end{code}
-
+\vspace{3mm}
 Der Template"=Parameter \texttt{TElem} definiert den zu kopierenden Datentyp,
 während \texttt{TDim} den Typ der Dimensionalität des zu kopierenden Puffers
 angibt.  
