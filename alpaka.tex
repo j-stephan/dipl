@@ -87,7 +87,7 @@ Algorithmus natürlich trotzdem vektorisieren, zudem existieren noch weitere
 Möglichkeiten der Parallelisierung durch Instruktions"=Level"=Parallelität oder
 Pipelining.}.
 
-\subsection{Alpaka am Beispiel des AXPY-Algorithmus}
+\subsection{Struktur eines Alpaka-Programms}
 \label{alpaka:ueberblick:axpy}
 
 Zum Zwecke der einfachen Vergleichbarkeit der von SYCL und Alpaka gebotenen
@@ -122,7 +122,7 @@ auto main() -> int
     \label{alpaka:ueberblick:axpy:struktur}
 \end{code}
 
-\subsubsection{Beschleunigerwahl und Befehlswarteschlange}
+\subsection{Beschleunigerwahl und Befehlswarteschlange}
 \label{alpaka:ueberblick:axpy:queue}
 
 Die Auswahl des Beschleunigers erfolgt bei Alpaka bereits zur Compile"=Zeit. Der
@@ -207,7 +207,7 @@ auto queue = Queue{devAcc};
     \label{alpaka:ueberblick:axpy:queue:inst_src}
 \end{code}
 
-\subsubsection{Speicherreservierung und -initialisierung}
+\subsection{Speicherreservierung und -initialisierung}
 \label{alpaka:ueberblick:axpy:buffer}
 
 Die für die AXPY"=Operation nötigen Vektoren müssen zunächst im Speicher
@@ -238,7 +238,7 @@ auto extent = alpaka::vec::Vec<Dim, Idx>{numElements};
     \caption{Definition eines Größenvektors mit Alpaka}
     \label{alpaka:ueberblick:axpy:buffer:extent_src}
 \end{code}
-
+\vspace{4mm}
 In der Folge kann die Größe verwendet werden, um den Speicher sowohl auf dem
 \textit{Host} als auch auf dem \textit{Device} zu reseriveren. Dies ist in
 Quelltext~\ref{alpaka:ueberblick:axpy:buffer:alloc} dargestellt.
@@ -254,7 +254,7 @@ auto devBufY = alpaka::mem::buf::alloc<int, Idx>(devAcc, extent);
     \caption{Speicherallokation mit Alpaka}
     \label{alpaka:ueberblick:axpy:buffer:alloc}
 \end{code}
-
+\vspace{4mm}
 Die in Quelltext~\ref{alpaka:ueberblick:axpy:buffer:init} durchgeführte
 Initialisierung erfolgt über die von den \textit{Host}"=Puffern gekapselten
 Zeiger, auf die man bei Alpaka direkt zugreifen kann.
@@ -273,7 +273,7 @@ for(auto i = 0; i < numElements; ++i)
     \caption{Initialisierung eines Alpaka-Puffers}
     \label{alpaka:ueberblick:axpy:buffer:init}
 \end{code}
-
+\vspace{4mm}
 Im letzten Schritt (siehe Quelltext~\ref{alpaka:ueberblick:axpy:buffer:copy})
 müssen die Daten vom \textit{Host} auf das \textit{Device} kopiert werden. Dazu
 werden Kopieroperationen in der oben angelegten Warteschlange eingereiht.
@@ -287,7 +287,7 @@ alpaka::mem::view::copy(queue, devBufY, hostBufY, extent);
     \label{alpaka:ueberblick:axpy:buffer:copy}
 \end{code}
 
-\subsubsection{Kerneldefinition und -ausführung}
+\subsection{Kerneldefinition und -ausführung}
 \label{alpaka:ueberblick:axpy:kernel}
 
 Um die parallelen Eigenschaften der Ziel"=Hardware nutzen zu können, erfordert
@@ -313,30 +313,6 @@ auto workDiv = alpaka::workdiv::getValidWorkDiv<Acc>(
     \caption{Arbeitsaufteilung durch Alpaka"=Schätzfunktion}
     \label{alpaka:ueberblick:axpy:kernel:workdiv}
 \end{code}
-
-Alpaka"=Kernel werden in Form von C++"=Funktoren -- das heißt Strukturen mit
-einem überladenen \texttt{()}"=Operator -- definiert. Der \texttt{()}"=Operator
-wird mit einem speziellen Funktionsattribut versehen (\texttt{ALPAKA\_FN\_ACC}),
-der im Hintergrund dafür sorgt, dass diese Funktion für das \textit{Device}
-kompiliert wird.
-
-Als Parameter nimmt der Kernel zunächst die oben definierte
-\texttt{devAcc}"=Instanz entgegen. Dies ist nötig, um von dieser Struktur
-gekapselte \textit{device}"=seitige Funktionen im Kernel nutzen zu können.
-Daneben ist nur die Angabe der eigentlichen Funktionsparameter erforderlich,
-in diesem Fall also die für den AXPY"=Algorithmus nötige Konstante \texttt{a}
-sowie die Ein- bzw. Ausgangsvektoren. Wie auf dem \textit{Host} erfolgt auch auf
-dem \textit{Device} der Zugriff auf die Speicherbereiche durch reine Zeiger.
-
-Innerhalb des Kernels wird ein Index"=Raum aufgespannt (eine genaue Erläuterung
-dieses Prinzips folgt in Abschnitt~\ref{alpaka:konzepte:abstraktion}), in dem
-jeder ausführenden Einheit des Beschleunigers ein eindeutiger Index sowie zu
-bearbeitende Elemente zugeordnet werden. Über in Alpaka vorhandene Funktionen
-ist eine Orientierung innerhalb des Index"=Raums möglich, wodurch die
-AXPY"=Funktion auf alle Vektor"=Elemente angewendet werden kann.
-
-Die gesamte Kernel"=Definition ist in
-Quelltext~\ref{alpaka:ueberblick:axpy:kernel:kernel_src} dargestellt.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -372,6 +348,30 @@ struct AxpyKernel
     \caption{Kernel"=Definition in Alpaka}
     \label{alpaka:ueberblick:axpy:kernel:kernel_src}
 \end{code}
+\vspace{3mm}
+Alpaka"=Kernel werden in Form von C++"=Funktoren -- das heißt Strukturen mit
+einem überladenen \texttt{()}"=Operator -- definiert. Der \texttt{()}"=Operator
+wird mit einem speziellen Funktionsattribut versehen (\texttt{ALPAKA\_FN\_ACC}),
+der im Hintergrund dafür sorgt, dass diese Funktion für das \textit{Device}
+kompiliert wird.
+
+Als Parameter nimmt der Kernel zunächst die oben definierte
+\texttt{devAcc}"=Instanz entgegen. Dies ist nötig, um von dieser Struktur
+gekapselte \textit{device}"=seitige Funktionen im Kernel nutzen zu können.
+Daneben ist nur die Angabe der eigentlichen Funktionsparameter erforderlich,
+in diesem Fall also die für den AXPY"=Algorithmus nötige Konstante \texttt{a}
+sowie die Ein- bzw. Ausgangsvektoren. Wie auf dem \textit{Host} erfolgt auch auf
+dem \textit{Device} der Zugriff auf die Speicherbereiche durch reine Zeiger.
+
+Innerhalb des Kernels wird ein Index"=Raum aufgespannt (eine genaue Erläuterung
+dieses Prinzips folgt in Abschnitt~\ref{alpaka:konzepte:abstraktion}), in dem
+jeder ausführenden Einheit des Beschleunigers ein eindeutiger Index sowie zu
+bearbeitende Elemente zugeordnet werden. Über in Alpaka vorhandene Funktionen
+ist eine Orientierung innerhalb des Index"=Raums möglich, wodurch die
+AXPY"=Funktion auf alle Vektor"=Elemente angewendet werden kann.
+
+Die gesamte Kernel"=Definition ist in
+Quelltext~\ref{alpaka:ueberblick:axpy:kernel:kernel_src} dargestellt.
 
 Der so definierte Kernel wird im nächsten Schritt einem \textit{Task}
 zugeordnet. Ein \textit{Task} ist prinzipiell mit einer \textit{command group}
@@ -399,7 +399,7 @@ alpaka::queue::enqueue(queue, taskKernel);
     \label{alpaka:ueberblick:axpy:kernel:task}
 \end{code}
 
-\subsubsection{Synchronisierung}
+\subsection{Synchronisierung}
 \label{alpaka:ueberblick:axpy:sync}
 
 Nach dem Abschluss der Berechnung ist die Prüfung der Ergebnisse erforderlich.
@@ -422,7 +422,7 @@ alpaka::wait::wait(queue); // warte auf ausstehende Operationen
     \label{alpaka:ueberblick:axpy:sync:src}
 \end{code}
 
-\subsubsection{Zusammenfassung}
+\subsection{Zusammenfassung}
 \label{alpaka:ueberblick:axpy:zusammenfassung}
 
 Der Quelltext~\ref{alpaka:ueberblick:axpy:zusammenfassung:src} zeigt das gesamte
