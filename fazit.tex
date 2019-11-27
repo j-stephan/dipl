@@ -2,37 +2,44 @@
 \label{fazit}
 
 Es konnte gezeigt werden, dass SYCL sich als Backend für die Alpaka"=Bibliothek
-grundsätzlich eignet. Da jedoch gravierende Inkompatibilitäten zwischen SYCL und
-Alpaka bestehen, ist eine Entwicklung über den Prototypen"=Status hinaus derzeit
-nicht umzusetzen. Diesbezüglich sind noch einige konzeptionelle Änderungen in
-Alpaka und/oder SYCL notwendig.
+grundsätzlich eignet. Da zur Zeit noch gravierende Inkompatibilitäten zwischen
+SYCL und Alpaka bestehen, ist eine Entwicklung über den Prototypen"=Status
+im Moment nicht durchführbar. Diesbezüglich sind noch einige konzeptionelle
+Änderungen in Alpaka und/oder SYCL notwendig.
 
-Aufgrund des Zustands der verfügbaren SYCL"=Implementierungen ist eine
+Aufgrund des Entwicklungsstands der verfügbaren SYCL"=Implementierungen ist eine
 Ausführung von Alpaka"=Programmen auf den meisten Hardware"=Plattformen derzeit
 nicht möglich. Lediglich Intel"=CPUs und "=GPUs sind zur Zeit nutzbar, sofern
 man die Beschränkungen des Backend"=Prototypen in Kauf zu nehmen bereit ist.
-Dagegen ist die Nutzbarkeit von FPGAs sowohl durch das Alpaka"=Backend als auch
-durch SYCL selbst in nächster Zeit fraglich. Hier dürfte vor allem die
-Beobachtung der Intel"=Implementierung des SYCL"=Standards von Bedeutung sein,
-da eine Unterstützung der hauseigenen FPGAs mittelfristig wahrscheinlich ist und
-die bisherige Implementierung recht ausgereift wirkt. Dem gegenüber steht die
-auf der Intel"=Implementierung aufsetzende Xilinx"=Implementierung, die
-insgesamt sehr instabil ist und unter einer sehr kleinen Entwicklerzahl leidet.
-Es ist dennoch lohnenswert, das Projekt der FPGA"=Unterstützung für beide
-Hersteller in Alpaka weiter zu verfolgen, weil Alpaka so ein wichtiges
+
+Die produktive Nutzbarkeit von FPGAs sowohl durch das Alpaka"=Backend als auch
+durch SYCL selbst ist langfristig eine interessante Option. Hier dürfte zunächst
+die Intel"=Implementierung des SYCL"=Standards von Bedeutung sein, da eine
+Unterstützung der hauseigenen FPGAs mittelfristig wahrscheinlich ist und die
+bisherige Implementierung für CPUs und GPUs recht ausgereift wirkt.
+
+Dem gegenüber steht die auf der Intel"=Implementierung aufsetzende
+Xilinx"=Implementierung, die sich noch in einem sehr frühen Entwicklungsstadium
+befindet und unter einer sehr kleinen Entwicklerzahl leidet. Es ist dennoch
+lohnenswert, das Projekt der FPGA"=Unterstützung für beide Hersteller in Alpaka
+weiter zu verfolgen: Einerseits hätte Alpaka damit ein wichtiges
 Alleinstellungsmerkmal gegenüber vergleichbaren Projekten wie Kokkos oder
-HPX.Compute hätte.
+HPX.Compute. Andererseits sind die Hardware"= und Parallelisierungseigenschaften
+der FPGAs für viele Algorithmen sehr interessant, die zum Teil bereits mit
+Alpaka implementiert wurden. Insbesondere bildverarbeitende Programme könnten
+hier profitieren.
 
 Gegenüber Alpaka bietet SYCL das modernere, intuitivere und standardnähere
 Programmier"=Interface. Das fragmentierte Ökosystem sowie der eingeschränkte
-Hardware"=Support sprechen im Moment aber recht deutlich gegen die Nutzung
+Hardware"=Support sprechen im Moment noch recht deutlich gegen die Nutzung
 dieses insgesamt vielversprechenden Ansatzes zur parallelen Programmierung. Es
-bleibt daher abzuwarten, ob SYCL in den nächsten Monaten und Jahren weitere
-Verbreitung erfährt oder in der Bedeutungslosigkeit versinkt. Wichtig wäre hier
-eine kurzfristige und umfangreiche Unterstützung von NVIDIA"=GPUs, die
-den Bereich des HPC mit weitem Abstand dominieren. Auch für moderne AMD"=GPUs
-existiert bislang keine SYCL"=Implementierung, die auf dem HPC"=Sektor
-vorbehaltlos einzusetzen ist. Dadurch kann SYCL in der GPGPU"=Programmierung
-keine Rolle spielen, sofern man von den vergleichsweise leistungsschwachen
-Intel"=Laptop"=GPUs absieht. Diesbezüglich wird interessant sein, ob und wie gut
-Intels zukünftige dedizierte GPU"=Plattform mit SYCL genutzt werden kann.
+bleibt deswegen abzuwarten, ob SYCL in den nächsten Monaten und Jahren weitere
+Verbreitung erfährt oder in der momentanen relativen Bedeutungslosigkeit
+verharrt. Wichtig wäre hier eine baldige vollständige Unterstützung von
+NVIDIA"=GPUs, die den Bereich des HPC mit weitem Abstand dominieren. Auch für
+moderne AMD"=GPUs existiert bislang keine SYCL"=Implementierung, die auf dem
+HPC"=Sektor vorbehaltlos einzusetzen ist. Dadurch kann SYCL in der
+GPGPU"=Programmierung keine Rolle spielen, sofern man von den vergleichsweise
+leistungsschwachen Intel"=Laptop"=GPUs absieht. Diesbezüglich wird interessant
+sein, ob und wie gut Intels zukünftige dedizierte GPU"=Plattform mit SYCL
+genutzt werden kann.
