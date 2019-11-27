@@ -12,23 +12,6 @@ Ausführung von Alpaka"=Programmen auf den meisten Hardware"=Plattformen derzeit
 nicht möglich. Lediglich Intel"=CPUs und "=GPUs sind zur Zeit nutzbar, sofern
 man die Beschränkungen des Backend"=Prototypen in Kauf zu nehmen bereit ist.
 
-Die produktive Nutzbarkeit von FPGAs sowohl durch das Alpaka"=Backend als auch
-durch SYCL selbst ist langfristig eine interessante Option. Hier dürfte zunächst
-die Intel"=Implementierung des SYCL"=Standards von Bedeutung sein, da eine
-Unterstützung der hauseigenen FPGAs mittelfristig wahrscheinlich ist und die
-bisherige Implementierung für CPUs und GPUs recht ausgereift wirkt.
-
-Dem gegenüber steht die auf der Intel"=Implementierung aufsetzende
-Xilinx"=Implementierung, die sich noch in einem sehr frühen Entwicklungsstadium
-befindet und unter einer sehr kleinen Entwicklerzahl leidet. Es ist dennoch
-lohnenswert, das Projekt der FPGA"=Unterstützung für beide Hersteller in Alpaka
-weiter zu verfolgen: Einerseits hätte Alpaka damit ein wichtiges
-Alleinstellungsmerkmal gegenüber vergleichbaren Projekten wie Kokkos oder
-HPX.Compute. Andererseits sind die Hardware"= und Parallelisierungseigenschaften
-der FPGAs für viele Algorithmen sehr interessant, die zum Teil bereits mit
-Alpaka implementiert wurden. Insbesondere bildverarbeitende Programme könnten
-hier profitieren.
-
 Gegenüber Alpaka bietet SYCL das modernere, intuitivere und standardnähere
 Programmier"=Interface. Das fragmentierte Ökosystem sowie der eingeschränkte
 Hardware"=Support sprechen im Moment noch recht deutlich gegen die Nutzung
@@ -43,3 +26,35 @@ GPGPU"=Programmierung keine Rolle spielen, sofern man von den vergleichsweise
 leistungsschwachen Intel"=Laptop"=GPUs absieht. Diesbezüglich wird interessant
 sein, ob und wie gut Intels zukünftige dedizierte GPU"=Plattform mit SYCL
 genutzt werden kann.
+
+Für die Zukunft der Alpaka"=Bibliothek wäre eine weniger starke Anlehnung an
+CUDA wünschenswert. Diese ist zwar durch die historische Entwicklung der
+Alpaka"=Bibliothek begründet, erschwert aber die Integration konkurrierender
+Plattformen, wie die Probleme bei der Entwicklung des SYCL"=Backends zeigten.
+Beispielhaft sei hier die Unterstützung unterschiedlicher Beschleunigertypen
+und/oder Hersteller genannt, die erst zur Laufzeit des Programms bekannt sind.
+Dieses Problem betrifft nicht nur SYCL, sondern auch neuere Fassungen des
+OpenMP"=Standards. Nicht nur an dieser Stelle ist daher eine Diskussion über das
+zukünftige Design der Bibliothek innerhalb der Alpaka"=Entwicklergemeinde
+notwendig. Trotz alledem ist Alpaka für den Einsatz in der Praxis gut geeignet,
+wie bereits produktiv genutzte Programme auf Alpaka"=Basis beweisen.
+
+Die Programmierbarkeit von FPGAs sowohl durch das Alpaka"=Backend als auch durch
+SYCL selbst ist langfristig eine attraktive Option. Hier dürfte zunächst die
+Intel"=Implementierung des SYCL"=Standards von Bedeutung sein, da eine
+Unterstützung der hauseigenen FPGAs mittelfristig wahrscheinlich ist und die
+bisherige Implementierung für CPUs und GPUs recht ausgereift wirkt.
+
+Dem gegenüber steht die auf der Intel"=Implementierung aufsetzende
+Xilinx"=Implementierung, die sich noch in einem sehr frühen Entwicklungsstadium
+befindet und unter einer sehr kleinen Entwicklerzahl leidet. Es ist dennoch
+lohnenswert, das Projekt der FPGA"=Unterstützung für beide Hersteller in Alpaka
+weiter zu verfolgen: Einerseits hätte Alpaka damit ein wichtiges
+Alleinstellungsmerkmal gegenüber vergleichbaren Projekten wie Kokkos oder
+HPX.Compute. Andererseits sind die Hardware"= und Parallelisierungseigenschaften
+der FPGAs für viele Algorithmen -- die zum Teil schon in einer Alpaka"=Fassung
+vorliegen -- sehr interessant. Insbesondere Programme aus dem Umfeld der
+Laser"=Teilchenbeschleunigung könnten von einer physischen Schaltung
+profitieren, die auf der Basis eines bildverarbeitenden Algorithmus 
+synthetisiert und an einen mit hoher Messfrequenz betriebenen Detektor
+angeschlossen wurde.
