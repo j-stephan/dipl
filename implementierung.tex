@@ -43,8 +43,8 @@ basierende System zur Auswahl des Beschleunigers stößt hier an seine Grenzen.
 Wie im Kapitel~\ref{alpaka} beschrieben wurde, fungiert eine vom Benutzer
 gewählte \texttt{Acc}"=Datenstruktur als Template"=Parameter für viele
 abstrakte Alpaka"=Klassen, die dadurch einen konkreten Code"=Pfad wählen können.
-Die \texttt{Acc}"=Datenstrukur selbst wird nicht auf der \textit{Host}-, sondern
-auf der \textit{Device}"=Seite instanziiert und kann deshalb keinen
+Die \texttt{Acc}"=Datenstrukur wird nicht auf der \textit{Host}-, sondern auf
+der \textit{Device}"=Seite instanziiert und kann deshalb keinen
 SYCL"=\texttt{device\_selector} kapseln.
 
 Nun ließe sich einwenden, dass mehrere spezialisierte
@@ -293,7 +293,7 @@ Abschnitt~\ref{sycl:konzepte:kernelstart}):
           genau einmal für die gesamte \textit{work"=group} ausgeführt, Befehle
           auf der Ebene der \textit{work"=items} genau einmal pro
           \textit{work"=item}. Dadurch hat der Programmierer die Möglichkeit,
-          seine Algorithmen hierarchisch zu gliedern. Dieses Konzept findet sich
+          seine Algorithmen hierarchisch zu gliedern. Dieses Prinzip findet sich
           nicht in Alpakas Work"=Division"=Konzept, weshalb in dieser
           Implementierung \texttt{parallel\_for} als
           \textit{Kernel}"=Start"=Funktion gewählt wurde.
@@ -436,8 +436,8 @@ Auf der \textit{Host}"=Seite wird beim Aufruf der Funktion
 \texttt{getPtrNative()} eine Datenstruktur angelegt, die den SYCL"=Puffer
 kapselt und sich aus Sicht des Programmierers weitestgehend wie ein normaler
 Zeiger verhält. Daneben enthält diese Struktur ein spezielles Attribut mit dem
-Namen \texttt{is\_alpaka\_sycl\_buffer\_wrapper}. (Der Quelltext dieser Struktur
-ist in Anhang~\ref{anhang:source:cpp:bufferwrapper} zu finden.)
+Namen \texttt{is\_alpaka\_sycl\_buffer\_wrapper}. Der Quelltext dieser Struktur
+ist in Anhang~\ref{anhang:source:cpp:bufferwrapper} zu finden.
 
 Dieses Attribut wird bei der Nutzung des Kernel"=Objekts verwendet, um die
 Puffer"=Strukturen von den restlichen Parametern abzugrenzen. Strukturen, die
@@ -452,7 +452,7 @@ Quelltext~\ref{implementierung:task:kernel:zeiger:wrappertrans} dargestellt.
     \begin{minted}[fontsize=\small]{c++}
 inline operator()(cl::sycl::handler& cgh)
 {
-    // transformiere alle Puffer-Parameter in Accessor-Parameter
+    // transformiere alle Puffer-Parameter in accessor-Parameter
     auto accessor_args = sycl::detail::bind_buffers<TDim>(
                 cgh, m_args,
                 std::make_index_sequence<sizeof...(TArgs)>{});
@@ -685,7 +685,7 @@ zugehörige Ökosystem noch nicht sonderlich stark ausgeprägt. So fehlt auch
 Funktionalität, die auf Seiten des \textit{Devices} die Generierung von
 Zufallszahlen oder Zeitmessung erlauben. Alpaka stellt diese Funktionen jedoch
 zur Verfügung. Eine Lösung für dieses Problem konnte im Rahmen dieser Arbeit
-nicht gefunden werden, diese Funktionalität fehlt daher für das SYCL"=Backend.
+nicht gefunden werden. Diese Funktionalität fehlt daher für das SYCL"=Backend.
 
 \section{Zusammenfassung}
 

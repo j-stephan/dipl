@@ -178,7 +178,7 @@ der Warteschlange also so lange blockiert, bis die Verarbeitung auf dem
 \textit{Device} abgeschlossen ist. In diesem Beispiel ist dies jedoch nicht
 notwendig, weshalb eine asynchrone Warteschlange verwendet wird, wie
 Quelltext~\ref{alpaka:ueberblick:axpy:queue:queue_src} zeigt. Wie man schnell
-erkennt, existiert kein \texttt{Acc}"=Parameter für eine Alpaka"=\texttt{queue}
+erkennt, existiert kein \texttt{Acc}"=Parameter für eine Alpaka"=\textit{Queue}
 -- der Programmierer muss diese also ebenfalls selbst passend wählen.
 
 \begin{code}
@@ -1122,13 +1122,13 @@ sind.
 
 Mit dem \textit{Element}"=Konzept ermöglicht Alpaka dem Programmierer die
 genauere Anpassung auf die Ziel"=Hardware. Die Idee, jeden \textit{Thread} genau
-ein Datum bearbeiten zu lassen, ist nicht immer der optimale Weg. So kann es
-beispielsweise sinnvoll sein, auf CPU"=Beschleunigern mehrere Daten pro
-\textit{Thread} innerhalb kurzer Schleifen zu verarbeiten. Dadurch können gute
-Compiler selbstständig von Vektorregistern der CPU Gebrauch machen. Alternativ
-kann der Programmierer dies auch über alpaka"=fremde befehlssatzspezifische
-Compiler"=Intrinsiken explizit selbst tun, gibt dadurch aber die Portabilität
-auf.
+ein \textit{Element} -- also ein Datum -- bearbeiten zu lassen, ist nicht immer
+der optimale Weg. So kann es beispielsweise sinnvoll sein, auf
+CPU"=Beschleunigern mehrere \textit{Elements} pro \textit{Thread} innerhalb
+kurzer Schleifen zu verarbeiten. Dadurch können gute Compiler selbstständig von
+Vektorregistern der CPU Gebrauch machen. Alternativ kann der Programmierer dies
+auch über alpaka"=fremde befehlssatzspezifische Compiler"=Intrinsiken explizit
+selbst tun, gibt dadurch aber die Portabilität auf.
 
 Die \textit{Element}"=Ebene ist die unterste Ebene der
 Alpaka"=Abstraktionshierarchie. Dadurch ergibt sich die Gesamthierarchie, wie

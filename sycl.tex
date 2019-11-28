@@ -20,7 +20,7 @@ beibehalten werden.
 Von \gls{opencl} erbt SYCL damit den Anspruch, eine einheitliche
 Programmierschnittstelle für verschiedene Beschleunigertypen unterschiedlicher
 Hersteller zu bieten. Das heißt, dass ein einmal geschriebener Quelltext, der
-auf einem Beschleuniger ausgeführt werden soll, möglichst ohne große Änderungen
+auf einem Beschleuniger ausgeführt werden kann, möglichst ohne große Änderungen
 sowohl auf einer \gls{cpu}, einer \gls{gpu}, einem \gls{dsp} oder einem
 \gls{fpga} ausführbar sein soll.
 
@@ -252,7 +252,7 @@ auch Abschnitt~\ref{sycl:konzepte:abhaengigkeiten}).
 SYCL unterscheidet sechs verschiedene Zugriffstypen:
 \begin{itemize}
     \item \texttt{read} gestattet ausschließlich lesenden Zugriff auf den
-          Puffer.
+          \texttt{buffer}.
     \item \texttt{write} ermöglicht ausschließlich schreibenden Zugriff.
     \item Durch \texttt{read\_write} kann sowohl lesend als auch schreibend
           auf den \texttt{buffer} zugegriffen werden.
@@ -376,8 +376,8 @@ Nachdem der \textit{Kernel} an die \textit{Queue} übergeben wurde, muss das
 Ergebnis überprüft werden. Um darauf zugreifen zu können, ist zunächst die
 Synchronisierung von \textit{Host} und \textit{Device} erforderlich, da beide
 asynchron zueinander arbeiten. Die \textit{Queue} verfügt jedoch über die
-Methode \texttt{wait}, die den \textit{Host} so lange warten lässt, bis alle bis
-zu diesem Zeitpunkt eingereihten Befehle abgearbeitet wurden. Dies ist in
+Methode \texttt{wait}, die den \textit{Host} so lange warten lässt, bis alle
+bereits eingereihten Befehle abgearbeitet wurden. Dies ist in
 Quelltext~\ref{sycl:ueberblick:axpy:sync:wait} dargestellt. Anschließend
 lassen sich die Elemente des Vektors $\vec{y}$ auf der \textit{Host}"=Seite
 über den während der Initialisierung der Puffer angelegten \texttt{accessor}

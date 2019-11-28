@@ -11,7 +11,7 @@ Parallelisierungskonzepte.
 Für das Verständnis der Funktionsweise eines \gls{fpga}s ist es notwendig, die
 zugrunde liegenden Konzepte in Abgrenzung zu herkömmlicher Hardware
 darzustellen. Dieser Abschnitt definiert zunächst den \gls{fpga}"=Begriff und
-erläutert im Anschluss daran den Aufbau moderner \gls{fpga}"=Architekturen sowie
+erläutert im Anschluss den Aufbau moderner \gls{fpga}"=Architekturen sowie
 traditionelle und neuartige Nutzungsmöglichkeiten dieses Hardware"=Typs.
 
 \subsection{Definition}\label{fpga:ueberblick:definition}
@@ -29,7 +29,7 @@ kundenspezifischen Schaltung versehen werden. Innerhalb dieser Kategorie gehöre
 technischen Grundgerüst produziert und erst in einem späteren
 Herstellungsschritt in kleineren Mengen mit kundenspezifischen Schaltungen
 versehen. Im Gegensatz zu ASICs, die von Anfang an nach Kundenwunsch hergestellt
-wurden (engl. \textit{full-custom ASIC}), lässt sich so -- unter Inkaufnahme
+werden (engl. \textit{full-custom ASIC}), lässt sich so -- unter Inkaufnahme
 geringerer erreichbarer Taktraten und schlechterer Energieeffizienz -- eine
 Reduktion der Produktionskosten erreichen. \cite[vgl.][123]{kesel2013}
 
@@ -1162,8 +1162,8 @@ Schaltung mit Pipelining.
 \noindent
 Die grauen Kästen der unteren Schaltung entsprechen Registern, die in realer
 Hardware durch Flip"=Flops realisiert werden. Jeder Kasten kann dabei als ein
-zusätzlicher Taktzyklus aufgefasst werden. Die Berechnung eines einzelnen
-Ergebnisses benötigt dadurch drei zusätzliche Taktzyklen. Durch die zusätzlichen
+weiterer Taktzyklus aufgefasst werden. Die Berechnung eines einzelnen
+Ergebnisses benötigt dadurch drei zusätzliche Taktzyklen. Durch die eingefügten
 Register lassen sich die einzelnen Schritte der Berechnung jedoch in unabhängige
 Abschnitte aufteilen, der Multiplizierer und die Addierer können also
 nebenläufig arbeiten. Die Ergebnisse $y$ und $y'$ lassen sich auf diese Weise
