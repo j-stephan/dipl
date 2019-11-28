@@ -52,10 +52,10 @@ Nun ließe sich einwenden, dass mehrere spezialisierte
 SYCL"=\textit{Device} abbilden. Sieht man von der daraus resultierenden
 Code"=Duplizierung an vielen Stellen im Backend ab, ist damit jedoch noch nicht
 die Frage der wechselseitigen Beziehungen zwischen \texttt{Acc} und anderen
-Backend"=Klassen gelöst. Ist z.B. nur ein Alpaka"=Task gegeben, lässt sich der
-zugehörige \texttt{Acc} über Alpakas \textit{type traits} ermitteln. Welche der
-spezialisierten \texttt{Acc}"=Klassen soll aber gewählt werden, wenn nur ein
-Task ohne weitere Informationen gegeben ist?
+Backend"=Klassen gelöst. Ist z.B. nur ein Alpaka"=\textit{Task} gegeben, lässt
+sich der zugehörige \texttt{Acc} über Alpakas \textit{type traits} ermitteln.
+Welche der spezialisierten \texttt{Acc}"=Klassen soll aber gewählt werden, wenn
+nur ein \textit{Task} ohne weitere Informationen gegeben ist?
 
 Die Frage der \textit{Device}"=Wahl ließ sich im Rahmen der Arbeit nicht
 befriedigend lösen. Darüber hinaus ist dies kein SYCL"=spezifisches Problem,
@@ -98,8 +98,8 @@ nicht implementiert werden.
 
 In CUDA und deshalb auch in Alpaka gibt es die Möglichkeit, ein \textit{Device}
 in seinen Ursprungszustand zurückzusetzen. Alpakas Funktion
-\texttt{dev::reset()} unterbricht laufende Kernel und gibt alle Speicherbereiche
-frei. 
+\texttt{dev::reset()} unterbricht laufende \textit{Kernel} und gibt alle
+Speicherbereiche frei. 
 
 In SYCL spielt die \texttt{device}"=Struktur eine weitaus weniger wichtige
 Rolle als seine CUDA"= und Alpaka"=Äquivalente. Ein Äquivalent zu
@@ -120,88 +120,92 @@ Aussage darüber getroffen werden, inwieweit sich das Fehlen der
 \texttt{dev::reset()}"=Funktion für SYCL"=Backends zukünftig bemerkbar machen
 wird.
 
-\section{Queues und Events}
+\section{\textit{Queues} und \textit{Events}}
 \label{implementierung:queue}
 
-Alpaka"=Queues bilden die Schnittstelle zwischen \textit{Host} und
-\textit{Device}. Sie nehmen vom \textit{Host} Tasks entgegen und bringen diese
-in der Reihenfolge ihres Eingehens zur Ausführung.
+Alpaka"=\textit{Queues} bilden die Schnittstelle zwischen \textit{Host} und
+\textit{Device}. Sie nehmen vom \textit{Host} \textit{Tasks} entgegen und
+bringen diese in der Reihenfolge ihres Eingehens zur Ausführung.
 
 Alpaka unterscheidet den \textit{Host} blockierende und nicht-blockierende
-Queues. Blockierende Queues unterbrechen die Ausführung auf dem \textit{Host} so
-lange, bis alle eingereihten Tasks abgearbeitet sind. Die nicht-blockierenden
-Queues führen diese Tasks asynchron zum \textit{Host} aus.
+\textit{Queues}. Blockierende \textit{Queues} unterbrechen die Ausführung auf
+dem \textit{Host} so lange, bis alle eingereihten \textit{Tasks} abgearbeitet
+sind. Die nicht"=blockierenden \textit{Queues} führen diese \textit{Tasks}
+asynchron zum \textit{Host} aus.
 
-SYCL kennt ausschließlich nicht-blockierende Queues. Da auf diese aber manuell
-gewartet werden kann, gestaltete sich die Implementierung der Alpaka"=Queues
-sehr einfach. Die Klassen \texttt{QueueSyclBlocking} und
-\texttt{QueueSyclNonBlocking} stellen Alpakas Queue"=Funktionalität zur
-Verfügung. Lediglich die Implementierung des Event"=Systems bereitete größere
-Schwierigkeiten.
+SYCL kennt ausschließlich nicht"=blockierende \textit{Queues}. Da auf diese aber
+manuell gewartet werden kann, gestaltete sich die Implementierung der
+Alpaka"=\textit{Queues} sehr einfach. Die Klassen \texttt{QueueSyclBlocking} und
+\texttt{QueueSyclNonBlocking} stellen Alpakas \textit{Queue}"=Funktionalität zur
+Verfügung. Lediglich die Implementierung des \textit{Event}"=Systems bereitete
+größere Schwierigkeiten.
 
-\subsubsection{Event"=Inkompatibilitäten}
+\subsubsection{\textit{Event}"=Inkompatibilitäten}
 
-Alpaka übernimmt viele CUDA"=Konzepte, darunter auch das Event"=System.
-Alpaka"=Events werden wie Tasks in eine Queue eingereiht. Beendet die Queue
-einen Task, wird das dahinterliegende Event markiert. Dadurch kann der Nutzer
-das Ende eines Kernels abwarten und z.B. einen Task in einer weiteren Queue
-starten, was der Organisation der Abhängigkeiten zwischen \textit{Kerneln} sehr
-dienlich ist.
+Alpaka übernimmt viele CUDA"=Konzepte, darunter auch das \textit{Event}"=System.
+Alpaka"=\textit{Events} werden wie \textit{Tasks} in eine \textit{Queue}
+eingereiht. Beendet die \textit{Queue} einen \textit{Task}, wird das
+dahinterliegende \textit{Event} markiert. Dadurch kann der Nutzer das Ende eines
+\textit{Kernels} abwarten und z.B. einen \textit{Task} in einer weiteren
+\textit{Queue} starten, was der Organisation der Abhängigkeiten zwischen
+\textit{Kerneln} sehr dienlich ist.
 
-Dieses Prinzip ist in SYCL so nicht vorhanden. Eine SYCL"=Queue führt
-grundsätzlich alle Tasks asynchron zueinander aus. Sofern Abhängigkeiten
-bestehen, werden diese von der Queue erkannt und entsprechend sortiert. Es ist
+Dieses Prinzip ist in SYCL so nicht vorhanden. Eine SYCL"=\textit{Queue} führt
+grundsätzlich alle \textit{Tasks} asynchron zueinander aus. Sofern Abhängigkeiten
+bestehen, werden diese von der \textit{Queue} erkannt und entsprechend sortiert. Es ist
 also in SYCL nicht notwendig, die Abhängigkeiten zwischen \textit{Kerneln}
 selbst zu verwalten.
 
-Dadurch existiert in SYCL auch kein vergleichbares Event"=System. Zwar erhält
-der Programmierer beim Einreihen einer \textit{command group} ein SYCL"=Event
-zurück, auf das der Host (und nur der Host) warten kann. Dieses dient aber
-vorrangig dem Profiling der Anwendung. Es ist insbesondere für die manuelle
-Abhängigkeitsverwaltung ungeeignet, da es zwar das Ende eines Kernels anzeigen
-kann, jedoch nicht die Verfügbarkeit der von diesem Kernel verwendeten Puffer.
-Über die Puffer"=Verfügbarkeit wird in SYCL die Abhängigkeitsverwaltung
-durchgeführt.
+Dadurch existiert in SYCL auch kein vergleichbares \textit{Event}"=System. Zwar
+erhält der Programmierer beim Einreihen einer \textit{command group} ein
+SYCL"=\textit{Event} zurück, auf das der \textit{Host} (und nur der
+\textit{Host}) warten kann. Dieses dient aber vorrangig dem Profiling der
+Anwendung. Es ist insbesondere für die manuelle Abhängigkeitsverwaltung
+ungeeignet, da es zwar das Ende eines \textit{Kernels} anzeigen kann, jedoch
+nicht die Verfügbarkeit der von diesem \textit{Kernel} verwendeten Puffer. Über
+die Puffer"=Verfügbarkeit wird in SYCL die Abhängigkeitsverwaltung durchgeführt.
 
-Für die Implementierung der Alpaka"=Events stellt dies ein nicht zu lösendes
-Problem dar. So ist es beispielsweise in SYCL völlig unmöglich (und unnötig),
-eine Queue über Events auf eine weitere Queue warten zu lassen -- genau dieser
-Mechanismus ist in Alpakas Interface aber vorgesehen. Analog verhält es sich bei
-Alpaka"=\textit{Devices}, die auf Events warten können, während
-SYCL"=\textit{Devices} dazu nicht in der Lage sind.
+Für die Implementierung der Alpaka"=\textit{Events} stellt dies ein nicht zu
+lösendes Problem dar. So ist es beispielsweise in SYCL völlig unmöglich (und
+unnötig), eine \textit{Queue} über \textit{Events} auf eine weitere
+\textit{Queue} warten zu lassen -- genau dieser Mechanismus ist in Alpakas
+Interface aber vorgesehen. Analog verhält es sich bei Alpaka"=\textit{Devices},
+die auf \textit{Events} warten können, während SYCL"=\textit{Devices} dazu nicht
+in der Lage sind.
 
 Im Backend"=Prototypen führt der Aufruf der entsprechenden Funktionen dazu, dass
-nicht nur die jeweilige Queue auf das Event wartet, sondern zusätzlich auch der
-Host. Dadurch wird die eigentliche Intention der Funktionen -- also das in Bezug
-auf den \textit{Host} asynchrone Warten -- zwar nicht erfüllt, aber es findet
-immerhin eine Synchronisation mit anderen Queues statt. Es besteht dabei aber
-weiterhin das Problem, dass es sich dabei nicht um eine echte
-Abhängigkeitsverwaltung im Sinne der SYCL"=Spezifikation handelt und deswegen zu
-Problemen führen kann.
+nicht nur die jeweilige \textit{Queue} auf das \textit{Event} wartet, sondern
+zusätzlich auch der \textit{Host}. Dadurch wird die eigentliche Intention der
+Funktionen -- also das in Bezug auf den \textit{Host} asynchrone Warten -- zwar
+nicht erfüllt, aber es findet immerhin eine Synchronisation mit anderen
+\textit{Queues} statt. Es besteht aber weiterhin das Problem, dass es sich dabei
+nicht um eine echte Abhängigkeitsverwaltung im Sinne der SYCL"=Spezifikation
+handelt und deswegen zu Problemen führen kann.
 
-In der Klasse \texttt{EventSycl} wurde Alpakas Event"=System mit den
+In der Klasse \texttt{EventSycl} wurde Alpakas \textit{Event}"=System mit den
 beschriebenen Einschränkungen implementiert.
 
-\section{Tasks}
+\section{\textit{Tasks}}
 \label{implementierung:task}
 
 Wie im vorherigen Kapitel dargestellt wurde, werden \textit{device}"=seitige
 Operationen in Alpaka unter dem Begriff \textit{Task} zusammengefasst. Dazu
-gehören neben dem Kernel die Kopier"= und \texttt{memset}"=Operationen.
-Alpaka"=Tasks werden in einer Alpaka"=Queue eingereiht und von dieser in der
-Reihenfolge ihrer Einreihung ausgeführt. In diesem Abschnitt wird die
-Implementierung dieses fundamentalen Alpaka"=Konzepts beschrieben.
+gehören neben dem \textit{Kernel} die Kopier"= und \texttt{memset}"=Operationen.
+Alpaka"=\textit{Tasks} werden in einer Alpaka"=\textit{Queue} eingereiht und von
+dieser in der Reihenfolge ihrer Einreihung ausgeführt. In diesem Abschnitt wird
+die Implementierung dieses fundamentalen Alpaka"=Konzepts beschrieben.
 
-\subsection{Kernel"=Tasks}
+\subsection{\textit{Kernel}-\textit{Tasks}}
 \label{implementierung:task:kernel}
 
-Ein Alpaka"=Kernel"=Task (im Folgenden als Kernel"=Task bezeichnet) verknüpft
-die eigentliche Kernel"=Funktion mit konkreten Daten. Damit ähnelt ein
-Kernel"=Task stark SYCLs \textit{command groups}, was die Umsetzung dieses
-Konzepts vereinfacht.
+Ein Alpaka"=\textit{Kernel}"=\textit{Task} (im Folgenden als
+\textit{Kernel}"=\textit{Task} bezeichnet) verknüpft die eigentliche
+\textit{Kernel}"=Funktion mit konkreten Daten. Damit ähnelt ein
+\textit{Kernel}"=\textit{Task} stark SYCLs \textit{command groups}, was die
+Umsetzung dieses Konzepts vereinfacht.
 
 Die Struktur \texttt{TaskKernelSycl} enthält die SYCL"=Implementierung der
-Kernel"=Tasks. Diese ist aus mehreren Teilen aufgebaut (siehe
+\textit{Kernel}"=\textit{Tasks}. Diese ist aus mehreren Teilen aufgebaut (siehe
 Quelltext~\ref{implementierung:task:kernel:struktur}):
 
 \begin{itemize}
@@ -212,24 +216,25 @@ Quelltext~\ref{implementierung:task:kernel:struktur}):
           Datentyp des bearbeiteten Indexraums angibt. Diese Parameter werden
           innerhalb des Work"=Division"=Konzepts -- gekennzeichnet durch die
           Elternklasse \texttt{workDivMembers} -- verwendet, um innerhalb des
-          Kernels die Position des jeweiligen \textit{Blocks} oder
+          \textit{Kernels} die Position des jeweiligen \textit{Blocks} oder
           \textit{Threads} bestimmen zu können. \texttt{TKernelFnObj} ist der Typ
-          bzw. die Signatur der vom Nutzer implementierten Kernel"=Funktion. Der
-          variadische Parameter \texttt{TArgs} umfasst die Typen der Parameter
-          der Kernel"=Funktion.
+          bzw. die Signatur der vom Nutzer implementierten
+          \textit{Kernel}"=Funktion. Der variadische Parameter \texttt{TArgs}
+          umfasst die Typen der Parameter der \textit{Kernel}"=Funktion.
     \item Der Konstruktor der Klasse wird während der Instanziierung der Klasse
           aufgerufen und nimmt konkrete Werte für die gewünschte
-          Arbeitsaufteilung, den auszuführenden Kernel und die zugehörigen Daten
-          an. Die Implementierung des Konstruktors ist im
+          Arbeitsaufteilung, den auszuführenden \textit{Kernel} und die
+          zugehörigen Daten an. Die Implementierung des Konstruktors ist im
           Anhang~\ref{anhang:source:cpp:taskkernelsyclkonst} zu finden.
     \item Den Variablen \texttt{m\_kernelFnObj} und \texttt{m\_args} werden vom
-          Konstruktor die konkrete Kernelfunktion bzw.\ die zugehörigen Daten
-          zugewiesen.
+          Konstruktor die konkrete \textit{Kernel}"=Funktion bzw.\ die
+          zugehörigen Daten zugewiesen.
     \item Der \texttt{operator()} bildet die Schnittstelle zur intern
-          verwendeten SYCL"=Queue. Durch den Parameter wird der Operator als
-          Einstiegspunkt in eine \texttt{command queue} gekennzeichnet, wodurch
-          die gesamte Klasse \texttt{TaskKernelSycl} ohne weitere
-          Transformationen in eine SYCL"=Queue eingereiht werden kann.
+          verwendeten SYCL"=\textit{Queue}. Durch den Parameter wird der
+          Operator als Einstiegspunkt in eine \texttt{command group}
+          gekennzeichnet, wodurch die gesamte Klasse \texttt{TaskKernelSycl}
+          ohne weitere Transformationen in eine SYCL"=\textit{Queue} eingereiht
+          werden kann.
 \end{itemize}
 
 \begin{code}
@@ -249,17 +254,18 @@ class TaskKernelSycl final : public workdiv::workDivMembers<TDim, TIdx>
     auto operator()(cl::sycl::handler& cgh);
 };
     \end{minted}
-    \caption{Aufbau des SYCL"=Kernel"=Tasks}
+    \caption{Aufbau des SYCL"=\textit{Kernel}"=\textit{Tasks}}
     \label{implementierung:task:kernel:struktur}
 \end{code}
 
-\subsubsection{Vom SYCL- zum Alpaka-Kernel}
+\subsubsection{Vom SYCL- zum Alpaka-\textit{Kernel}}
 \label{implementierung:task:kernel:launch}
 
-In der \textit{command group} wird der eigentliche SYCL"=Kernel gestartet, der
-wiederum die vom Nutzer geschriebene Alpaka"=Kernel"=Funktion mit ihren
-Parametern aufruft. SYCL verfügt über drei verschiedene Möglichkeiten für den
-Kernel"=Start (siehe Abschnitt~\ref{sycl:konzepte:kernelstart}):
+In der \textit{command group} wird der eigentliche SYCL"=\textit{Kernel}
+gestartet, der wiederum die vom Nutzer geschriebene
+Alpaka"=\textit{Kernel}"=Funktion mit ihren Parametern aufruft. SYCL verfügt
+über drei verschiedene Möglichkeiten für den \textit{Kernel}"=Start (siehe
+Abschnitt~\ref{sycl:konzepte:kernelstart}):
 
 \begin{itemize}
     \item \texttt{single\_task} stellt keine Parallelität durch
@@ -276,20 +282,21 @@ Kernel"=Start (siehe Abschnitt~\ref{sycl:konzepte:kernelstart}):
           spezifizieren. Diese lassen sich einfach auf die Alpaka"=Äquivalente
           \textit{Block} und \textit{Thread} aus dem Work"=Division"=Konzept
           abbilden, weshalb \texttt{parallel\_for} eine gute Wahl für den
-          SYCL"=Kernel"=Start darstellt.
+          SYCL"=\textit{Kernel}"=Start darstellt.
     \item \texttt{parallel\_for\_work\_group} bietet dieselbe Funktionalität wie
           \texttt{parallel\_for}, exponiert diese jedoch mit einem anderen
-          Schwerpunkt. Mit diesem Ansatz wird der Kernel in zwei separate
-          Bereiche aufgeteilt: Einmal auf Ebene der \textit{work"=groups} und
-          einmal auf Ebene der\textit{work"=items}, wobei die letztere der
-          ersteren untergeordnet ist bzw. aus ihr heraus aufgerufen wird.
-          Befehle auf der \textit{work"=group}"=Ebene werden genau einmal für
-          die gesamte \textit{work"=group} ausgeführt, Befehle auf der Ebene der
-          \textit{work"=items} genau einmal pro \textit{work"=item}. Dadurch
-          hat der Programmierer die Möglichkeit, seine Algorithmen hierarchisch
-          zu gliedern. Dieses Konzept findet sich nicht in Alpakas
-          Work"=Division"=Konzept, weshalb in dieser Implementierung
-          \texttt{parallel\_for} als Kernel"=Start"=Funktion gewählt wurde.
+          Schwerpunkt. Mit diesem Ansatz wird der \textit{Kernel} in zwei
+          separate Bereiche aufgeteilt: Einmal auf Ebene der
+          \textit{work"=groups} und einmal auf Ebene der\textit{work"=items},
+          wobei die letztere der ersteren untergeordnet ist bzw. aus ihr heraus
+          aufgerufen wird. Befehle auf der \textit{work"=group}"=Ebene werden
+          genau einmal für die gesamte \textit{work"=group} ausgeführt, Befehle
+          auf der Ebene der \textit{work"=items} genau einmal pro
+          \textit{work"=item}. Dadurch hat der Programmierer die Möglichkeit,
+          seine Algorithmen hierarchisch zu gliedern. Dieses Konzept findet sich
+          nicht in Alpakas Work"=Division"=Konzept, weshalb in dieser
+          Implementierung \texttt{parallel\_for} als
+          \textit{Kernel}"=Start"=Funktion gewählt wurde.
 \end{itemize}
 
 Für die Nutzung der \texttt{parallel\_for}"=Funktion muss die Gesamtanzahl der
@@ -341,36 +348,37 @@ class TaskKernelSycl final : public workdiv::WorkDivMembers<TDim, TIdx>
     }
 }
     \end{minted}
-    \caption{Aufruf der Alpaka-Kernel-Funktion im SYCL-Kernel}
+    \caption{Aufruf der Alpaka-\textit{Kernel}-Funktion im SYCL-\textit{Kernel}}
     \label{implementierung:task:kernel:launch:src}
 \end{code}
 \vspace{3mm}
-Wichtig ist ferner der Name des SYCL"=Kernels, der allen
-Kernel"=Start"=Varianten übergeben werden muss. In SYCL ist der Kernel"=Name ein
-eigener Datentyp, der der Startfunktion als Template"=Parameter übergeben wird,
-sich von anderen SYCL"=\textit{Kerneln} unterscheiden und global sichtbar sein
-muss. Daher wurde für das SYCL"=Backend die Klasse \texttt{sycl::detail::kernel}
-eingeführt, welche den Typ der Alpaka"=\textit{Kernel}"=Funktion
-(\texttt{TKernelFnObj}) als Template"=Parameter entgegennimmt.
-
-Im Quelltext~\ref{implementierung:task:kernel:launch:src} wird der Vorgang des
-Kernel"=Starts gezeigt, jedoch noch ohne \texttt{accessors}; diese werden
-im nächsten Abschnitt behandelt.
+Wichtig ist ferner der Name des SYCL"=\textit{Kernels}, der allen
+\textit{Kernel}"=Start"=Varianten übergeben werden muss. In SYCL ist der
+\textit{Kernel}"=Name ein eigener Datentyp, der der Startfunktion als
+Template"=Parameter übergeben wird, sich von anderen SYCL"=\textit{Kerneln}
+unterscheiden und global sichtbar sein muss. Daher wurde für das SYCL"=Backend
+die Klasse \texttt{sycl::detail::kernel} eingeführt, welche den Typ der
+Alpaka"=\textit{Kernel}"=Funktion (\texttt{TKernelFnObj}) als
+Template"=Parameter entgegennimmt. Im
+Quelltext~\ref{implementierung:task:kernel:launch:src} wird der Vorgang des
+\textit{Kernel}"=Starts gezeigt, jedoch noch ohne \texttt{accessors}; diese
+werden im nächsten Abschnitt behandelt.
 
 \subsubsection{Zeiger und \textit{accessors}}
 
 Innerhalb der \textit{command group} ist eine Transformation der
-Datenfeld"=Parameter nötig. In Alpaka erhält die Kernel"=Funktion pro Datenfeld
-üblicherweise einen Zeiger, z.B. vom Typ \texttt{float*}, und einen ganzzahligen
-Parameter (meist vom Typ \texttt{size\_t}), der die Länge des Speicherbereichs
-angibt. Der \textit{device}"=seitige Zeiger wird während der Instanziierung des
-Kernel"=Tasks über die Funktion \texttt{getPtrNative()} aus einem Alpaka"=Puffer
-extrahiert und an den Kernel übergeben.
+Datenfeld"=Parameter nötig. In Alpaka erhält die \textit{Kernel}"=Funktion pro
+Datenfeld üblicherweise einen Zeiger, z.B. vom Typ \texttt{float*}, und einen
+ganzzahligen Parameter (meist vom Typ \texttt{size\_t}), der die Länge des
+Speicherbereichs angibt. Der \textit{device}"=seitige Zeiger wird während der
+Instanziierung des \textit{Kernel}"=\textit{Tasks} über die Funktion
+\texttt{getPtrNative()} aus einem Alpaka"=Puffer extrahiert und an den
+\textit{Kernel} übergeben.
 
 Diese Vorgehensweise war mit allen bisher in Alpaka vorhandenen Backends
 unproblematisch, wenngleich etwas altmodisch. SYCL verlangt als Parameter für
-die Kernel"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen.
-Eine Übergabe von Zeigern an den Kernel wird in der Spezifikation explizit
+die \textit{Kernel}"=Funktionen jedoch die eigenen \texttt{accessor}"=Datenstrukturen.
+Eine Übergabe von Zeigern an den \textit{Kernel} wird in der Spezifikation explizit
 verboten \cite[vgl.][192]{sycl2019}. Zwar gibt die Spezifikation an, dass sich
 die \texttt{accessor}"=Typen implizit in reine Zeiger umwandeln lassen
 \cite[vgl.][27]{sycl2019}, was jedoch von keiner der verfügbaren
@@ -419,7 +427,7 @@ constexpr auto bind_buffers(cl::sycl::handler& cgh,
     \label{implementierung:task:kernel:zeiger:wrappertrans}
 \end{code}
 \vspace{3mm}
-Innerhalb eines Kernels lassen sich die \texttt{accessor}"=Typen in spezielle
+Innerhalb eines \textit{Kernels} lassen sich die \texttt{accessor}"=Typen in spezielle
 SYCL"=eigene Zeigertypen (\texttt{multi\_ptr}) umwandeln, die wiederum in
 \glqq reine\grqq\ Zeiger konvertierbar sind. Dadurch lässt sich die geschilderte
 Problematik in mehreren Stufen lösen:
@@ -459,10 +467,10 @@ inline operator()(cl::sycl::handler& cgh)
 
 Der Quelltext~\ref{implementierung:task:kernel:zeiger:transusage} zeigt die
 Nutzung der Template"=Meta"=Funktionen innerhalb der \textit{command group}:
-die in einem \texttt{std::tuple} gespeicherten Kernel"=Parameter werden in ein
+die in einem \texttt{std::tuple} gespeicherten \textit{Kernel}"=Parameter werden in ein
 SYCL"=kompatibles Format umgewandelt.
 
-Innerhalb des SYCL"=Kernels werden die \texttt{accessor}"=Typen (über SYCLs
+Innerhalb des SYCL"=\textit{Kernels} werden die \texttt{accessor}"=Typen (über SYCLs
 \texttt{multi\_ptr}) nach einem ähnlichen Prinzip in reine Zeiger transformiert.
 Die Template"=Meta"=Funktionen sind dem oben gezeigten Prinzip sehr ähnlich
 und im Anhang~\ref{anhang:source:cpp:kernelzeigeracctrans} gezeigt. Die Nutzung
@@ -487,16 +495,17 @@ cgh.parallel_for<sycl::detail::kernel<TKernelFnObj>>(
     \label{implementierung:task:kernel:zeiger:acctransusage}
 \end{code}
 
-Die extrahierten Zeiger werden dann an den vom SYCL"=Kernel aufgerufenen
-Alpaka"=Kernel übergeben, sodass der Programmierer diese verwenden kann.
+Die extrahierten Zeiger werden dann an den vom SYCL"=\textit{Kernel} aufgerufenen
+Alpaka"=\textit{Kernel} übergeben, sodass der Programmierer diese verwenden kann.
 Dadurch lässt sich das SYCL"=Backend analog zu den restlichen Implementierungen
 verwenden.
 
-\subsection{Kopier"= und \texttt{memset}"=Tasks}
+\subsection{Kopier"= und \texttt{memset}"=\textit{Tasks}}
 
-Im Vergleich zu Kernel"=Tasks gestaltete sich die Implementierung der
-Kopier"=Tasks in Form der Struktur \texttt{TaskCopySycl} vergleichsweise
-einfach. In ihrem Aufbau sind diese den Kernel"=Tasks recht ähnlich, wie
+Im Vergleich zu \textit{Kernel}"=\textit{Tasks} gestaltete sich die
+Implementierung der Kopier"=\textit{Tasks} in Form der Struktur
+\texttt{TaskCopySycl} vergleichsweise einfach. In ihrem Aufbau sind diese den
+\textit{Kernel}"=\textit{Tasks} recht ähnlich, wie
 Quelltext~\ref{implementierung:task:copy:struktur} zeigt.
 
 \begin{code}
@@ -516,7 +525,7 @@ struct TaskCopySycl<TElem, TDim, copy_type::host_to_device>
     }
 };
     \end{minted}
-    \caption{Aufbau eines SYCL"=Kopier"=Tasks}
+    \caption{Aufbau eines SYCL"=Kopier"=\textit{Tasks}}
     \label{implementierung:task:copy:struktur}
 \end{code}
 \vspace{3mm}
@@ -526,33 +535,34 @@ angibt.
 
 Der \texttt{operator()} wird durch seinen Parameter eine
 SYCL"=\textit{command"=group}. \texttt{TaskCopySycl} kann somit von einer
-SYCL"=Queue ausgeführt werden.
+SYCL"=\textit{Queue} ausgeführt werden.
 
 Die Struktur enthält ansonsten nur die Operanden der Kopier"=Operation und die
 Anzahl der zu kopierenden Elemente. Aufgrund der Reihenfolge der Operanden sowie
 der Unterscheidung zwischen Zeigern auf der \textit{Host}"=Seite und
-SYCL"=Puffern auf der \textit{Device}"=Seite muss die Task"=Struktur für die
-möglichen Kopierrichtungen (\textit{Host}"=auf"=\textit{Device},
+SYCL"=Puffern auf der \textit{Device}"=Seite muss die \textit{Task}"=Struktur
+für die möglichen Kopierrichtungen (\textit{Host}"=auf"=\textit{Device},
 \textit{Device}"=auf"=\textit{Host}, \textit{Device}"=auf"=\textit{Device})
 spezialisiert werden.
 
-Der \texttt{memset}"=Task ähnelt in seinem Aufbau dem Kopier"=Task. Für ihn
-entfällt die Angabe der Richtung (und damit die Notwendigkeit der
-Spezialisierung), da er immer auf dem \textit{Device} ausgeführt wird. Darüber
-hinaus findet er nur auf Puffer des Typs \texttt{uint8\_t} Anwendung, da es sich
-hier um eine byte"=weise Operation handelt. Puffer anderer Typen werden deshalb
-als \texttt{uint8\_t}"=Puffer interpretiert. Mit dem Befehl \texttt{cgh.fill()}
-lässt sich der Puffer dann Byte für Byte beschreiben.
+Der \texttt{memset}"=\textit{Task} ähnelt in seinem Aufbau dem
+Kopier"=\textit{Task}. Für ihn entfällt die Angabe der Richtung (und damit die
+Notwendigkeit der Spezialisierung), da er immer auf dem \textit{Device}
+ausgeführt wird. Darüber hinaus findet er nur auf Puffer des Typs
+\texttt{uint8\_t} Anwendung, da es sich hier um eine byte"=weise Operation
+handelt. Puffer anderer Typen werden deshalb als \texttt{uint8\_t}"=Puffer
+interpretiert. Mit dem Befehl \texttt{cgh.fill()} lässt sich der Puffer dann
+Byte für Byte beschreiben.
 
 \section{Work"=Division}
 \label{implementierung:workDiv}
 
 Um auf die Positionen der einzelnen \textit{Threads} und \textit{Blocks}
 innerhalb des aufgespannten \textit{Grids} zugreifen zu können, stellt Alpaka
-in seinem Work"=Division"=Konzept entsprechende Funktionen bereit. Da die Kernel
-durch SYCLs \texttt{parallel\_for}"=Funktion gestartet werden, ist innerhalb
-des SYCL"=Backends die Datenstruktur \texttt{nd\_item} vorhanden. Diese stellt
-äquivalente Funktionalität zur Verfügung, so dass alle
+in seinem Work"=Division"=Konzept entsprechende Funktionen bereit. Da die
+\textit{Kernel} durch SYCLs \texttt{parallel\_for}"=Funktion gestartet werden,
+ist innerhalb des SYCL"=Backends die Datenstruktur \texttt{nd\_item} vorhanden.
+Diese stellt äquivalente Funktionalität zur Verfügung, so dass alle
 Work"=Division"=Funktionen problemlos implementiert werden konnten.
 
 \section{Geteilter Speicher}
@@ -564,17 +574,17 @@ bietet gegenüber dem globalen Speicher sehr viel schnellere Zugriffe, ist aber
 auch deutlich kleiner. 
 
 Es gibt zwei mögliche Arten, Speicher dieses Typs zu reservieren:
-\textit{dynamisch}, das heißt außerhalb des Kernel"=Codes und zur Laufzeit,
-sowie \textit{statisch}, das heißt innerhalb des Kernel"=Codes und mit einer zur
+\textit{dynamisch}, das heißt außerhalb des \textit{Kernel}"=Codes und zur
+Laufzeit, sowie \textit{statisch}, das heißt innerhalb des \textit{Kernel}"=Codes und mit einer zur
 Compile"=Zeit feststehenden Größe. Alpaka stellt für beide Varianten eine
 Schnittstelle bereit.
 
 \subsection{Dynamischer, geteilter Speicher}
 
 Das \textit{type trait} \texttt{kernel::traits::BlockSharedMemDynSizeBytes}
-muss für den dynamischen Fall vom Programmierer auf der Host"=Seite für seine
-Anwendung implementiert werden. Innerhalb des Kernels kann er dann über die
-Alpaka-Funktion \texttt{block::shared::dyn::getMem()} auf den Zeiger zum so
+muss für den dynamischen Fall vom Programmierer auf der \textit{Host}"=Seite für
+seine Anwendung implementiert werden. Innerhalb des \textit{Kernels} kann er dann über
+die Alpaka-Funktion \texttt{block::shared::dyn::getMem()} auf den Zeiger zum so
 reservierten geteilten Speicher zugreifen.
 
 Dieses Verhalten ließ sich äquivalent auch für SYCL implementieren. Dafür musste
@@ -586,10 +596,10 @@ den zugehörigen Zeiger zurückgeben kann.
 \subsection{Statischer, geteilter Speicher}
 
 Für den statischen Fall existiert die Funktion
-\texttt{block::shared::st::allocVar()}, die innerhalb des Kernels aufgerufen
+\texttt{block::shared::st::allocVar()}, die innerhalb des \textit{Kernels} aufgerufen
 wird und Speicherplatz für eine Variable im geteilten Speicher reserviert. Diese
 Funktion kann für SYCL nicht implementiert werden, da die SYCL"=Spezifikation
-für den Kernel"=Start mit \texttt{parallel\_for} keine äquivalente
+für den \textit{Kernel}"=Start mit \texttt{parallel\_for} keine äquivalente
 Funktionalität bietet.
 
 Diese Einschränkung erklärt sich dadurch, dass SYCL mit dem Anspruch entworfen
@@ -598,8 +608,8 @@ auch wenn dieser keine Unterstützung für OpenCL"= und/oder SYCL"=Konzepte mit
 sich bringt. In diesem Fall generiert der Compiler wie bei jedem anderen
 C++"=Programm normalen CPU"=Maschinencode. Der Umfang des statischen geteilten
 Speichers steht bereits zur Compile"=Zeit fest und kann deshalb schon vor
-dem Aufruf des Kernels reserviert werden. Der Zeiger auf diesen Speicherbereich
-kann durch einen C++"=Compiler ohne SYCL"=Unterstützung dem betreffenden Kernel
+dem Aufruf des \textit{Kernels} reserviert werden. Der Zeiger auf diesen Speicherbereich
+kann durch einen C++"=Compiler ohne SYCL"=Unterstützung dem betreffenden \textit{Kernel}
 vor dessen Ausführung jedoch gar nicht zugeordnet werden, da für diese Funktion
 noch kein \textit{stack frame} existiert. Als Reaktion auf eine im Rahmen dieser
 Arbeit gestellte Rückfrage zur Sinnhaftigkeit dieser Einschränkung wird vom
@@ -665,7 +675,7 @@ Dies ist jedoch kein dauerhaft wünschenswerter Zustand, denn die Erweiterungen
 können ganz erhebliche Performanzgewinne zur Folge haben. Denkbar ist ein
 ähnliches Erweiterungskonzept für Alpaka, in welchem dem Nutzer abstrahierte
 Formen der SYCL"=Erweiterungen zur Verfügung gestellt werden, die er selbst in
-seinem Kernel nutzen kann. Diese Idee bedarf jedoch einer vorherigen Diskussion
+seinem \textit{Kernel} nutzen kann. Diese Idee bedarf jedoch einer vorherigen Diskussion
 innerhalb der Alpaka"=Entwicklergemeinde.
 
 \section{Zufallszahlen und Zeit}

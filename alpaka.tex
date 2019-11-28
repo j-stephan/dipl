@@ -21,18 +21,18 @@ Hilfe parallele Programme geschrieben werden können. Die in Alpaka enthaltenen
 Abstraktionen ähneln dabei konzeptionell stark dem Aufbau der
 CUDA"=Schnittstelle. Wie im Folgenden gezeigt wird, erstreckt sich diese
 Ähnlichkeit nicht nur auf das Verhalten der Bibliothek (z.B. bei der Definition
-von Task"=Graphen, siehe Abschnitt~\ref{alpaka:konzepte:abhaengigkeiten}),
-Alpaka übernimmt auch direkt CUDA"=Begriffe (z.B. \textit{Grid}, \textit{Block}
-oder \textit{Thread}, siehe  Abschnitt~\ref{alpaka:konzepte:abstraktion}). Im
-Hintergrund wird Alpaka auf hersteller- oder hardware"=spezifische
-Schnittstellen, wie CUDA oder OpenMP, -- im Folgenden als \textit{Backend}
-bezeichnet -- abgebildet. Schematisch ist dies in
-Abbildung~\ref{alpaka:ueberblick:schema} dargestellt. Alpaka ist somit ein
-einheitliches Paket, das die abstrakte Schnittstelle nach außen und die konkrete
-Implementierung vereinigt. Damit unterscheidet sich die Bibliothek von ähnlichen
-Ansätzen wie OpenCL oder SYCL, die ebenfalls eine abstrakte Schnittstelle
-definieren, die Implementierung jedoch den Hardware- und Software"=Herstellern
-überlassen.
+von \textit{Task}"=Graphen, siehe
+Abschnitt~\ref{alpaka:konzepte:abhaengigkeiten}), Alpaka übernimmt auch direkt
+CUDA"=Begriffe (z.B. \textit{Grid}, \textit{Block} oder \textit{Thread}, siehe 
+Abschnitt~\ref{alpaka:konzepte:abstraktion}). Im Hintergrund wird Alpaka auf
+hersteller- oder hardware"=spezifische Schnittstellen, wie CUDA oder OpenMP
+-- im Folgenden als \textit{Backend} bezeichnet --, abgebildet. Schematisch ist
+dies in Abbildung~\ref{alpaka:ueberblick:schema} dargestellt. Alpaka ist somit
+ein einheitliches Paket, das die abstrakte Schnittstelle nach außen und die
+konkrete Implementierung vereinigt. Damit unterscheidet sich die Bibliothek von
+ähnlichen Ansätzen wie OpenCL oder SYCL, die ebenfalls eine abstrakte
+Schnittstelle definieren, die Implementierung jedoch den Hardware- und
+Software"=Herstellern überlassen.
 
 \begin{figure}
     \centering
@@ -221,10 +221,10 @@ angelegt und initialisiert werden. Dies erfolgt in drei Stufen:
 \end{enumerate}
 
 Ähnlich wie bei SYCL werden Speicherbereiche in Alpaka durch Puffer dargestellt,
-die die reinen Zeiger kapseln. Im Gegensatz zu SYCL sind die Puffer auf dem Host
-und Device jedoch voneinander unabhängig. Es ist also nicht möglich, einen
-gemeinsamen Puffer zu erzeugen, der die notwendigen Kopien für den Programmierer
-unsichtbar im Hintergrund durchführt, wie es in
+die die reinen Zeiger kapseln. Im Gegensatz zu SYCL sind die Puffer auf dem
+\textit{Host} und \textit{Device} jedoch voneinander unabhängig. Es ist also
+nicht möglich, einen gemeinsamen Puffer zu erzeugen, der die notwendigen Kopien
+für den Programmierer unsichtbar im Hintergrund durchführt, wie es in
 Abschnitt~\ref{sycl:ueberblick:axpy:buffer} für SYCL demonstriert wurde.
 
 Für die Erzeugung von Puffern ist es zunächst nötig, die gewünschte Größe des
@@ -421,7 +421,8 @@ alpaka::wait::wait(queue); // warte auf ausstehende Operationen
 
 /* ab hier Überprüfung der Ergebnisse möglich */
     \end{minted}
-    \caption{Synchronisation zwischen Host und Device in Alpaka}
+    \caption{Synchronisation zwischen \textit{Host} und \textit{Device} in
+             Alpaka}
     \label{alpaka:ueberblick:axpy:sync:src}
 \end{code}
 

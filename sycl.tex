@@ -125,10 +125,10 @@ auto main() -> int
 Von \gls{opencl} erbt SYCL die Plattformunabhängigkeit. Es wird das
 Vorhandensein mindestens einer \gls{opencl}"=Plattform auf dem System
 angenommen\footnote{Diese wird aber nicht vorausgesetzt! Jede
-SYCL"=Implementierung muss auch ohne eine OpenCL"=Plattform auf dem Host
-lauffähig sein.}, was im Umkehrschluss bedeutet, dass unter Umständen zwischen
-mehreren verschiedenen Plattformen konkurrierender Hersteller gewählt werden
-muss. 
+SYCL"=Implementierung muss auch ohne eine OpenCL"=Plattform auf dem
+\textit{Host} lauffähig sein.}, was im Umkehrschluss bedeutet, dass unter
+Umständen zwischen mehreren verschiedenen Plattformen konkurrierender Hersteller
+gewählt werden muss. 
 
 Die SYCL"=Spezifikation bietet dem Programmierer mehrere Möglichkeiten, die
 gewünschte Plattform für sein Programm auszuwählen. Der einfachste Ansatz
@@ -886,12 +886,13 @@ queue.submit(/* D */);
 
 SYCL übernimmt das System der Ausnahmefehler (engl. \textit{exceptions}) aus
 der C++"=Standardbibliothek. Das Fehlersystem ist in SYCL asynchron:
-grundsätzlich werden nur (synchrone) Fehler der Host"=Seite ausgegeben, während
-auf der Device"=Seite aufgetretene Fehler ignoriert werden. Das Abfangen der
-Device"=Fehler erfordert einen weiteren Parameter für die \textit{Queue}. Dieser
-ist eine Datenstruktur, welche die asynchronen Fehler der Device"=Seite abfängt
-und in synchrone Host"=Fehler umwandt, die dann vom Programmierer weiter
-verarbeitet werden können (siehe Anhang~\ref{anhang:source:cpp:syclexceptions}).
+grundsätzlich werden nur (synchrone) Fehler der \textit{Host}"=Seite ausgegeben,
+während auf der \textit{Device}"=Seite aufgetretene Fehler ignoriert werden. Das
+Abfangen der \textit{Device}"=Fehler erfordert einen weiteren Parameter für die
+\textit{Queue}. Dieser ist eine Datenstruktur, welche die asynchronen Fehler der
+\textit{Device}"=Seite abfängt und in synchrone \textit{Host}"=Fehler umwandt,
+die dann vom Programmierer weiter verarbeitet werden können
+(siehe Anhang~\ref{anhang:source:cpp:syclexceptions}).
 
 \subsection{Profiling}
 
