@@ -57,6 +57,14 @@
 \AfterEndEnvironment{minted}{\end{tcolorbox}}
 \newcommand{\lstfont}[1]{\color{#1}\small\ttfamily}
 
+% Einstellungen für glossaries
+\newglossarystyle{mystyle}{%
+  \glossarystyle{long}%
+  \renewenvironment{theglossary}%
+     {\begin{longtable}{p{3cm}p{\glsdescwidth}}}%
+     {\end{longtable}}%
+}
+
 \begin{document}
 
 \faculty{Fakultät Informatik}
@@ -95,8 +103,8 @@
 \tableofcontents
 
 \glsaddall
-\printglossary
-\printglossary[type=\acronymtype]
+\printglossary[style=long]
+\printglossary[style=long, type=\acronymtype]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Hauptteil
@@ -114,6 +122,7 @@
 % Nachspann
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\emergencystretch 2em
 \printbibliography[heading=bibintoc]
 
 \listoffigures

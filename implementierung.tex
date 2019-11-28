@@ -145,14 +145,14 @@ Alpaka übernimmt viele CUDA"=Konzepte, darunter auch das Event"=System.
 Alpaka"=Events werden wie Tasks in eine Queue eingereiht. Beendet die Queue
 einen Task, wird das dahinterliegende Event markiert. Dadurch kann der Nutzer
 das Ende eines Kernels abwarten und z.B. einen Task in einer weiteren Queue
-starten, was der Organisation der Abhängigkeiten zwischen Kerneln sehr dienlich
-ist.
+starten, was der Organisation der Abhängigkeiten zwischen \textit{Kerneln} sehr
+dienlich ist.
 
 Dieses Prinzip ist in SYCL so nicht vorhanden. Eine SYCL"=Queue führt
 grundsätzlich alle Tasks asynchron zueinander aus. Sofern Abhängigkeiten
 bestehen, werden diese von der Queue erkannt und entsprechend sortiert. Es ist
-also in SYCL nicht notwendig, die Abhängigkeiten zwischen Kerneln selbst zu
-verwalten.
+also in SYCL nicht notwendig, die Abhängigkeiten zwischen \textit{Kerneln}
+selbst zu verwalten.
 
 Dadurch existiert in SYCL auch kein vergleichbares Event"=System. Zwar erhält
 der Programmierer beim Einreihen einer \textit{command group} ein SYCL"=Event
@@ -258,38 +258,39 @@ class TaskKernelSycl final : public workdiv::workDivMembers<TDim, TIdx>
 
 In der \textit{command group} wird der eigentliche SYCL"=Kernel gestartet, der
 wiederum die vom Nutzer geschriebene Alpaka"=Kernel"=Funktion mit ihren
-Parametern aufruft. SYCL stellt drei verschiedene Möglichkeiten für den
-Kernel"=Start zur Verfügung (siehe Abschnitt~\ref{sycl:konzepte:kernelstart}:
-\texttt{single\_task}, \texttt{parallel\_for} und
-\texttt{parallel\_for\_work\_group}.
+Parametern aufruft. SYCL verfügt über drei verschiedene Möglichkeiten für den
+Kernel"=Start (siehe Abschnitt~\ref{sycl:konzepte:kernelstart}):
 
-\texttt{single\_task} stellt keine Parallelität durch \textit{work"=items} zur
-Verfügung und ist in seiner Funktion mit einem einzelnen CPU"=Thread
-vergleichbar, der auf genau einem CPU"=Kern ausgeführt wird. In Kombination mit
-den in Kapitel~\ref{sycl} aufgeführten FPGA"=Erweiterungen ist dieses Verhalten
-für FPGAs durchaus sinnvoll, jedoch für CPU"= und GPU"=Beschleuniger wenig
-nützlich bis kontraproduktiv. Im Interesse eines portablen Backends scheidet
-diese Variante aus.
-
-\texttt{parallel\_for} ist für datenparallele Algorithmen gedacht. Der
-Programmierer hat die Möglichkeit, die Zahl der \textit{work"=groups} und ihrer
-\textit{work"=items} genau zu spezifizieren. Diese lassen sich einfach auf die
-Alpaka"=Äquivalente \textit{Block} und \textit{Thread} aus dem
-Work"=Division"=Konzept abbilden, weshalb \texttt{parallel\_for} eine gute Wahl
-für den SYCL"=Kernel"=Start darstellt.
-
-\texttt{parallel\_for\_work\_group} bietet dieselbe Funktionalität wie
-\texttt{parallel\_for}, exponiert diese jedoch mit einem anderen Schwerpunkt.
-Mit diesem Ansatz wird der Kernel in zwei separate Bereiche aufgeteilt: Einmal
-auf Ebene der \textit{work"=groups} und einmal auf Ebene der
-\textit{work"=items}, wobei die letztere der ersteren untergeordnet ist bzw.
-aus ihr heraus aufgerufen wird. Befehle auf der \textit{work"=group}"=Ebene
-werden genau einmal für die gesamte \textit{work"=group} ausgeführt, Befehle auf
-der Ebene der \textit{work"=items} genau einmal pro \textit{work"=item}. Dadurch
-hat der Programmierer die Möglichkeit, seine Algorithmen hierarchisch zu
-gliedern. Dieses Konzept findet sich nicht in Alpakas Work"=Division"=Konzept,
-weshalb in dieser Implementierung \texttt{parallel\_for} als
-Kernel"=Start"=Funktion gewählt wurde.
+\begin{itemize}
+    \item \texttt{single\_task} stellt keine Parallelität durch
+          \textit{work"=items} zur Verfügung und ist in seiner Funktion mit
+          einem einzelnen CPU"=Thread vergleichbar, der auf genau einem
+          CPU"=Kern ausgeführt wird. In Kombination mit den in
+          Kapitel~\ref{sycl} aufgeführten FPGA"=Erweiterungen ist dieses
+          Verhalten für FPGAs durchaus sinnvoll, jedoch für CPU"= und
+          GPU"=Beschleuniger wenig nützlich bis kontraproduktiv. Im Interesse
+          eines portablen Backends scheidet diese Variante aus.
+    \item \texttt{parallel\_for} ist für datenparallele Algorithmen gedacht.
+          Der Programmierer hat die Möglichkeit, die Zahl der
+          \textit{work"=groups} und ihrer \textit{work"=items} genau zu
+          spezifizieren. Diese lassen sich einfach auf die Alpaka"=Äquivalente
+          \textit{Block} und \textit{Thread} aus dem Work"=Division"=Konzept
+          abbilden, weshalb \texttt{parallel\_for} eine gute Wahl für den
+          SYCL"=Kernel"=Start darstellt.
+    \item \texttt{parallel\_for\_work\_group} bietet dieselbe Funktionalität wie
+          \texttt{parallel\_for}, exponiert diese jedoch mit einem anderen
+          Schwerpunkt. Mit diesem Ansatz wird der Kernel in zwei separate
+          Bereiche aufgeteilt: Einmal auf Ebene der \textit{work"=groups} und
+          einmal auf Ebene der\textit{work"=items}, wobei die letztere der
+          ersteren untergeordnet ist bzw. aus ihr heraus aufgerufen wird.
+          Befehle auf der \textit{work"=group}"=Ebene werden genau einmal für
+          die gesamte \textit{work"=group} ausgeführt, Befehle auf der Ebene der
+          \textit{work"=items} genau einmal pro \textit{work"=item}. Dadurch
+          hat der Programmierer die Möglichkeit, seine Algorithmen hierarchisch
+          zu gliedern. Dieses Konzept findet sich nicht in Alpakas
+          Work"=Division"=Konzept, weshalb in dieser Implementierung
+          \texttt{parallel\_for} als Kernel"=Start"=Funktion gewählt wurde.
+\end{itemize}
 
 Für die Nutzung der \texttt{parallel\_for}"=Funktion muss die Gesamtanzahl der
 \textit{work"=items} sowie die Anzahl der \textit{work"=items} pro
@@ -347,10 +348,10 @@ class TaskKernelSycl final : public workdiv::WorkDivMembers<TDim, TIdx>
 Wichtig ist ferner der Name des SYCL"=Kernels, der allen
 Kernel"=Start"=Varianten übergeben werden muss. In SYCL ist der Kernel"=Name ein
 eigener Datentyp, der der Startfunktion als Template"=Parameter übergeben wird,
-sich von anderen SYCL"=Kerneln unterscheiden und global sichtbar sein muss.
-Daher wurde für das SYCL"=Backend die Klasse \texttt{sycl::detail::kernel}
-eingeführt, welche den Typ der Alpaka"=Kernel"=Funktion (\texttt{TKernelFnObj})
-als Template"=Parameter entgegennimmt.
+sich von anderen SYCL"=\textit{Kerneln} unterscheiden und global sichtbar sein
+muss. Daher wurde für das SYCL"=Backend die Klasse \texttt{sycl::detail::kernel}
+eingeführt, welche den Typ der Alpaka"=\textit{Kernel}"=Funktion
+(\texttt{TKernelFnObj}) als Template"=Parameter entgegennimmt.
 
 Im Quelltext~\ref{implementierung:task:kernel:launch:src} wird der Vorgang des
 Kernel"=Starts gezeigt, jedoch noch ohne \texttt{accessors}; diese werden
@@ -524,7 +525,7 @@ während \texttt{TDim} den Typ der Dimensionalität des zu kopierenden Puffers
 angibt.  
 
 Der \texttt{operator()} wird durch seinen Parameter eine
-SYCL"=\textit{command"=group}. Der \texttt{TaskCopySycl} kann somit von einer
+SYCL"=\textit{command"=group}. \texttt{TaskCopySycl} kann somit von einer
 SYCL"=Queue ausgeführt werden.
 
 Die Struktur enthält ansonsten nur die Operanden der Kopier"=Operation und die

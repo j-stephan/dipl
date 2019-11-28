@@ -81,11 +81,11 @@ Abstraktions"=Overhead zur Laufzeit vermieden wird.
 Ähnlich wie SYCL bietet auch Alpaka ein beschleunigerunabhängiges Backend, das
 sich prinzipiell mit jedem modernen C++"=Compiler kompilieren lässt. Dieses
 wird in der Alpaka"=Terminologie \texttt{CpuSerial} genannt und führt jeden
-Befehl sequentiell aus. Während der \textit{Kernel}"=Ausführung existiert also keinerlei
-Parallelität durch CPU"=Threads\footnote{Der Compiler kann den verwendeten
-Algorithmus natürlich trotzdem vektorisieren, zudem existieren noch weitere
-Möglichkeiten der Parallelisierung durch Instruktions"=Level"=Parallelität oder
-Pipelining.}.
+Befehl sequentiell aus. Während der \textit{Kernel}"=Ausführung existiert also
+keinerlei Parallelität durch CPU"=Threads\footnote{Der Compiler kann den
+verwendeten Algorithmus natürlich trotzdem vektorisieren, zudem existieren noch
+weitere Möglichkeiten der Parallelisierung durch
+Instruktions"=Level"=Parallelität oder Pipelining.}.
 
 \subsection{Struktur eines Alpaka-Programms}
 \label{alpaka:ueberblick:axpy}
@@ -349,11 +349,11 @@ struct AxpyKernel
     \label{alpaka:ueberblick:axpy:kernel:kernel_src}
 \end{code}
 \vspace{3mm}
-Alpaka"=\textit{Kernel} werden in Form von C++"=Funktoren -- das heißt Strukturen mit
-einem überladenen \texttt{()}"=Operator -- definiert. Der \texttt{()}"=Operator
-wird mit einem speziellen Funktionsattribut versehen (\texttt{ALPAKA\_FN\_ACC}),
-der im Hintergrund dafür sorgt, dass diese Funktion für das \textit{Device}
-kompiliert wird.
+Alpaka"=\textit{Kernel} werden in Form von C++"=Funktoren -- das heißt
+Strukturen mit einem überladenen \texttt{()}"=Operator -- definiert. Der
+\texttt{()}"=Operator wird mit einem speziellen Funktionsattribut versehen
+(\texttt{ALPAKA\_FN\_ACC}), der im Hintergrund dafür sorgt, dass diese Funktion
+für das \textit{Device} kompiliert wird.
 
 Als Parameter nimmt der \textit{Kernel} zunächst die oben definierte
 \texttt{devAcc}"=Instanz entgegen. Dies ist nötig, um von dieser Struktur
@@ -364,22 +364,24 @@ erforderlich. In diesem Fall also die für den AXPY"=Algorithmus nötige Konstan
 erfolgt auch auf dem \textit{Device} der Zugriff auf die Speicherbereiche durch
 reine Zeiger.
 
-Innerhalb des \textit{Kernels} wird ein Index"=Raum aufgespannt (eine genaue Erläuterung
-dieses Prinzips folgt in Abschnitt~\ref{alpaka:konzepte:abstraktion}), in dem
-jeder ausführenden Einheit des Beschleunigers ein eindeutiger Index sowie zu
-bearbeitende Elemente zugeordnet werden. Über in Alpaka vorhandene Funktionen
-ist eine Orientierung innerhalb des Index"=Raums möglich, wodurch die
-AXPY"=Funktion auf alle Vektor"=Elemente angewendet werden kann.
+Innerhalb des \textit{Kernels} wird ein Index"=Raum aufgespannt (eine genaue
+Erläuterung dieses Prinzips folgt in
+Abschnitt~\ref{alpaka:konzepte:abstraktion}), in dem jeder ausführenden Einheit
+des Beschleunigers ein eindeutiger Index sowie zu bearbeitende Elemente
+zugeordnet werden. Über in Alpaka vorhandene Funktionen ist eine Orientierung
+innerhalb des Index"=Raums möglich, wodurch die AXPY"=Funktion auf alle
+Vektor"=Elemente angewendet werden kann.
 
 Die gesamte \textit{Kernel}"=Definition ist in
 Quelltext~\ref{alpaka:ueberblick:axpy:kernel:kernel_src} dargestellt.
 
 Der so definierte \textit{Kernel} wird im nächsten Schritt einem \textit{Task}
 zugeordnet. Ein \textit{Task} ist prinzipiell mit einer \textit{command group}
-in SYCL vergleichbar und umfasst neben der \textit{Kernel}"=Definition die gewünschte
-Aufteilung der Arbeit sowie die konkreten Ein- und Ausgabeparameter für eine
-\textit{Kernel}"=Ausführung. Ein Alpaka"=\textit{Task} wird einer Alpaka"=\textit{Queue}
-übergeben und von dieser auf dem \textit{Device} zur Ausführung gebracht.
+in SYCL vergleichbar und umfasst neben der \textit{Kernel}"=Definition die
+gewünschte Aufteilung der Arbeit sowie die konkreten Ein- und Ausgabeparameter
+für eine \textit{Kernel}"=Ausführung. Ein Alpaka"=\textit{Task} wird einer
+Alpaka"=\textit{Queue} übergeben und von dieser auf dem \textit{Device} zur
+Ausführung gebracht.
 
 Der gesamte Prozess ist in Quelltext~\ref{alpaka:ueberblick:axpy:kernel:task}
 gezeigt.
@@ -427,7 +429,8 @@ alpaka::wait::wait(queue); // warte auf ausstehende Operationen
 \label{alpaka:ueberblick:axpy:zusammenfassung}
 
 Der Quelltext~\ref{alpaka:ueberblick:axpy:zusammenfassung:src} zeigt das gesamte
-Alpaka"=AXPY"=Beispiel, jedoch aus Platzgründen ohne die \textit{Kernel}"=Definition.
+Alpaka"=AXPY"=Beispiel, jedoch aus Platzgründen ohne die
+\textit{Kernel}"=Definition.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -496,8 +499,8 @@ Zum besseren Verständnis des obigen Beispiels sowie der in den nächsten Kapite
 geschilderten Schwierigkeiten beim Entwicklungsprozess des Backends ist die
 Kenntnis weiterführender Alpaka"=Konzepte notwendig. Dazu gehören insbesondere
 die in Alpaka verwendete Hardware"=Abstraktion und die Verwaltung der
-Abhängigkeiten zwischen \textit{Kerneln}. Für den Entwicklungsprozess mit Alpaka sind
-außerdem die Methoden für die Fehlerbehandlung und das Profiling relevant.
+Abhängigkeiten zwischen \textit{Kerneln}. Für den Entwicklungsprozess mit Alpaka
+sind außerdem die Methoden für die Fehlerbehandlung und das Profiling relevant.
 
 \subsection{Hardware"=Abstraktion}
 \label{alpaka:konzepte:abstraktion}
@@ -515,7 +518,7 @@ Die Konzepte sind hierarchisch und redundant aufgebaut: Sofern eine Ebene der
 Abstraktionshierarchie von der konkreten Hardware bzw. dem zugehörigen
 Programmier"=Interface nicht unterstützt wird, lässt sich die betreffende Ebene
 emulieren oder sogar ganz ignorieren. Dadurch ist es möglich, einen
-Alpaka"=Kernel optimal auf die von Alpaka unterstützten Beschleuniger
+Alpaka"=\textit{Kernel} optimal auf die von Alpaka unterstützten Beschleuniger
 abzubilden. Daher wird Alpakas Hardware"=Abstraktion als \textit{Redundant
 Hierarchical Parallelism} bezeichnet. \cite[vgl.][22]{worpitz2015}
 
@@ -656,7 +659,8 @@ anwendbar wäre.
                                 -- (6.1334, 4.2);
         \node [align = center] (coretext15) at (6.6834, 3.9) {\color{white}Kern};
     \end{tikzpicture}
-    \caption{Links: Abstraktionshierarchie mit einem aus \textit{Threads}
+    \caption[Abstraktionshierarchie aus Grid und Threads]
+            {Links: Abstraktionshierarchie mit einem aus \textit{Threads}
              zusammengesetzten \textit{Grid}. Rechts: Ein hypothetischer
              Prozessor, der datenparallele Anwendungen mit diesem
              Abstraktionsschema ideal ausführen könnte.
@@ -693,7 +697,7 @@ scalability} umsetzen. Damit lässt sich dasselbe \textit{Grid}, das aus einer
 festen Menge von \textit{Blocks} besteht, z.B. auf einer GPU mit zwei
 Multiprozessoren oder auf einer GPU mit acht Multiprozessoren zur Ausführung
 bringen: Der Scheduler der GPU verteilt die Blocks auf die freien
-Multiprozessoren, wodurch der Kernel selbst skalierbar wird.
+Multiprozessoren, wodurch der \textit{Kernel} selbst skalierbar wird.
 
 \begin{figure}
     \centering
@@ -858,7 +862,8 @@ Multiprozessoren, wodurch der Kernel selbst skalierbar wird.
                                 -- (12.6, 2.25);
 
     \end{tikzpicture}
-    \caption{Links: Abstraktionshierarchie mit einem \textit{Grid}, das aus
+    \caption[Abstraktionshierarchie aus Grid, Blocks und Threads]
+            {Links: Abstraktionshierarchie mit einem \textit{Grid}, das aus
              zu \textit{Blocks} gruppierten \textit{Threads} besteht.
              Rechts: Ein theoretischer Prozessor, der eine 1"=zu"=1"=Abbildung
              von \textit{Threads} auf Kerne sowie schnelle Synchronisation und
@@ -1099,7 +1104,8 @@ sind.
         \node [align = center] (warptext3) at (10.075, 0.9) {\small\color{white}Warp};
 
     \end{tikzpicture}
-    \caption{Links: Abstraktionshierarchie mit einem \textit{Grid}, das aus
+    \caption[Abstraktionshierarchie aus Grid, Blocks, Warps und Threads]
+            {Links: Abstraktionshierarchie mit einem \textit{Grid}, das aus
              zu \textit{Blocks} gruppierten \textit{Warps} besteht. Letzere sind
              wiederum aus mehreren \textit{Threads} zusammengesetzt.
              Rechts: Ein theoretischer Prozessor, der eine 1"=zu"=1"=Abbildung
@@ -1143,7 +1149,8 @@ dargestellt ist.
         \node [align = center] (threadtext) at (1.75, 2) {\Large\color{white}\textbf{Thread}};
         \node [align = center] (elemtext) at (1.75, 0.91) {\Large\color{white}\textbf{Element}};
     \end{tikzpicture}
-    \caption{Vollständiges Alpaka"=Abstraktionskonzept: Mehrere
+    \caption[Vollständiges Alpaka-Abstraktionskonzept]
+            {Vollständiges Alpaka"=Abstraktionskonzept: Mehrere
              \textit{Elements} werden von einem \textit{Thread} verarbeitet.
              Mehrere \textit{Threads} werden innerhalb eines \textit{Warps}
              taktgenau gemeinsam ausgeführt. Mehrere \textit{Warps} bilden
@@ -1179,16 +1186,16 @@ Jeder \textit{Thread} besitzt außerdem eine Reihe von Registern, auf die nur er
 selbst Zugriff hat. In diesen werden z.B. \textit{thread}"=lokale Variablen
 gespeichert. SYCLs Äquivalent wird \textit{private memory} genannt.
 
-\subsection{Abhängigkeiten zwischen Kerneln}
+\subsection{Abhängigkeiten zwischen \textit{Kerneln}}
 \label{alpaka:konzepte:abhaengigkeiten}
 
 Im Gegensatz zu SYCL verfügt Alpaka nicht über ein System, um automatisch
-Abhängigkeiten zwischen Kerneln zu verwalten. Stattdessen ist es Aufgabe des
-Programmierers, Alpaka"=\textit{Events} zur Synchronisierung zwischen Kerneln zu
-verwenden. Dies ist nötig, da Operationen (Kopien, Kernel, \ldots) in derselben
-\textit{Queue} zwar sequentiell in der Reihenfolge ihrer Einreihung
-abgearbeitet werden, in verschiedenen \textit{Queues} dagegen zueinander
-asynchron laufen.
+Abhängigkeiten zwischen \textit{Kerneln} zu verwalten. Stattdessen ist es
+Aufgabe des Programmierers, Alpaka"=\textit{Events} zur Synchronisierung
+zwischen \textit{Kerneln} zu verwenden. Dies ist nötig, da Operationen (Kopien,
+\textit{Kernel}, \ldots) in derselben \textit{Queue} zwar sequentiell in der
+Reihenfolge ihrer Einreihung abgearbeitet werden, in verschiedenen
+\textit{Queues} dagegen zueinander asynchron laufen.
 
 \begin{code}
     \begin{minted}[fontsize=\small]{c++}
@@ -1375,7 +1382,8 @@ wurden.
         \draw [rounded corners, fill = HKS07!100] (5.5, 20.1) rectangle (8, 22.1)
               node [pos = 0.5, align = center] {\color{white}\textbf{Konzept}};
     \end{tikzpicture}
-    \caption{Struktureller Aufbau der Alpaka"=Bibliothek
+    \caption[Struktureller Aufbau der Alpaka-Bibliothek]
+            {Struktureller Aufbau der Alpaka-Bibliothek
              \cite[nach][40]{worpitz2015}}
     \label{alpaka:konzepte:zusammenfassung:struktur}
 \end{figure}

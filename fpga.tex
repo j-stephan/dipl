@@ -296,7 +296,8 @@ Speicher- und Multiplizierer-Blöcken aufgebaut ist.
         \draw [color = HKS92!90, line width = 5mm]
                 (-0.5625, 9.9375) -- (9.9375, 9.9375);
     \end{tikzpicture}
-    \caption{abstrakter FPGA-Aufbau \cite[nach][10-14]{hawkins2010}}
+    \caption[abstrakter FPGA-Aufbau]
+            {abstrakter FPGA-Aufbau \cite[nach][10-14]{hawkins2010}}
     \label{fpga:definition:aufbau}
 \end{figure}
 
@@ -315,10 +316,10 @@ Architektur bestehen aus sechs fundamentalen programmierbaren Elementen:
           \cite[vgl.][6]{ultrascaleclb2017}
     \item Eingabe/Ausgabe-Blöcke (engl. \gls{iob}) werden zur Steuerung des
           Datenflusses zwischen den I/O"=Pins und den internen Schaltkreisen
-          benutzt. Die UltraScale+-Architektur bietet verschiedene
-          \gls{iob}-Typen, die z.B. verschiedene I/O"=Standards oder uni- oder
-          bidirektionale Kommunikation unterstützen. \cite[vgl. die
-          ausführliche I/O"=Beschreibung in][Kapitel 1 und 2]{ultrascaleio2019}
+          benutzt. Es gibt mehrere \gls{iob}"=Typen in der
+          UltraScale+\-Ar\-chi\-tek\-tur, die z.B. verschiedene I/O"=Standards
+          oder uni- und bidirektionale Kommunikation unterstützen. \cite[vgl.
+          die ausführliche I/O"=Beschreibung in][Kapitel 1 und 2]{ultrascaleio2019}
     \item \glqq Block RAM\grqq\ kann bis zu \SI{36}{\kilo\bit} speichern. Dabei
           lässt sich ein Block bei Bedarf auch in zwei unabhängige RAMs mit
           jeweils \SI{18}{\kilo\bit} zerlegen. Zusätzlich sind in einem
@@ -389,7 +390,8 @@ Anzahl auf die \gls{slr}s, wie Tabelle~\ref{fpga:aufbau:ressourcen} zeigt.
             node [pos = 0.5] {dynamische Region}
             node [pos = 0.1] {SLR2};
     \end{tikzpicture}
-    \caption{Aufbau eines XCU200-FPGAs \cite[nach][5]{alveo2019}}
+    \caption[Aufbau eines XCU200-FPGAs]
+            {Aufbau eines XCU200-FPGAs \cite[nach][5]{alveo2019}}
     \label{fpga:aufbau:alveoslr}
 \end{figure}
 
@@ -408,7 +410,8 @@ Anzahl auf die \gls{slr}s, wie Tabelle~\ref{fpga:aufbau:ressourcen} zeigt.
         DSP & \num{5867} & \num{2275} & \num{1317} &
             \num{2275}\tabularnewline\bottomrule
     \end{tabulary}
-    \caption{Ressourcen der dynamischen Regionen eines XCU200-FPGAs
+    \caption[Ressourcen der dynamischen Regionen eines XCU200-FPGAs]
+            {Ressourcen der dynamischen Regionen eines XCU200-FPGAs
              \cite[siehe][5]{alveo2019}}
     \label{fpga:aufbau:ressourcen}
 \end{table}
@@ -440,7 +443,8 @@ Abbildung~\ref{fpga:aufbau:clockregions} zu sehen ist.
         \draw [fill = HKS92!90] (7.5, 0.0) rectangle (8.5, 8.0)
             node [pos = 0.5, rotate = 90, color = white] {externe I/O};
     \end{tikzpicture}
-    \caption{spaltenweise Verteilung der FPGA-Ressourcen
+    \caption[spaltenweise Verteilung der FPGA-Ressourcen]
+            {spaltenweise Verteilung der FPGA-Ressourcen
              \cite[nach][22]{ultrascale2019}}
     \label{fpga:aufbau:spalten}
 \end{figure}
@@ -467,7 +471,8 @@ Abbildung~\ref{fpga:aufbau:clockregions} zu sehen ist.
             (0.0, 6.0) -- (0.0, 8.0)
             node [pos = 0.5, xshift = -11mm, align = center] {60 CLBs};
     \end{tikzpicture}
-    \caption{Aufteilung der FPGA-Ressourcen auf \textit{clock regions}
+    \caption[Aufteilung der FPGA-Ressourcen auf \textit{clock regions}]
+            {Aufteilung der FPGA-Ressourcen auf \textit{clock regions}
              \cite[nach][22]{ultrascale2019}}
     \label{fpga:aufbau:clockregions}
 \end{figure}
@@ -617,7 +622,8 @@ oder der Systemebene anzusiedeln sind. \cite[vgl.][10--11]{kesel2013}
               node [right, xshift = 2mm, fill = white, inner sep = 1pt]
                    {\fontsize{6.5}{7.8}\selectfont Chip};
     \end{tikzpicture}
-    \caption{Y"=Diagramm nach Gajski \cite[nach][10]{kesel2013}}
+    \caption[Y-Diagramm nach Gajski]
+            {Y-Diagramm nach Gajski \cite[nach][10]{kesel2013}}
     \label{fpga:entwicklung:ydiagramm}
 \end{figure}
 
@@ -709,7 +715,8 @@ Diese Darstellung wird auch als Moore"=Schaltwerk bezeichnet.
         \draw [-{Latex[length = 3mm]}] (13.25, 3.25) -- (14.75, 3.25)
                     node [right, xshift = 1mm] {$Y$};
     \end{tikzpicture}
-    \caption{Modell eines endlichen Automaten (Moore"=Schaltwerk)
+    \caption[Modell eines endlichen Automaten]
+            {Modell eines endlichen Automaten (Moore"=Schaltwerk)
              \cite[nach][35]{kesel2013}}
     \label{fpga:hdl:moore}
 \end{figure}
@@ -736,7 +743,8 @@ ENTITY reg2 IS
     );
 END reg2 ;
     \end{minted}
-    \caption{\textit{Entity} eines 2-Bit-Registers \cite[siehe][26]{kesel2013}}
+    \caption[Entity eines 2-Bit-Registers]
+            {\textit{Entity} eines 2-Bit-Registers \cite[siehe][26]{kesel2013}}
     \label{fpga:hdl:regentity}
 \end{code}
 
@@ -853,7 +861,8 @@ BEGIN
     END PROCESS mux;
 END beh;
     \end{minted}
-    \caption{Verhaltensbeschreibung eines 2-Bit-Registers \cite[siehe][28]{kesel2013}}
+    \caption[Verhaltensbeschreibung eines 2-Bit-Registers]
+            {Verhaltensbeschreibung eines 2-Bit-Registers \cite[siehe][28]{kesel2013}}
     \label{fpga:hdl:regbeh}
 \end{code}
 
@@ -926,7 +935,8 @@ BEGIN
 
 END struct;
     \end{minted}
-    \caption{Strukturbeschreibung eines 2-Bit-Registers \cite[siehe][36]{kesel2013}}
+    \caption[Strukturbeschreibung eines 2-Bit-Registers]
+            {Strukturbeschreibung eines 2-Bit-Registers \cite[siehe][36]{kesel2013}}
     \label{fpga:hdl:regstruct}
 \end{code}
 \noindent
@@ -1144,7 +1154,9 @@ Schaltung mit Pipelining.
         \draw [-{Latex}] (9.5, 9) -- (11.5, 9);
         \draw (11.0, 8.9) -- (11.2, 9.1) node [pos = 1.0, xshift = 1.2mm, yshift = 2mm] {$y$};
     \end{tikzpicture}
-    \caption{FPGA"=Implementierung einer mehrstufigen Berechnung \cite[nach][21]{hlsintro2019}}
+    \caption[FPGA-Implementierung einer mehrstufigen Berechnung]
+            {FPGA-Implementierung einer mehrstufigen Berechnung
+             \cite[nach][21]{hlsintro2019}}
     \label{fpga:pipelining:schaltung}
 \end{figure}
 \noindent
@@ -1232,7 +1244,8 @@ nur alle zwei Takte, bei $\text{II} = 4$ mit jedem vierten Takt, usw.
         \draw [thick, fill = HKS92!50] (4.5, -3.5) rectangle (11.5, -0.5)
               node [pos = 0.5, align = center] { $(a(i - 2) \cdot x(i - 2)) + b(i - 2) + c(i - 2)$};
     \end{tikzpicture}
-    \caption{FPGA"=Pipeline"=Architektur \cite[nach][22]{hlsintro2019}}
+    \caption[FPGA-Pipeline-Architektur]
+            {FPGA-Pipeline-Architektur \cite[nach][22]{hlsintro2019}}
     \label{fpga:pipelining:pipeline}
 \end{figure}
 

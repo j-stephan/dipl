@@ -117,9 +117,9 @@ abstürzt.
 \subsubsection{Strukturen}
 
 Zu einem gravierenden Problem kommt es bei der Nutzung von benutzerdefinierten
-Strukturen. Werden diese außerhalb eines Kernels definiert und dann innerhalb
-eines Kernels verwendet, kommt es zu einem Absturz des Compilers. Der Grund
-dafür liegt in einem Fehler des im Hintergrund verwendeten
+Strukturen. Werden diese außerhalb eines \textit{Kernels} definiert und dann
+innerhalb eines \textit{Kernels} verwendet, kommt es zu einem Absturz des
+Compilers. Der Grund dafür liegt in einem Fehler des im Hintergrund verwendeten
 Xilinx"=OpenCL"=Compilers \texttt{xocc}, welcher die Synthese steuert. Nach
 Aussage der an der SYCL"=Implementierung beteiligten Xilinx"=Mitarbeiter genießt
 die Behebung dieses Fehlers niedrige Priorität, weshalb in nächster Zeit nicht
@@ -212,10 +212,11 @@ anstelle des weiter verbreiteten \texttt{const char *}. Damit weicht das
 C++"=Projekt Alpaka auch von den vom C++"=Standardisierungskomitee
 veröffentlichen Stilrichtlinien ab, den \textit{C++ Core Guidelines}.
 
-Die Modellierung von Aufgabengraphen bzw.\ der Abhängigkeiten zwischen Kerneln
-ist in SYCL deutlich einfacher als in Alpaka. Während dies in SYCL automatisch
-von der Laufzeitumgebung übernommen wird, muss der Programmierer in Alpaka
-selbst tätig werden -- der Aufwand ist in Alpaka also höher.
+Die Modellierung von Aufgabengraphen bzw.\ der Abhängigkeiten zwischen
+\textit{Kerneln} ist in SYCL deutlich einfacher als in Alpaka. Während dies in
+SYCL automatisch von der Laufzeitumgebung übernommen wird, muss der
+Programmierer in Alpaka selbst tätig werden -- der Aufwand ist in Alpaka also
+höher.
 
 Die meisten Konzepte sind in SYCL und Alpaka jedoch recht ähnlich, sodass
 hinsichtlich der Mächtigkeit keine großen Unterschiede bestehen. Darüber hinaus
@@ -393,11 +394,12 @@ $(x, y)$ horizontal, vertikal und diagonal angrenzenden Pixelwerte:
 Sofern ein Pixel am Bildrand liegt, wird der Wert der Nachbarn, die außerhalb
 des Bildes lägen, als $0$ angenommen.
 
-Der dem Algorithmus entsprechende SYCL"=Kernel ist im
+Der dem Algorithmus entsprechende SYCL"=\textit{Kernel} ist im
 Anhang~\ref{anhang:source:cpp:boxkernel} zu finden. Obwohl \textit{local memory}
 und Pipelining zur Zeit von der Xilinx"=SYCL"=Implementierung nicht unterstützt
 werden bzw. zu der Nutzung des falschen Speichertyps führen, wurden sie im
-Kernel"=Quelltext zur Illustration der FPGA"=SYCL"=Programmierung verwendet.
+\textit{Kernel}"=Quelltext zur Illustration der FPGA"=SYCL"=Programmierung
+verwendet.
 
 \subsection{Messergebnisse}
 
@@ -428,10 +430,10 @@ kompiliert werden.
 Schon während der Synthese der Schaltungen ergaben sich durch den Austausch der
 Datentypen signifikante zeitliche Unterschiede bei den einzelnen
 Syntheseschritten (siehe Abbildung~\ref{ergebnisse:box:messung:zeitvergleich}).
-Während beide Datentypen während der Umwandlung des SYCL"=Kernels in ein
-HLS"=taugliches Format noch ungefähr die gleiche Zeit benötigen, benötigt die
-\texttt{int}"=Schaltung in allen folgenden Schritten deutlich messbar mehr Zeit
-als das \texttt{float}"=Äquivalent. Anscheinend fällt es den
+Während beide Datentypen während der Umwandlung des SYCL"=\textit{Kernels} in
+ein HLS"=taugliches Format noch ungefähr die gleiche Zeit benötigen, benötigt
+die \texttt{int}"=Schaltung in allen folgenden Schritten deutlich messbar mehr
+Zeit als das \texttt{float}"=Äquivalent. Anscheinend fällt es den
 Synthesewerkzeugen leichter, optimierte Schaltungen für
 \texttt{float}"=Operationen zu generieren.
 
@@ -563,9 +565,9 @@ stehenden \textit{Block RAM}.
         \caption*{Netzliste für den Datentyp \texttt{float}}
     \end{minipage}
     \pdfimageresolution=72
-    \caption[Netzliste des synthetisierten Box-Filter-Kernels mit verschiedenen
-             Datentypen]{Netzliste des Box-Filter-Kernels mit verschiedenen
-             Datentypen. Die unterschiedliche Auslastung der
+    \caption[Netzliste des synthetisierten Box-Filter-\textit{Kernels} mit
+             verschiedenen Datentypen]{Netzliste des Box-Filter-Kernels mit
+             verschiedenen Datentypen. Die unterschiedliche Auslastung der
              Hardware"=Ressourcen ist in dieser Ansicht deutlich sichtbar. Blaue
              Bereiche werden für die Schaltung verwendet, dunkelgraue sind nicht
              in Gebrauch. Der orange Bereich ist für die Laufzeitumgebung
@@ -588,7 +590,7 @@ Beschleuniger, der für den Einsatz in Rechenzentren ausgelegt wurde, ist das
 deutlich zu wenig. Es gilt allerdings zu bedenken, dass die Synthesewerkzeuge
 aufgrund des Entwicklungsstandes der Xilinx"=SYCL"=Implementierung keinerlei
 Optimierungen -- wie z.B. die Nutzung des Block RAM oder Pipelining -- vornehmen
-konnten, obwohl diese im Kernel"=Quelltext selbst eingefügt wurden. Mit
+konnten, obwohl diese im \textit{Kernel}"=Quelltext selbst eingefügt wurden. Mit
 zunehmendem Reifegrad der Xilinx"=SYCL"=Implementierung dürfte derselbe
 Quelltext zukünftig deutlich bessere Ergebnisse liefern.
 
