@@ -239,23 +239,24 @@ dafür zwei Klassen bereit:
 \end{itemize}
 %
 \noindent
-Ein \texttt{buffer} besteht aus einer endlichen Anzahl von Elementen desselben
-Typs und kann ein-, zwei- oder dreidimensional sein. Der Elemente-Typ sowie die
-Dimension des Puffers sind als Template"=Parameter zur Compile"=Zeit anzugeben,
-während die Anzahl als Laufzeit"=Parameter übergeben wird. Ein \texttt{accessor}
-lässt sich über die Methode \texttt{get\_access} der \texttt{buffer}"=Klasse
-erzeugen. Dabei wird als Template"=Parameter der gewünschte Zugriffstyp
-angegeben. Diese Information wird von der SYCL"=Laufzeitumgebung zur Sortierung
-der Abhängigkeiten zwischen Operationen auf dem \textit{Device} genutzt (siehe
-auch Abschnitt~\ref{sycl:konzepte:abhaengigkeiten}).
+Ein \texttt{buffer} (im Folgenden als Puffer bezeichnet) besteht aus einer
+endlichen Anzahl von Elementen desselben Typs und kann ein-, zwei- oder
+dreidimensional sein. Der Elemente"=Typ sowie die Dimension des Puffers sind als
+Template"=Parameter zur Compile"=Zeit anzugeben, während die Anzahl als
+Laufzeit"=Parameter übergeben wird. Ein \texttt{accessor} lässt sich über die
+Methode \texttt{get\_access} der \texttt{buffer}"=Klasse erzeugen. Dabei wird
+als Template"=Parameter der gewünschte Zugriffstyp angegeben. Diese Information
+wird von der SYCL"=Laufzeitumgebung zur Sortierung der Abhängigkeiten zwischen
+Operationen auf dem \textit{Device} genutzt (siehe auch
+Abschnitt~\ref{sycl:konzepte:abhaengigkeiten}).
 
 SYCL unterscheidet sechs verschiedene Zugriffstypen:
 \begin{itemize}
     \item \texttt{read} gestattet ausschließlich lesenden Zugriff auf den
-          \texttt{buffer}.
+          Puffer.
     \item \texttt{write} ermöglicht ausschließlich schreibenden Zugriff.
     \item Durch \texttt{read\_write} kann sowohl lesend als auch schreibend
-          auf den \texttt{buffer} zugegriffen werden.
+          auf den Puffer zugegriffen werden.
     \item \texttt{discard\_write} ermöglicht ausschließlich schreibenden Zugriff
           und verwirft alle vorher im Puffer enthaltenen Elemente (also auch bei
           partiellem Zugriff).

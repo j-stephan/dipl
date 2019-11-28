@@ -105,7 +105,7 @@ In SYCL spielt die \texttt{device}"=Struktur eine weitaus weniger wichtige
 Rolle als seine CUDA"= und Alpaka"=Äquivalente. Ein Äquivalent zu
 \texttt{dev::reset()} existiert deswegen nicht, und die Dokumentation zum
 Destruktor der \texttt{device}"=Klasse enthält keine Angaben darüber, wie sich
-der Aufruf auf den Zustand des tatsächlichen \textit{Devices} auswirkt
+dessen Aufruf auf den Zustand des tatsächlichen \textit{Devices} auswirkt
 \cite[vgl.][33,41,58]{sycl2019}.
 
 Eine befriedigende Implementierung der \texttt{dev::reset()}"=Funktion konnte
@@ -287,7 +287,7 @@ Abschnitt~\ref{sycl:konzepte:kernelstart}):
           \texttt{parallel\_for}, exponiert diese jedoch mit einem anderen
           Schwerpunkt. Mit diesem Ansatz wird der \textit{Kernel} in zwei
           separate Bereiche aufgeteilt: Einmal auf Ebene der
-          \textit{work"=groups} und einmal auf Ebene der\textit{work"=items},
+          \textit{work"=groups} und einmal auf Ebene der \textit{work"=items},
           wobei die letztere der ersteren untergeordnet ist bzw. aus ihr heraus
           aufgerufen wird. Befehle auf der \textit{work"=group}"=Ebene werden
           genau einmal für die gesamte \textit{work"=group} ausgeführt, Befehle
@@ -383,10 +383,11 @@ verboten \cite[vgl.][192]{sycl2019}. Zwar gibt die Spezifikation an, dass sich
 die \texttt{accessor}"=Typen implizit in reine Zeiger umwandeln lassen
 \cite[vgl.][27]{sycl2019}, was jedoch von keiner der verfügbaren
 Implementierungen unterstützt wird\footnote{Im Rahmen dieser Arbeit wurde der
-Konflikt in dieser Frage zwischen der Spezifikation und den vorhandenen
-Implementierungen an das SYCL"=Spezifikationskomitee gemeldet. Infolgedessen
-wurde der Wortlaut der Spezifikation als Fehler anerkannt, der in zukünftigen
-Fassungen der Spezifikation behoben sein wird (siehe die Diskussion in
+zwischen der Spezifikation und den vorhandenen Implementierungen bestehende
+Konflikt in dieser Frage an das SYCL"=Spezifikationskomitee gemeldet.
+Infolgedessen wurde der Wortlaut der Spezifikation als Fehler anerkannt. In
+zukünftigen Fassungen der Spezifikation wird der Wortlaut nicht mehr vorhanden
+sein (siehe die Diskussion in
 Anhang~\ref{anhang:diskussion:syclspec:implicitaccessor}).}.
 
 \begin{code}
@@ -659,7 +660,7 @@ durchgeführt werden.
 Bei der Implementierung der von Alpaka vorgegebenen mathematischen Funktionen
 kam es zu keinen Schwierigkeiten. SYCL stellt für alle Alpaka"=Funktionen ein
 Äquivalent zur Verfügung, das Datentypen mit halber, einfacher und doppelter
-Präzision entgegennimmt.
+Präzision entgegennimmt. \cite[vgl.][230--234]{sycl2019}
 
 \section{FPGA-Erweiterungen}\label{implementierung:probleme:fpga}
 

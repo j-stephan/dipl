@@ -651,8 +651,46 @@ struct pointer_traits
                             address space becomes a major obstacle.
 \end{otherlanguage}
 
-\section{Diskussionen mit Xilinx-Angestellten}
+\section{Bekannte Fehler der Xilinx-SYCL-Implementierung}
 \label{anhang:diskussionen:xilinx}
+
+\subsection{[SYCL] Missing and/or Incorrect xocc SPIR Math builtins}
+\label{anhang:diskussionen:xilinx:math}
+
+Original: \url{https://github.com/triSYCL/sycl/issues/11}, zuletzt abgerufen am
+28. November 2019.
+
+\begin{otherlanguage}{english}
+    \paragraph{Andrew Gozillon (Xilinx)} Some math manglings from xocc's SPIR
+                                         libraries appear to be incorrect or
+                                         missing. In the sense that math
+                                         functions correctly translated to their
+                                         SPIR mangled names (found in:
+                                         \url{https://github.com/KhronosGroup/SPIR-Tools/wiki/SPIR-2.0-built-in-functions})
+                                         result in runtime errors caused by
+                                         missing symbols.
+
+                                         Two known examples are the
+                                         mad(float, float, float) (\_Z3madfff)
+                                         function used in the test
+                                         math\_mangle.cpp and
+                                         fmin(float2, float2)
+                                         (\_Z4fminDv2\_fDv2\_f) found in the 
+                                         test vector\_math.cpp.
+
+                                         In at least fmin's case it appears to
+                                         be that the mangling of the arguments
+                                         type is different within xocc's SPIR
+                                         library.
+
+                                         This issue will require some further
+                                         investigation, but a preliminary look
+                                         at the issue makes it seem like it will
+                                         require modifications to the
+                                         InSPIRation pass to support these
+                                         alternate SPIR manglings in certain
+                                         cases.
+\end{otherlanguage}
 
 \subsection{[SYCL][XilinxFPGA] Known Issues}
 \label{anhang:diskussionen:xilinx:knownissues}
