@@ -9,9 +9,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="210mm"
-   height="297mm"
-   viewBox="0 0 210 297"
+   width="209.70218mm"
+   height="209.70218mm"
+   viewBox="0 0 209.70218 209.70218"
    version="1.1"
    id="svg8"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
@@ -25,17 +25,21 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98994949"
-     inkscape:cx="332.55677"
-     inkscape:cy="548.57143"
+     inkscape:zoom="0.49497475"
+     inkscape:cx="347.50934"
+     inkscape:cy="394.13857"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g842"
      showgrid="false"
-     inkscape:window-width="1850"
-     inkscape:window-height="1016"
-     inkscape:window-x="70"
-     inkscape:window-y="27"
-     inkscape:window-maximized="1" />
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <metadata
      id="metadata5">
     <rdf:RDF>
@@ -51,13 +55,14 @@
   <g
      inkscape:label="Ebene 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(0.07177628,-35.746678)">
     <g
        transform="matrix(0.35277777,0,0,-0.35277777,-0.00951076,357.11483)"
        inkscape:label="fpga_abstract"
        id="g842">
       <g
-         transform="translate(178.937,466.1)"
+         transform="matrix(1.5960017,0,0,1.5960017,84.969392,401.67936)"
          id="g844">
         <g
            id="g846">
